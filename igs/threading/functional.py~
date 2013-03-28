@@ -1,0 +1,35 @@
+# Parallel implementations of various functions
+import Queue
+
+from igs.threading import threads
+
+def pmap(f, iterable, num_workers=1):
+    def _worker(work_queue, result):
+        while not work_queue.empty():
+            work = work_queue.get()
+            result.append(f(work))
+            work_queue.task_done()
+
+    work_queue = Queue.Queue()
+    for i in iterable:
+        queue.put(i)
+
+    results = []
+    worker_threads = []
+    for i in range(num_workers):
+        results.append([])
+        worker_threads.append(threads.runThread(_worker, work_queue, results[i]))
+
+    for th in worker_threads:
+        th.join()
+
+    result = []
+    for r in results:
+        result.extend(r)
+
+    return result
+
+
+
+
+    
