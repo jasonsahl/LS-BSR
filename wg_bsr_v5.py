@@ -130,7 +130,6 @@ def uclust_cluster():
 
 def translate_consensus(consensus):
     """translate nucleotide into peptide with transeq"""
-    #subprocess.check_call("transeq -sequence consensus.fasta -outseq consensus.pep -frame 1 -trim > /dev/null 2>&1", shell=True)
     infile = open(consensus, "rU")
     output_handle = open("tmp.pep", "w")
     for record in SeqIO.parse(infile, "fasta"):
@@ -173,7 +172,6 @@ def blast_against_each_genome(directory, processors):
                    "-v", "1",
                    "-e", "0.1",
                    "-m", "8",
-                   #"-F", "F",
                    "-o", "%s_blast.out" % f]
             subprocess.check_call(cmd)
             
@@ -258,7 +256,7 @@ def make_table(directory):
         open("ref.list", "a").write("%s\n" % x)
 
 def divide_values(file, ref_scores):
-    """divide each BSR value in a row by that row's maximum value"""
+    """divide each BSR value in a row by the maximum bit score"""
     infile = open(file, "rU")
     firstLine = infile.readline()
     FL_F=firstLine.split()
@@ -268,7 +266,6 @@ def divide_values(file, ref_scores):
         fields=line.split()
         all_fields=list(fields)
         fields=map(float, fields[1:])
-        #largest=max(fields)
         values= [ ]
 	for x in fields:
 	    values.append(float(x)/float(ref_scores.get(all_fields[0])))
@@ -329,9 +326,7 @@ def main(directory, processors):
     divide_values("bsr_matrix", ref_scores)
     subprocess.check_call("paste ref.list BSR_matrix_values.txt > ../bsr_matrix_values.txt", shell=True)
     subprocess.check_call("cp names.txt consensus.pep ..", shell=True)
-    logging.logPrint("cleaning up")
-    #ap=os.path.abspath("%s"+"/" % directory)
-    #os.system("rm -rf %sjoined" % ap)
+    logging.logPrint("Done")
     
 if __name__ == "__main__":
     usage="usage: %prog [options]"
