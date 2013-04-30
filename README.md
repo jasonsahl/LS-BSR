@@ -6,8 +6,8 @@ provides one with the BSR, which can range from 0 to 1.
 
 To run the program, the following dependencies are required:
 
-1.  USearch (currently only works with v5)
-2.  BioPython
+1.  USearch (currently only works with v6)
+2.  BioPython (tested version is 0.16)
 3.  blastall (tested version is 2.2.25)
-4.  glimmer3 (will be replaced with prodigal in future)
+4.  Prodigal (tested version is 2.60)
 
