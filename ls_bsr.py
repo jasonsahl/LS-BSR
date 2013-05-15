@@ -33,13 +33,9 @@ def predict_genes(directory, processors):
     files = os.listdir(curr_dir)
     files_and_temp_names = [(str(idx), os.path.join(curr_dir, f))
                             for idx, f in enumerate(files)]
-                         
     def _perform_workflow(data):
         tn, f = data
-        names = get_seq_name(f)
-        reduced = names.replace('.fasta.new','')
-        subprocess.check_call("prodigal -i %s -d %s_genes.seqs -a %s_genes.pep > /dev/null 2>&1" % (f, reduced, reduced), shell=True)
-        
+        subprocess.check_call("prodigal -i %s -d %s_genes.seqs -a %s_genes.pep > /dev/null 2>&1" % (f, f, f), shell=True)
     results = set(p_func.pmap(_perform_workflow,
                               files_and_temp_names,
                               num_workers=processors))
@@ -81,7 +77,7 @@ def filter_seqs(input_pep):
     SeqIO.write(long_sequences, outfile, "fasta")
     outfile.close()
 
-def blast_against_each_genome(directory, processors, filter):
+def blast_against_each_genome(directory, processors, filter, peptides):
     """BLAST all peptides against each genome"""
     curr_dir=os.getcwd()
     files = os.listdir(curr_dir)
@@ -89,17 +85,14 @@ def blast_against_each_genome(directory, processors, filter):
                             for idx, f in enumerate(files)]
     def _perform_workflow(data):
 	tn, f = data
-        names = get_seq_name(f)
         if ".fasta.new" in f:
             subprocess.check_call("formatdb -i %s -p F > /dev/null 2>&1" % f, shell=True)
         if ".fasta.new" in f:
             cmd = ["blastall",
                    "-p", "tblastn",
-                   "-i", "consensus.pep",
+                   "-i", peptides,
                    "-d", f,
                    "-a", str(processors),
-                   "-b", "1",
-                   "-v", "1",
                    "-e", "0.1",
                    "-m", "8",
                    "-F", str(filter),
@@ -213,8 +206,6 @@ def blast_against_self(genes_nt, genes_pep, output, filter):
            "-i", genes_pep,
            "-d", genes_nt,
            "-a", "2",
-           #"-b", "1",
-           #"-v", "1",
            "-e", "0.1",
            "-m", "8",
            "-F", str(filter),
@@ -230,7 +221,20 @@ def parse_self_blast(blast_out):
         my_dict.update({str1:str2})
     return my_dict
 
-def main(directory, id, filter, processors):
+def translate_genes(genes, directory):
+    """translate nucleotide into peptide with BioPython"""
+    os.chdir("%s/joined" % directory)
+    infile = open(genes, "rU")
+    output_handle = open("genes.pep", "w")
+    for record in SeqIO.parse(infile, "fasta"):
+        if len(record.seq.translate(to_stop=True, table=11))>=30:
+            print >> output_handle, ">"+record.id
+            print >> output_handle, record.seq.translate(to_stop=True, table=11)
+    infile.close()
+    output_handle.close()
+
+def main(directory, id, filter, processors, genes):
+    ap=os.path.abspath("%s" % directory)
     try:
      	os.makedirs('%s/joined' % directory)
     except OSError, e:
@@ -239,21 +243,34 @@ def main(directory, id, filter, processors):
     for infile in glob.glob(os.path.join(directory, '*.fasta')):
         name=get_seq_name(infile)
         os.system("cp %s %s/joined/%s.new" % (infile,directory,name))
-    logging.logPrint("predicting genes with Prodigal")
-    predict_genes(directory, processors)
-    logging.logPrint("Prodigal done")
-    os.system("cat *genes.seqs > all_gene_seqs.out")
-    uclust_sort()
-    uclust_cluster(id)
-    translate_consensus("consensus.fasta")
-    filter_seqs("tmp.pep")
-    subprocess.check_call("formatdb -i consensus.fasta -p F", shell=True)
-    blast_against_self("consensus.fasta", "consensus.pep", "tmp_blast.out", filter)
-    subprocess.check_call("sort -u -k 1,1 tmp_blast.out > self_blast.out", shell=True)
-    ref_scores=parse_self_blast("self_blast.out")
-    subprocess.check_call("rm tmp_blast.out self_blast.out", shell=True)
-    logging.logPrint("starting BLAST")
-    blast_against_each_genome(directory, processors, filter)
+    if "null" in genes:
+        logging.logPrint("predicting genes with Prodigal")
+        predict_genes(directory, processors)
+        logging.logPrint("Prodigal done")
+        os.system("cat *genes.seqs > all_gene_seqs.out")
+        uclust_sort()
+        uclust_cluster(id)
+        translate_consensus("consensus.fasta")
+        filter_seqs("tmp.pep")
+        subprocess.check_call("formatdb -i consensus.fasta -p F", shell=True)
+        blast_against_self("consensus.fasta", "consensus.pep", "tmp_blast.out", filter)
+        subprocess.check_call("sort -u -k 1,1 tmp_blast.out > self_blast.out", shell=True)
+        ref_scores=parse_self_blast("self_blast.out")
+        subprocess.check_call("rm tmp_blast.out self_blast.out", shell=True)
+        os.system("rm *new_genes.*")
+        logging.logPrint("starting BLAST")
+        blast_against_each_genome(directory, processors, filter, "consensus.pep")
+    else:
+        logging.logPrint("Using pre-compiled set of predicted genes")
+        os.system("cp %s %s/joined/" % (genes,directory))
+        translate_genes(genes, directory)
+        subprocess.check_call("formatdb -i %s -p F" % genes, shell=True)
+        blast_against_self(genes, "genes.pep", "tmp_blast.out", filter)
+        subprocess.check_call("sort -u -k 1,1 tmp_blast.out > self_blast.out", shell=True)
+        ref_scores=parse_self_blast("self_blast.out")
+        subprocess.check_call("rm tmp_blast.out self_blast.out", shell=True)
+        logging.logPrint("starting BLAST")
+        blast_against_each_genome(directory, processors, filter, "genes.pep")
     logging.logPrint("BLAST done")
     parse_blast_report(directory)
     get_unique_lines(directory)
@@ -261,10 +278,13 @@ def main(directory, id, filter, processors):
     subprocess.check_call("paste ref.list *.matrix > bsr_matrix", shell=True)
     divide_values("bsr_matrix", ref_scores)
     subprocess.check_call("paste ref.list BSR_matrix_values.txt > ../bsr_matrix_values.txt", shell=True)
-    subprocess.check_call("cp names.txt consensus.pep ..", shell=True)
+    try:
+        subprocess.check_call("cp names.txt consensus.pep consensus.fasta ..", shell=True)
+    except:
+        sys.exc_clear()
     logging.logPrint("all Done")
-    #ap=os.path.abspath("%s"+"/" % directory)
-    #os.system("rm -rf %sjoined" % ap)
+    os.chdir("%s" % ap)
+    os.system("rm -rf joined")
     
 if __name__ == "__main__":
     usage="usage: %prog [options]"
@@ -273,14 +293,17 @@ if __name__ == "__main__":
                       help="/path/to/fasta_directory [REQUIRED]",
                       action="store", type="string")
     parser.add_option("-i", "--identity", dest="id",
-                      help="clustering id for USEARCH (0.0-1.0)",
+                      help="clustering id for USEARCH (0.0-1.0), defaults to 0.9",
                       default="0.9", type="float")
     parser.add_option("-f", "--filter", dest="filter",
-                      help="to use blast filtering or not",
+                      help="to use blast filtering or not, default is F or filter",
                       default="F", type="string")
     parser.add_option("-p", "--parallel_workers", dest="processors",
                       help="How much work to do in parallel, defaults to 2, should number of CPUs your machine has",
                       action="store", type="int")
+    parser.add_option("-g", "--genes", dest="genes",
+                      help="predicted genes (nucleotide) to screen against genomes, will not use prodigal",
+                      default="null", type="string")
     options, args = parser.parse_args()
     
     mandatories = ["directory", "processors"]
@@ -290,5 +313,4 @@ if __name__ == "__main__":
             parser.print_help()
             exit(-1)
 
-    main(options.directory, options.id, options.filter, options.processors)
-
+    main(options.directory, options.id, options.filter, options.processors, options.genes)
