@@ -21,6 +21,18 @@ from igs.utils import logging
 from igs.threading import functional as p_func
 import errno
 
+rec=1
+
+def autoIncrement(): 
+    global rec 
+    pStart = 1  
+    pInterval = 1 
+    if (rec == 0):  
+        rec = pStart  
+    else:  
+        rec += pInterval  
+        return rec
+
 def get_seq_name(in_fasta):
     """used for renaming the sequences"""
     return os.path.basename(in_fasta)
@@ -44,7 +56,7 @@ def uclust_sort():
     """sort with Usearch. Updated to V6"""
     cmd = ["usearch6", 
            "-sortbylength", "all_gene_seqs.out",
-           "-output", "all_sorted.txt"]
+           "-output", "tmp_sorted.txt"]
     subprocess.check_call(cmd)
 
 def uclust_cluster(id):
@@ -233,6 +245,14 @@ def translate_genes(genes, directory):
     infile.close()
     output_handle.close()
 
+def rename_fasta_header(fasta_in, fasta_out):
+    """this is used for parsing the mugsy output"""
+    handle = open(fasta_out, "w")
+    for record in SeqIO.parse(open(fasta_in), "fasta"):
+        print >> handle, ">"+"centroid"+"_"+str(autoIncrement())
+        print >> handle, record.seq
+    handle.close()
+
 def main(directory, id, filter, processors, genes):
     ap=os.path.abspath("%s" % directory)
     try:
@@ -249,6 +269,7 @@ def main(directory, id, filter, processors, genes):
         logging.logPrint("Prodigal done")
         os.system("cat *genes.seqs > all_gene_seqs.out")
         uclust_sort()
+        rename_fasta_header("tmp_sorted.txt", "all_sorted.txt")
         uclust_cluster(id)
         translate_consensus("consensus.fasta")
         filter_seqs("tmp.pep")
@@ -314,3 +335,4 @@ if __name__ == "__main__":
             exit(-1)
 
     main(options.directory, options.id, options.filter, options.processors, options.genes)
+

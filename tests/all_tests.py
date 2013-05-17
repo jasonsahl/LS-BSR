@@ -24,6 +24,18 @@ import errno
 import unittest
 from Bio.Seq import Seq
 
+rec=1
+
+def autoIncrement(): 
+    global rec 
+    pStart = 1  
+    pInterval = 1 
+    if (rec == 0):  
+        rec = pStart  
+    else:  
+        rec += pInterval  
+        return rec
+
 def get_seq_name(in_fasta):
     """used for renaming the sequences"""
     return os.path.basename(in_fasta)
@@ -261,6 +273,17 @@ def translate_genes(genes, directory):
     infile.close()
     #output_handle.close()
 
+def rename_fasta_header(fasta_in):
+    """this is used for parsing the mugsy output"""
+    #handle = open(fasta_out, "w")
+    outdata = [ ]
+    for record in SeqIO.parse(open(fasta_in), "fasta"):
+        outdata.append(">"+"centroid"+"_"+str(autoIncrement()))
+        #print >> handle, ">"+"centroid"+"_"+str(autoIncrement())
+        #print >> handle, record.seq
+    return outdata
+    handle.close()
+
 class Test1(unittest.TestCase):
     def test(self):
         self.assertEqual(get_seq_name("/path/to/test.fasta"), "test.fasta")
@@ -289,6 +312,13 @@ class Test8(unittest.TestCase):
 class Test9(unittest.TestCase):
     def test(self):
         self.assertEqual(translate_genes("genes_test.fasta", "."), 'MNPHLTEHPPVGDIDALLQDTWLQVISLRQGVTCAEGEGQAFWQRCVADIERVHQALKDAGHSEQSCQHIRYAQCALLDETVKGRGVQDDAYFVWCHSPLQAHFFNTLDAGSQLYERMRAVLREPAPDRAVLTCFHRVLMLGFLGGYASPAASEREQLIDQLSVQVPAFSVAPSRGILASAASRNRLGIWLRYWPVRLGLAALMVALLWWGLDHWLSGLLATLLPEPV')
+class Test10(unittest.TestCase):
+    def test(self):
+        self.assertEqual(rename_fasta_header("genes_test.fasta"), ['>centroid_2', '>centroid_3'])
+class Test11(unittest.TestCase):
+    def test(self):
+        self.assertEqual(autoIncrement(), 4)
+
 
 if __name__ == "__main__":
     unittest.main()
