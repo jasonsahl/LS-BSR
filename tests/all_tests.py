@@ -23,6 +23,7 @@ from igs.threading import functional as p_func
 import errno
 import unittest
 from Bio.Seq import Seq
+import threading
 
 rec=1
 
@@ -159,7 +160,7 @@ def get_unique_lines(directory):
                 outdata.append(line)
         return outdata
     
-def make_table(directory):
+def make_table(directory, processors):
     """make the BSR matrix table"""
     clusters=[ ]
     curr_dir=os.getcwd()
@@ -175,17 +176,23 @@ def make_table(directory):
     nr=[x for i, x in enumerate(clusters) if x not in clusters[i+1:]]
     names = [ ]
     outdata = [ ]
-    for infile in glob.glob(os.path.join(curr_dir, "*.filtered.unique")):
+    files = glob.glob(os.path.join(curr_dir, "*.filtered.unique"))
+    files_and_temp_names = [(str(idx), os.path.join(curr_dir, f))
+                            for idx, f in enumerate(files)]
+    lock = threading.Lock()
+    def _perform_workflow(data):
+        lock.acquire()
+        tn, f = data
         """get the name of each of the files to be iterated"""
         name=[ ]
-        out=get_seq_name(infile)
+        out=get_seq_name(f)
         name.append(out)
         reduced=[ ]
         """remove the junk at the end of the file"""
-	for x in name:reduced.append(x.replace('.filtered.unique',''))
+        for x in name:reduced.append(x.replace('.filtered.unique',''))
         names.append(reduced)
         dict={}
-        file=open(infile, "rU")
+        file=open(f, "rU")
         #tmpfile=open("tmp.txt", "w")
         """make a dictionary of all clusters and values"""
         for line in file:
@@ -202,15 +209,22 @@ def make_table(directory):
         """sort keys to get the same order between samples"""
         for key in sorted(cluster_names.iterkeys()):
             for x in reduced:
-                #open("%s.tmp.matrix" % x, 'a').write("%s\n" % cluster_names[key])
                 outdata.append(cluster_names[key])
-                #names_out = open("names.txt", "w")
-                #for x in names: print >> names_out, "".join(x)
-    nr_sorted=sorted(nr)
+                #open("%s.tmp.matrix" % x, 'a').write("%s\n" % cluster_names[key])
+        lock.release()
+        #print cluster_names
+        #print reduced
+    results = set(p_func.pmap(_perform_workflow,
+                              files_and_temp_names,
+                              num_workers=processors))
+        #names_out = open("names.txt", "w")
+        #for x in names: print >> names_out, "".join(x)
+        #nr_sorted=sorted(nr)
     #open("ref.list", "a").write("\n")
     #for x in nr_sorted:
-    #    open("ref.list", "a").write("%s\n" % x)
+    #open("ref.list", "a").write("%s\n" % x)
     return outdata
+
 
 def divide_values(file, ref_scores):
     """divide each BSR value in a row by that row's maximum value"""
@@ -304,7 +318,7 @@ class Test6(unittest.TestCase):
         self.assertEqual(get_unique_lines("."), ['Cluster0\t30.2'])
 class Test7(unittest.TestCase):
     def test(self):
-        self.assertEqual(make_table("."), ['30.2', '40.5', '60.6', '15.2', 0, '30.6'])
+        self.assertEqual(make_table(".", 2), ['30.2', '40.5', '60.6', '15.2', 0, '30.6'])
 class Test8(unittest.TestCase):
     def test(self):
         self.assertEqual(divide_values( "test_bsr.matrix", {'Cluster2': '60.6', 'Cluster0': '30.2', 'Cluster1': '40.5'}),

@@ -1,4 +1,4 @@
-LS-BSR is released under the MIT license.  See "license.txt" for more information
+LS-BSR (Large Scale Blast Score Ratio) is released under the MIT license.  See "license.txt" for more information
 
 LS-BSR is a method to compare all coding regions in a large set of genomes.
 Each peptide is compared against it's nucleotide sequence in order to obtain
@@ -23,12 +23,7 @@ Command line options include:
 -f FILTER, whether to use BLAST filtering, default is "F" or filter, turn off with "T"
 
 -p PROCESSORS, number of processors to use, defaults to 2
-<<<<<<< HEAD
+
 -g GENES, if you have a list of genes to screen, supply a nucleotide fasta file. Each gene
 sequence must be in frame, or questionable results will be obtained.  If this flag is not envoked,
  then the de novo gene prediction method is applied 
-=======
-
--g GENES, if you have a list of genes to screen, supply a nucleotide fasta file.  If this 
-flag is not envoked, then the de novo gene prediction method is applied 
->>>>>>> a8bcfd5a8c0465674bb327a750f7fa7d1ed2fbfb

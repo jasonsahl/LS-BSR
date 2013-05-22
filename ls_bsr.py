@@ -20,6 +20,8 @@ from igs.utils import functional as func
 from igs.utils import logging
 from igs.threading import functional as p_func
 import errno
+import threading
+import types
 
 rec=1
 
@@ -141,7 +143,7 @@ def get_unique_lines(directory):
                 d[unique] = 1
                 print >> outfile,line,
     
-def make_table(directory):
+def make_table(directory, processors):
     """make the BSR matrix table"""
     clusters=[ ]
     curr_dir=os.getcwd()
@@ -156,17 +158,23 @@ def make_table(directory):
     """de-replicate the clusters"""
     nr=[x for i, x in enumerate(clusters) if x not in clusters[i+1:]]
     names = [ ]
-    for infile in glob.glob(os.path.join(curr_dir, "*.filtered.unique")):
+    files = glob.glob(os.path.join(curr_dir, "*.filtered.unique"))
+    files_and_temp_names = [(str(idx), os.path.join(curr_dir, f))
+                            for idx, f in enumerate(files)]
+    lock = threading.Lock()
+    def _perform_workflow(data):
+        lock.acquire()
+        tn, f = data
         """get the name of each of the files to be iterated"""
         name=[ ]
-        out=get_seq_name(infile)
+        out=get_seq_name(f)
         name.append(out)
         reduced=[ ]
         """remove the junk at the end of the file"""
-	for x in name:reduced.append(x.replace('.fasta.new_blast.out.filtered.filtered.unique',''))
+        for x in name:reduced.append(x.replace('.fasta.new_blast.out.filtered.filtered.unique',''))
         names.append(reduced)
         dict={}
-        file=open(infile, "rU")
+        file=open(f, "rU")
         tmpfile=open("tmp.txt", "w")
         """make a dictionary of all clusters and values"""
         for line in file:
@@ -184,6 +192,10 @@ def make_table(directory):
         for key in sorted(cluster_names.iterkeys()):
             for x in reduced:
                 open("%s.tmp.matrix" % x, 'a').write("%s\n" % cluster_names[key])
+        lock.release()
+    results = set(p_func.pmap(_perform_workflow,
+                              files_and_temp_names,
+                              num_workers=processors))
     names_out = open("names.txt", "w")
     for x in names: print >> names_out, "".join(x)
     nr_sorted=sorted(nr)
@@ -253,7 +265,40 @@ def rename_fasta_header(fasta_in, fasta_out):
         print >> handle, record.seq
     handle.close()
 
+def test_file(option, opt_str, value, parser):
+    try:
+        with open(value): setattr(parser.values, option.dest, value)
+    except IOError:
+        print 'genes file cannot be opened'
+        sys.exit()
+
+def test_filter(option, opt_str, value, parser):
+    if "F" in value:
+        setattr(parser.values, option.dest, value)
+    elif "T" in value:
+        setattr(parser.values, option.dest, value)
+    else:
+        print "option not supported.  Only select from T and F"
+        sys.exit()
+
+def test_dir(option, opt_str, value, parser):
+    if os.path.exists(value):
+        setattr(parser.values, option.dest, value)
+    else:
+        print "directory of fastas cannot be found"
+        sys.exit()
+
+def test_id(option, opt_str, value, parser):
+    if type(value) == types.IntType:
+        sys.exit()
+    elif type(value) == types.FloatType:
+        setattr(parser.values, option.dest, value)
+    else:
+        print "id value needs to be a float"
+        sys.exit()
+    
 def main(directory, id, filter, processors, genes):
+    start_dir = os.getcwd()
     ap=os.path.abspath("%s" % directory)
     try:
      	os.makedirs('%s/joined' % directory)
@@ -295,12 +340,12 @@ def main(directory, id, filter, processors, genes):
     logging.logPrint("BLAST done")
     parse_blast_report(directory)
     get_unique_lines(directory)
-    make_table(directory)
+    make_table(directory, processors)
     subprocess.check_call("paste ref.list *.matrix > bsr_matrix", shell=True)
     divide_values("bsr_matrix", ref_scores)
-    subprocess.check_call("paste ref.list BSR_matrix_values.txt > ../bsr_matrix_values.txt", shell=True)
+    subprocess.check_call("paste ref.list BSR_matrix_values.txt > %s/bsr_matrix_values.txt" % start_dir, shell=True)
     try:
-        subprocess.check_call("cp names.txt consensus.pep consensus.fasta ..", shell=True)
+        subprocess.check_call("cp names.txt consensus.pep consensus.fasta %s" % start_dir, shell=True, stderr=open(os.devnull, 'w'))
     except:
         sys.exc_clear()
     logging.logPrint("all Done")
@@ -312,22 +357,22 @@ if __name__ == "__main__":
     parser = optparse.OptionParser(usage=usage)
     parser.add_option("-d", "--directory", dest="directory",
                       help="/path/to/fasta_directory [REQUIRED]",
-                      action="store", type="string")
-    parser.add_option("-i", "--identity", dest="id",
+                      type="string", action="callback", callback=test_dir)
+    parser.add_option("-i", "--identity", dest="id", action="callback", callback=test_id,
                       help="clustering id for USEARCH (0.0-1.0), defaults to 0.9",
-                      default="0.9", type="float")
-    parser.add_option("-f", "--filter", dest="filter",
-                      help="to use blast filtering or not, default is F or filter",
+                      type="float", default="0.9")
+    parser.add_option("-f", "--filter", dest="filter", action="callback", callback=test_filter,
+                      help="to use blast filtering or not, default is F or filter, change to T to turn off filtering",
                       default="F", type="string")
     parser.add_option("-p", "--parallel_workers", dest="processors",
                       help="How much work to do in parallel, defaults to 2, should number of CPUs your machine has",
-                      action="store", type="int")
-    parser.add_option("-g", "--genes", dest="genes",
+                      default="2", type="int")
+    parser.add_option("-g", "--genes", dest="genes", action="callback", callback=test_file,
                       help="predicted genes (nucleotide) to screen against genomes, will not use prodigal",
-                      default="null", type="string")
+                      type="string",default="null")
     options, args = parser.parse_args()
     
-    mandatories = ["directory", "processors"]
+    mandatories = ["directory"]
     for m in mandatories:
         if not getattr(options, m, None):
             print "\nMust provide %s.\n" %m
