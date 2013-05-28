@@ -80,7 +80,6 @@ def main(directory, id, filter, processors, genes):
     else:
         logging.logPrint("Using pre-compiled set of predicted genes")
         os.system("cp %s %s/joined/" % (genes,directory))
-        os.chdir("%s/joined" % directory)
         translate_genes(genes, directory)
         subprocess.check_call("formatdb -i %s -p F" % genes, shell=True)
         blast_against_self(genes, "genes.pep", "tmp_blast.out", filter)
