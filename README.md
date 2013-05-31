@@ -6,12 +6,16 @@ the maximum BLAST bit score.  Each peptide is then aligned against each genome
 in order to find the query BLAST bit score.  The query dividied by the reference
 provides one with the BSR, which can range from 0 to 1.
 
+contact: jsahl at tgen.org
+
 To run the program, the following dependencies are required:
 
-1.  USearch (tested version is 6.0.307), must be in path and called "usearch6"
+1.  USearch (tested version is 6.0.307), passed as command-line option - only required
+    if a set of gene sequences is not supplied
 2.  BioPython, must be in PythonPath
-3.  blastall (tested version is 2.2.25), must be in path
-4.  Prodigal (tested version is 2.60), must be in path
+3.  blastall (tested version is 2.2.25), must be in path as 'blastall'
+4.  Prodigal (tested version is 2.60), must be in path as 'prodigal' - only required
+    if a set of gene sequences is not supplied
 
 Command line options include:
 
@@ -26,4 +30,18 @@ Command line options include:
 
 -g GENES, if you have a list of genes to screen, supply a nucleotide fasta file. Each gene
 sequence must be in frame, or questionable results will be obtained.  If this flag is not envoked,
- then the de novo gene prediction method is applied 
+ then the de novo gene prediction method is applied
+ 
+-b BLAST, which blast method to use for a supplied set of genes.  Default is 'tblastn',
+  can be changed to 'blastn'.  Only is functional when -g flag is invoked
+  
+-q PENALTY, blast mismatch penalty, default is -4, only works with blastn and -g flag.
+   Optimized to return longer matches.  Only certain q/r ratios are allowed.  See BLAST
+   documentation for more details.
+
+-r REWARD, blast reward value, default is 5, only works with blastn and -g flag.
+   Optimized to return longer matches.  Only certain q/r ratios are allowed.  See BLAST
+   documentation for more details.
+                        
+
+  

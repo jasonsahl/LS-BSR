@@ -142,23 +142,23 @@ def translate_consensus(consensus):
         outdata.append(record.seq.translate(to_stop=True))
     for record in outdata: return str(record)
     
-def uclust_sort():
+def uclust_sort(usearch):
     """sort with Usearch. Updated to V6"""
-    cmd = ["usearch6", 
+    cmd = ["%s" % usearch, 
            "-sortbylength", "all_gene_seqs.out",
            "-output", "tmp_sorted.txt"]
     subprocess.check_call(cmd)
 
-def uclust_cluster(id):
+def uclust_cluster(usearch, id):
     """cluster with Uclust.  Updated to V6"""
-    cmd = ["usearch6",
+    cmd = ["%s" % usearch,
            "-cluster_fast", "all_sorted.txt",
            "-id", str(id),
            "-uc", "results.uc",
            "-centroids", "consensus.fasta"]
     subprocess.check_call(cmd)
 
-def blast_against_each_genome(directory, processors, filter, peptides):
+def blast_against_each_genome(directory, processors, filter, peptides, blast, penalty, reward):
     """BLAST all peptides against each genome"""
     curr_dir=os.getcwd()
     files = os.listdir(curr_dir)
@@ -170,13 +170,15 @@ def blast_against_each_genome(directory, processors, filter, peptides):
             subprocess.check_call("formatdb -i %s -p F > /dev/null 2>&1" % f, shell=True)
         if ".fasta.new" in f:
             cmd = ["blastall",
-                   "-p", "tblastn",
+                   "-p", blast,
                    "-i", peptides,
                    "-d", f,
                    "-a", str(processors),
                    "-e", "0.1",
                    "-m", "8",
                    "-F", str(filter),
+                   "-q", str(penalty),
+                   "-r", str(reward),
                    "-o", "%s_blast.out" % f]
             subprocess.check_call(cmd)
             
@@ -237,15 +239,17 @@ def get_unique_lines(directory):
     return outdata
 
 
-def blast_against_self(genes_nt, genes_pep, output, filter):
+def blast_against_self(genes_nt, genes_pep, output, filter, blast, penalty, reward):
     cmd = ["blastall",
-           "-p", "tblastn",
+           "-p", blast,
            "-i", genes_pep,
            "-d", genes_nt,
            "-a", "2",
            "-e", "0.1",
            "-m", "8",
            "-F", str(filter),
+           "-q", str(penalty),
+           "-r", str(reward),
            "-o", output]
     subprocess.check_call(cmd)
 
@@ -260,7 +264,6 @@ def parse_self_blast(blast_out):
 
 def translate_genes(genes, directory):
     """translate nucleotide into peptide with BioPython"""
-    #os.chdir("%s/joined" % directory)
     infile = open(genes, "rU")
     output = [ ]
     output_handle = open("genes.pep", "w")

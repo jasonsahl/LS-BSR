@@ -38,13 +38,13 @@ if __name__ == "__main__":
     usage="usage: %prog [options]"
     parser = OptionParser(usage=usage) 
     parser.add_option("-m", "--in_matrix", dest="in_matrix",
-                      help="/path/to/file [REQUIRED]",
+                      help="/path/to/BSR matrix [REQUIRED]",
                       action="store", type="string")
     parser.add_option("-p", "--out_prefix", dest="prefix",
-                      help="/path/to/file [REQUIRED]",
+                      help="output naming prefix [REQUIRED]",
                       action="store", type="string")
     parser.add_option("-g", "--genomes", dest="genomes",
-                      help="/path/to/genomes_file [REQUIRED]",
+                      help="/path/to/genomes_file (new line delimited) [REQUIRED]",
                       action="store", type="string")
     options, args = parser.parse_args()
     
