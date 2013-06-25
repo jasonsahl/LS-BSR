@@ -66,18 +66,19 @@ def test_usearch(option, opt_str, value, parser):
 
 def main(directory, id, filter, processors, genes, usearch, blast, penalty, reward):
     start_dir = os.getcwd()
-    ap=os.path.abspath("%s" % directory)
+    ap=os.path.abspath("%s" % start_dir)
+    dir_path=os.path.abspath("%s" % directory)
     try:
-     	os.makedirs('%s/joined' % directory)
+        os.makedirs('%s/joined' % dir_path)
     except OSError, e:
      	if e.errno != errno.EEXIST:
             raise
-    for infile in glob.glob(os.path.join(directory, '*.fasta')):
+    for infile in glob.glob(os.path.join(dir_path, '*.fasta')):
         name=get_seq_name(infile)
-        os.system("cp %s %s/joined/%s.new" % (infile,directory,name))
+        os.system("cp %s %s/joined/%s.new" % (infile,dir_path,name))
     if "null" in genes:
         logging.logPrint("predicting genes with Prodigal")
-        predict_genes(directory, processors)
+        predict_genes(dir_path, processors)
         logging.logPrint("Prodigal done")
         os.system("cat *genes.seqs > all_gene_seqs.out")
         uclust_sort(usearch)
@@ -88,38 +89,47 @@ def main(directory, id, filter, processors, genes, usearch, blast, penalty, rewa
         subprocess.check_call("formatdb -i consensus.fasta -p F", shell=True)
         blast_against_self("consensus.fasta", "consensus.pep", "tmp_blast.out", filter, blast, penalty, reward)
         subprocess.check_call("sort -u -k 1,1 tmp_blast.out > self_blast.out", shell=True)
-        ref_scores=parse_self_blast("self_blast.out")
+        ref_scores=parse_self_blast(open("self_blast.out", "U"))
         subprocess.check_call("rm tmp_blast.out self_blast.out", shell=True)
         os.system("rm *new_genes.*")
         logging.logPrint("starting BLAST")
         blast_against_each_genome(directory, processors, filter, "consensus.pep", blast, penalty, reward)
     else:
         logging.logPrint("Using pre-compiled set of predicted genes")
-        os.system("cp %s %s/joined/" % (genes,directory))
-        os.chdir("%s/joined" % directory)
+        gene_path=os.path.abspath("%s" % genes)
+        os.system("cp %s %s/joined/" % (gene_path,dir_path))
+        os.chdir("%s/joined" % dir_path)
         if "tblastn" in blast:
             logging.logPrint("using tblastn")
-            translate_genes(genes, directory)
-            subprocess.check_call("formatdb -i %s -p F" % genes, shell=True)
-            blast_against_self(genes, "genes.pep", "tmp_blast.out", filter, blast, penalty, reward)
+            translate_genes(gene_path,)
+            try:
+                subprocess.check_call("formatdb -i %s -p F" % gene_path, shell=True)
+            except:
+                logging.logPrint("BLAST not found")
+                sys.exit()
+            blast_against_self(gene_path, "genes.pep", "tmp_blast.out", filter, blast, penalty, reward)
             subprocess.check_call("sort -u -k 1,1 tmp_blast.out > self_blast.out", shell=True)
-            ref_scores=parse_self_blast("self_blast.out")
+            ref_scores=parse_self_blast(open("self_blast.out", "U"))
             subprocess.check_call("rm tmp_blast.out self_blast.out", shell=True)
             logging.logPrint("starting BLAST")
             blast_against_each_genome(directory, processors, filter, "genes.pep", blast, penalty, reward)
         else:
             logging.logPrint("using blastn")
-            subprocess.check_call("formatdb -i %s -p F" % genes, shell=True)
-            blast_against_self(genes, genes, "tmp_blast.out", filter, blast, penalty, reward)
+            try:
+                subprocess.check_call("formatdb -i %s -p F" % gene_path, shell=True)
+            except:
+                logging.logPrint("BLAST not found")
+                sys.exit()
+            blast_against_self(gene_path, gene_path, "tmp_blast.out", filter, blast, penalty, reward)
             subprocess.check_call("sort -u -k 1,1 tmp_blast.out > self_blast.out", shell=True)
-            ref_scores=parse_self_blast("self_blast.out")
+            ref_scores=parse_self_blast(open("self_blast.out", "U"))
             subprocess.check_call("rm tmp_blast.out self_blast.out", shell=True)
             logging.logPrint("starting BLAST")
-            blast_against_each_genome(directory, processors, filter, genes, blast, penalty, reward)
+            blast_against_each_genome(directory, processors, filter, gene_path, blast, penalty, reward)
     logging.logPrint("BLAST done")
-    parse_blast_report(directory)
-    get_unique_lines(directory)
-    make_table(directory, processors)
+    parse_blast_report()
+    get_unique_lines()
+    make_table(processors)
     subprocess.check_call("paste ref.list *.matrix > bsr_matrix", shell=True)
     divide_values("bsr_matrix", ref_scores)
     subprocess.check_call("paste ref.list BSR_matrix_values.txt > %s/bsr_matrix_values.txt" % start_dir, shell=True)
@@ -128,7 +138,7 @@ def main(directory, id, filter, processors, genes, usearch, blast, penalty, rewa
     except:
         sys.exc_clear()
     logging.logPrint("all Done")
-    os.chdir("%s" % ap)
+    os.chdir("%s" % dir_path)
     os.system("rm -rf joined")
     
 if __name__ == "__main__":
