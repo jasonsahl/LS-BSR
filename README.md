@@ -4,7 +4,9 @@ LS-BSR is a method to compare all coding regions in a large set of genomes.
 Each peptide is compared against it's nucleotide sequence in order to obtain
 the maximum BLAST bit score.  Each peptide is then aligned against each genome
 in order to find the query BLAST bit score.  The query dividied by the reference
-provides one with the BSR, which can range from 0 to 1.
+provides one with the BSR, which can range from 0 to 1; scores slightly higher
+than 1.0 can be observed due to variable bit scores obtained by BLAST.  In my opinion,
+they should be treated as 1.0.
 
 contact: jsahl at tgen.org
 
@@ -16,6 +18,25 @@ To run the program, the following dependencies are required:
 3.  blastall (tested version is 2.2.25), must be in path as 'blastall'
 4.  Prodigal (tested version is 2.60), must be in path as 'prodigal' - only required
     if a set of gene sequences is not supplied
+5.  Numpy, must be in PythonPath.  Numpy is only required for the compare matrices tool.
+	If you don't want to install numpy, comment out this line in ls_bsr/util.py
+	
+	import numpy as np
+
+
+##To install:
+
+python setup.py install
+
+-if your install directory is /Users/jsahl/LS-BSR, then run:
+
+export PYTHONPATH=/Users/jsahl/LS-BSR:$PYTHONPATH
+
+You can test your installation by running the tests:
+
+python /Users/jsahl/LS-BSR/tests/test_all_functions.py
+
+-If your installation is correct, all 43 tests should pass
 
 Command line options include:
 
@@ -42,6 +63,61 @@ sequence must be in frame, or questionable results will be obtained.  If this fl
 -r REWARD, blast reward value, default is 5, only works with blastn and -g flag.
    Optimized to return longer matches.  Only certain q/r ratios are allowed.  See BLAST
    documentation for more details.
+   
+Test data is present in the test_data directory.  This data consists of:
+
+1.  Genomes (4 E.coli genomes from 4 different pathogenic variants).  Genomes are:
+
+-H10407 - ETEC
+-E2348/69 - EPEC
+-O157:H7 sakai - STEC
+-SSON046 - Shigella sonnei
+
+2.  Genes (5 different markers that deliniate between the variants).  These include:
+
+IpaH3 - Shigella invasion antigen.  Mostly present in Shigella spp.
+LT - heat-labile toxin.  Only present in ETEC
+ST2 - heat-stable toxin.  Only present in ETEC
+bfpB - bundle forming pilus.  Only present on plasmid in EPEC
+stx2a - shiga toxin.  Present in STEC
+
+You can test out the LS-BSR functionality in 3 different ways:
+
+1.  Test the gene screen method with tblastn:
+
+-enter test_data directory
+
+-run LS-BSR
+
+python /Users/jsahl/LS-BSR/ls_bsr.py -d genomes -g genes/ecoli_markers.fasta -u /usr/local/bin/usearch6
+
+-the output should show how each gene is only present in the correct pathovar
+
+2. Test the gene screen method with blastn:
+
+-enter test_data directory
+
+-run LS-BSR
+
+python /Users/jsahl/LS-BSR/ls_bsr.py -d genomes -g genes/ecoli_markers.fasta -u /usr/local/bin/usearch6 -b blastn
+
+3.  Test the de novo gene prediction method:
+
+-enter test_data directory
+
+-run LS-BSR
+
+python /Users/jsahl/LS-BSR/ls_bsr.py -d genomes -u /usr/local/bin/usearch6
+
+-To inspect the output, you can look up the following entries in the BSR matrix.  They
+should correspond with the results obtained with the gene screen methods:
+
+IpaH3 -> centroid_1724
+LT -> centroid_11953
+ST2 -> centroid_19265
+bfpB -> centroid_1922
+stx2a -> centroid_7471
+
                         
 
   

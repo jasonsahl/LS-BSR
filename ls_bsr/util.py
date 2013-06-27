@@ -60,7 +60,6 @@ def make_table(processors):
                 dict.update({fields[0]:fields[1]})
         except:
             raise TypeError("abnormal number of fields")
-            lock.release()
         cluster_names={}
         """add in values, including any potentially missing ones"""
         for k,v in dict.iteritems():
@@ -112,10 +111,10 @@ def divide_values(file, ref_scores):
         outdata.append(values)
     return outdata
         
-def predict_genes(directory, processors):
+def predict_genes(dir_path, processors):
     """simple gene prediction using Prodigal in order
     to find coding regions from a genome sequence"""    
-    os.chdir("%s/joined" % directory)
+    os.chdir("%s/joined" % dir_path)
     curr_dir=os.getcwd()
     files = os.listdir(curr_dir)
     files_and_temp_names = [(str(idx), os.path.join(curr_dir, f))
@@ -173,7 +172,7 @@ def uclust_cluster(usearch, id):
            "-centroids", "consensus.fasta"]
     subprocess.check_call(cmd)
 
-def blast_against_each_genome(directory, processors, filter, peptides, blast, penalty, reward):
+def blast_against_each_genome(dir_path, processors, filter, peptides, blast, penalty, reward):
     """BLAST all peptides against each genome"""
     curr_dir=os.getcwd()
     files = os.listdir(curr_dir)
@@ -355,7 +354,7 @@ def prune_matrix(matrix, group1, group2):
         name = fields[0]
         deque((list.pop(fields, i) for i in sorted(group2_idx, reverse=True)), maxlen=0)
         print >> group2_out,"".join(name),"\t","\t".join(fields)
-    return group1_ids, group2_ids
+    return group1_ids, group2_ids, group1_idx, group2_idx
 
 def compare_values(pruned_1,pruned_2,upper,lower):
     group1 = open(pruned_1, "rU")
@@ -364,6 +363,7 @@ def compare_values(pruned_1,pruned_2,upper,lower):
     group2_out = open("group2_out.txt", "w")
     group1_presents=[ ]
     group2_presents=[ ]
+    group1_mean = [ ]
     next(group1)
     for line in group1:
 	fields = line.split()
@@ -371,6 +371,7 @@ def compare_values(pruned_1,pruned_2,upper,lower):
 	homolog = [ ]
 	ints=map(float, fields[1:])
 	mean = float(np.mean(ints))
+        group1_mean.append(mean)
 	for x in fields[1:]:
 		if float(x)>=float(upper): presents.append(x)
                 if float(x)>=float(upper): group1_presents.append(x)
@@ -390,7 +391,7 @@ def compare_values(pruned_1,pruned_2,upper,lower):
 	for x in fields[1:]:
 		if float(x)>=float(lower): homolog.append(x)
 	print >> group2_out,mean,"\t",len(presents),"\t",len(fields[1:]),"\t",len(homolog)
-    return group1_presents, group2_presents
+    return group1_presents, group2_presents, group1_mean
 
 def compare_values(pruned_1,pruned_2,upper,lower):
     group1 = open(pruned_1, "rU")
@@ -399,6 +400,7 @@ def compare_values(pruned_1,pruned_2,upper,lower):
     group2_out = open("group2_out.txt", "w")
     group1_presents=[ ]
     group2_presents=[ ]
+    group1_mean = [ ]
     next(group1)
     for line in group1:
 	fields = line.split()
@@ -406,6 +408,7 @@ def compare_values(pruned_1,pruned_2,upper,lower):
 	homolog = [ ]
 	ints=map(float, fields[1:])
 	mean = float(np.mean(ints))
+        group1_mean.append(mean)
 	for x in fields[1:]:
 		if float(x)>=float(upper): presents.append(x)
                 if float(x)>=float(upper): group1_presents.append(x)
@@ -425,19 +428,22 @@ def compare_values(pruned_1,pruned_2,upper,lower):
 	for x in fields[1:]:
 		if float(x)>=float(lower): homolog.append(x)
 	print >> group2_out,mean,"\t",len(presents),"\t",len(fields[1:]),"\t",len(homolog)
-    return group1_presents, group2_presents
+    return group1_presents, group2_presents, group1_mean
 
 def find_uniques(combined,fasta):
     infile = open(combined, "rU")
     group1_unique_ids = [ ]
     seqrecords=[ ]
+    testids = [ ]
     for line in infile:
 	fields=line.split()
 	if int(fields[2])/int(fields[3])==1 and int(fields[8])==0:
 		group1_unique_ids.append(fields[0])
     for record in SeqIO.parse(fasta, "fasta"):
 	    if record.id in group1_unique_ids:
-		    seqrecords.append(record)
+		seqrecords.append(record)
+            if record.id in group1_unique_ids:
+                testids.append(record.id)
     output_handle = open("group1_unique_seqs.fasta", "w")
     SeqIO.write(seqrecords, output_handle, "fasta")
     output_handle.close()
@@ -454,7 +460,7 @@ def find_uniques(combined,fasta):
     output_handle2 = open("group2_unique_seqs.fasta", "w")
     SeqIO.write(seqrecords2, output_handle2, "fasta")
     output_handle2.close()
-    return group1_unique_ids, group2_unique_ids
+    return group1_unique_ids, group2_unique_ids, testids
 
 def filter_genomes(genomes, in_matrix):
     in_matrix = open(in_matrix, "rU")

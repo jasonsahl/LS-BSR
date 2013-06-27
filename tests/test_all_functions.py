@@ -1,17 +1,12 @@
 #!/usr/bin/env python
 
-"""Calculate the BSR value for all predicted ORFs
-in a set of genomes in fasta format.  V3 - replaced
-transeq with BioPython.  V4 - changed to true BSR
-test.  V5 - fixed bug in how BSR was calculated.
-V6 - changed gene caller from Glimmer to Prodigal"""
+"""test functions for LS-BSR tools"""
 
 import unittest
 from ls_bsr.util import *
 import os
 import tempfile
 import shutil
-
 
 curr_dir=os.getcwd()
 
@@ -51,17 +46,19 @@ class Test2(unittest.TestCase):
         self.assertEqual(translate_consensus(fpath), 'MNHY')
         shutil.rmtree(tdir)
     def test3(self):
+        """Tests the condition of having an integer, instead
+        of sequence.  This should make the script throw a typeerror"""
         tdir = tempfile.mkdtemp(prefix="filetest_",)
         fpath = os.path.join(tdir,"testfile")
         fp = open(fpath, "w")
         fp.write(">Cluster1\n")
-        """having an integer should make the script throw a typeerror"""
         fp.write("AT1CGAGCTTTCCG")
         fp.close()
         self.assertRaises(TypeError, translate_consensus, fpath)
         shutil.rmtree(tdir)
         os.system("rm tmp.pep")
     def test4(self):
+        """Tests the condition where no sequence is present"""
         tdir = tempfile.mkdtemp(prefix="filetest_",)
         fpath = os.path.join(tdir,"testfile")
         fp = open(fpath, "w")
@@ -74,6 +71,7 @@ class Test2(unittest.TestCase):
         
 class Test3(unittest.TestCase):
     def test(self):
+        """Tests several conditions in one shot"""
         tdir = tempfile.mkdtemp(prefix="filetest_",)
         fpath = os.path.join(tdir,"testfile")
         fp = open(fpath, "w")
@@ -106,6 +104,8 @@ class Test3(unittest.TestCase):
         
 class Test4(unittest.TestCase):
     def test(self):
+        """Tests the basic functionality of the parse_self_blast
+        function"""
         tdir = tempfile.mkdtemp(prefix="filetest_",)
         fpath = os.path.join(tdir,"testfile")
         fp = open(fpath, "w")
@@ -139,6 +139,8 @@ class Test4(unittest.TestCase):
         
 class Test5(unittest.TestCase):
     def test(self):
+        """"tests the basic functionality of the parse_blast_report
+        function"""
         tdir = tempfile.mkdtemp(prefix="filetest_",)
         fpath = os.path.join(tdir,"testfile_blast.out")
         os.chdir("%s" % tdir)
@@ -149,6 +151,8 @@ class Test5(unittest.TestCase):
         os.chdir("%s" % curr_dir)
         shutil.rmtree(tdir)
     def test2(self):
+        """tests the condition where too few fields are present
+        .  Should throw a typeerror"""
         ndir = tempfile.mkdtemp(prefix="filetest_",)
         os.chdir("%s" % ndir)
         fpath = os.path.join(ndir,"output_blast.out")
@@ -295,6 +299,8 @@ class Test8(unittest.TestCase):
         
 class Test9(unittest.TestCase):
     def test(self):
+        """tests to see if the translation is correct, and if shorter sequences
+        get filtered out"""
         tdir = tempfile.mkdtemp(prefix="filetest_",)
         fpath = os.path.join(tdir,"testfile.filtered")
         fp = open(fpath, "w")
@@ -303,8 +309,6 @@ class Test9(unittest.TestCase):
         fp.write(">gi|22123922|ref|NC_004088.1|_1575\n")
         fp.write("ATGAAGCTAAATATCAAAGTTAATTGTTCTTATATCTGTGAACCCATACGTAAGCAA")
         fp.close()
-        """tests to see if the translation is correct, and if shorter sequences
-        get filtered out"""
         self.assertEqual(translate_genes(fpath), 'MNPHLTEHPPVGDIDALLQDTWLQVISLRQGVTCAEGEGQAFWQRCVADIERVHQALKDAGHSEQSCQHIRYAQCALLDE')
         os.system("rm genes.pep")
         shutil.rmtree(tdir)
@@ -402,33 +406,80 @@ class Test12(unittest.TestCase):
         op = open(opath, "w")
         op.write("H10407_all")
         op.close()
-        self.assertEqual(prune_matrix(fpath,npath,opath), (['E2348_69_all'], ['H10407_all']))
+        self.assertEqual(prune_matrix(fpath,npath,opath), (['E2348_69_all'], ['H10407_all'], [0, 2, 3, 4], [0, 1, 3, 4]))
         shutil.rmtree(tdir)
         os.system("rm group*_pruned.txt")
-        
+    def test2(self):
+        """tests the case where one of the group files is empty"""
+        tdir = tempfile.mkdtemp(prefix="filetest_",)
+        fpath = os.path.join(tdir,"testfile.filtered")
+        fp = open(fpath, "w")
+        fp.write("        E2348_69_all    H10407_all      O157_H7_sakai_all       SSON_046_all\n")
+        fp.write("IpaH3   0.03    0.03    0.03    1.00\n")
+        fp.write("LT      0.00    1.00    0.00    0.00\n")
+        fp.write("ST1     0.00    1.00    0.12    0.12\n")
+        fp.write("bfpB    1.00    0.00    0.00    0.00\n")
+        fp.write("stx2a   0.07    0.08    0.98    0.07\n")
+        fp.close()
+        npath = os.path.join(tdir,"group1")
+        np = open(npath, "w")
+        np.write("E2348_69_all")
+        np.close()
+        opath = os.path.join(tdir,"group2")
+        op = open(opath, "w")
+        op.close()
+        self.assertEqual(prune_matrix(fpath,npath,opath), (['E2348_69_all'], [], [0, 2, 3, 4], [0, 1, 2, 3, 4]))
+        shutil.rmtree(tdir)
+        os.system("rm group*_pruned.txt")
+    def test3(self):
+        """tests the case where the genome file isn't in the matrix"""
+        tdir = tempfile.mkdtemp(prefix="filetest_",)
+        fpath = os.path.join(tdir,"testfile.filtered")
+        fp = open(fpath, "w")
+        fp.write("        E2348_69_all    H10407_all      O157_H7_sakai_all       SSON_046_all\n")
+        fp.write("IpaH3   0.03    0.03    0.03    1.00\n")
+        fp.write("LT      0.00    1.00    0.00    0.00\n")
+        fp.write("ST1     0.00    1.00    0.12    0.12\n")
+        fp.write("bfpB    1.00    0.00    0.00    0.00\n")
+        fp.write("stx2a   0.07    0.08    0.98    0.07\n")
+        fp.close()
+        npath = os.path.join(tdir,"group1")
+        np = open(npath, "w")
+        np.write("not_there")
+        np.close()
+        opath = os.path.join(tdir,"group2")
+        op = open(opath, "w")
+        op.write("not this one either")
+        op.close()
+        self.assertEqual(prune_matrix(fpath,npath,opath), (['not_there'], ['not this one either'], [0, 1, 2, 3, 4], [0, 1, 2, 3, 4]))
+        shutil.rmtree(tdir)
+        os.system("rm group*_pruned.txt")
+
 class Test13(unittest.TestCase):
     def test(self):
-        """test basic functionality of compare_values function"""
+        """test basic functionality of compare_values function.  Tests
+        that the values are being parsed, and that the Numpy mean feature
+        is working correctly"""
         tdir = tempfile.mkdtemp(prefix="filetest_",)
         fpath = os.path.join(tdir,"group1_pruned")
         fp = open(fpath, "w")
-        fp.write("		E2348_69_all\n")
-        fp.write("IpaH3 	0.03\n")
-        fp.write("LT 	0.00\n")
-        fp.write("ST2 	0.00\n")
-        fp.write("bfpB 	1.00\n")
-        fp.write("stx2a 	0.07")
+        fp.write("        E2348_69_all    H10407_all\n")
+        fp.write("IpaH3   0.03    0.03\n")
+        fp.write("LT      0.00    1.00\n")
+        fp.write("ST2     0.00    0.92\n")
+        fp.write("bfpB    1.00    0.00\n")
+        fp.write("stx2a   0.07    0.08")
         fp.close()
         npath = os.path.join(tdir,"group2_pruned")
         np = open(npath, "w")
-        np.write("        H10407_all\n")
+        np.write("        SSON_046_all\n")
         np.write("IpaH3   0.03\n")
         np.write("LT      1.00\n")
         np.write("ST2     1.00\n")
         np.write("bfpB    0.00\n")
         np.write("stx2a   0.08")
         np.close()
-        self.assertEqual(compare_values(fpath, npath, "0.8", "0.4"), (['1.00'], ['1.00', '1.00']))
+        self.assertEqual(compare_values(fpath, npath, "0.8", "0.4"), (['1.00', '0.92', '1.00'], ['1.00', '1.00'], [0.03, 0.5, 0.46, 0.5, 0.07500000000000001]))
         shutil.rmtree(tdir)
     def test2(self):
         """tests the condition where BSR values are near the border regions
@@ -452,12 +503,10 @@ class Test13(unittest.TestCase):
         np.write("bfpB    0.00\n")
         np.write("stx2a   0.79")
         np.close()
-        self.assertEqual(compare_values(fpath, npath, "0.8", "0.4"), (['0.81'], ['0.80', '1.00']))
+        self.assertEqual(compare_values(fpath, npath, "0.8", "0.4"), (['0.81'], ['0.80', '1.00'], [0.03, 0.0, 0.0, 0.81, 0.07]))
         shutil.rmtree(tdir)
         os.system("rm group*_out.txt")
         
-"""test the mean and average functionalities"""
-
 class Test14(unittest.TestCase):
     def test(self):
         """tests the basic functionality of the find_uniques function"""
@@ -476,13 +525,37 @@ class Test14(unittest.TestCase):
         np.write("ATGAAACTTGGCAGGTATTCACTTTTCTTATTG\n")
         np.write(">LT\n")
         np.write("ATGCCCAGAGGGCATAATGAGTACTTCGA\n")
-        np.write("ST2\n")
+        np.write(">ST2\n")
         np.write("ATGAAGAAATCAATATTATTTATTTTTCTTTCTGTATTGTCTTTT")
         np.close()
-        self.assertEqual(find_uniques(fpath, npath), (['bfpB'], ['LT', 'ST2']))
+        self.assertEqual(find_uniques(fpath, npath), (['bfpB'], ['LT', 'ST2'], ['bfpB']))
         shutil.rmtree(tdir)
         os.system("rm group*_unique_seqs.fasta")
-
+    def test2(self):
+        """tests the case where headers don't match to those headers
+        in a matrix"""
+        tdir = tempfile.mkdtemp(prefix="filetest_",)
+        fpath = os.path.join(tdir,"combined.txt")
+        fp = open(fpath, "w")
+        fp.write("IpaH3   0.03    0       1       0       0.03    0       1       0\n")
+        fp.write("LT 	0.0 	0 	1 	0	0.8 	1 	1 	1\n")
+        fp.write("ST2 	0.0 	0 	1 	0	1.0 	1 	1 	1\n")
+        fp.write("bfpB 	0.81 	1 	1 	1	0.0 	0 	1 	0\n")
+        fp.write("stx2a 	0.07 	0 	1 	0	0.79 	0 	1 	1")
+        fp.close()
+        npath = os.path.join(tdir,"fasta")
+        np = open(npath, "w")
+        np.write(">nomatch\n")
+        np.write("ATGAAACTTGGCAGGTATTCACTTTTCTTATTG\n")
+        np.write(">nomatch1\n")
+        np.write("ATGCCCAGAGGGCATAATGAGTACTTCGA\n")
+        np.write(">nomatch2\n")
+        np.write("ATGAAGAAATCAATATTATTTATTTTTCTTTCTGTATTGTCTTTT")
+        np.close()
+        self.assertEqual(find_uniques(fpath, npath), (['bfpB'], ['LT', 'ST2'], []))
+        shutil.rmtree(tdir)
+        os.system("rm group*_unique_seqs.fasta")
+        
 class Test15(unittest.TestCase):
     def test(self):
         """test the basic functionality of the filter_genomes function"""
@@ -505,7 +578,27 @@ class Test15(unittest.TestCase):
         are the genomes that should be removed"""
         self.assertEqual(filter_genomes(npath, fpath), [1, 3])
         shutil.rmtree(tdir)
-
+    def test2(self):
+        """tests the condition where the group names provided are not in
+        the input matrix"""
+        tdir = tempfile.mkdtemp(prefix="filetest_",)
+        fpath = os.path.join(tdir,"sample_matrix.txt")
+        fp = open(fpath, "w")
+        fp.write("        E2348_69_all    H10407_all      O157_H7_sakai_all       SSON_046_all\n")
+        fp.write("IpaH3   0.03    0.03    0.03    1.00\n")
+        fp.write("LT      0.00    1.00    0.00    0.00\n")
+        fp.write("ST1     0.00    1.00    0.12    0.12\n")
+        fp.write("bfpB    1.00    0.00    0.00    0.00\n")
+        fp.write("stx2a   0.07    0.08    0.98    0.07\n")
+        fp.close()
+        npath = os.path.join(tdir,"genomes")
+        np = open(npath, "w")
+        np.write("absent\n")
+        np.write("absent2")
+        np.close()
+        self.assertEqual(filter_genomes(npath, fpath), [])
+        shutil.rmtree(tdir)
+        
 class Test16(unittest.TestCase):
     def test(self):
         """test the basic functionality of the filter_matrix function"""
@@ -521,7 +614,23 @@ class Test16(unittest.TestCase):
         fp.close()
         self.assertEqual(filter_matrix([1, 3], fpath, "test"), [['', 'E2348_69_all', 'O157_H7_sakai_all'],['IpaH3', '0.03', '0.03'],['LT', '0.00', '0.00'],['ST1', '0.00', '0.12'],['bfpB', '1.00', '0.00'],['stx2a', '0.07', '0.98']])
         shutil.rmtree(tdir)
-        
+        os.system("rm test_genomes.matrix")
+    def test2(self):
+        """tests the case where non-numeric values are in matrix"""
+        tdir = tempfile.mkdtemp(prefix="filetest_",)
+        fpath = os.path.join(tdir,"sample_matrix.txt")
+        fp = open(fpath, "w")
+        fp.write("        E2348_69_all    H10407_all      O157_H7_sakai_all       SSON_046_all\n")
+        fp.write("IpaH3   cats    0.03    dogs    1.00\n")
+        fp.write("LT      0.00    1.00    0.00    0.00\n")
+        fp.write("ST1     0.00    1.00    0.12    0.12\n")
+        fp.write("bfpB    1.00    0.00    0.00    0.00\n")
+        fp.write("stx2a   0.07    0.08    0.98    0.07\n")
+        fp.close()
+        self.assertEqual(filter_matrix([1, 3], fpath, "test"), [['', 'E2348_69_all', 'O157_H7_sakai_all'],['IpaH3', 'cats', 'dogs'],['LT', '0.00', '0.00'],['ST1', '0.00', '0.12'],['bfpB', '1.00', '0.00'],['stx2a', '0.07', '0.98']])
+        shutil.rmtree(tdir)
+        os.system("rm test_genomes.matrix")
+
 if __name__ == "__main__":
     unittest.main()
     main()

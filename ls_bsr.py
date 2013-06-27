@@ -14,7 +14,7 @@ from subprocess import call
 import errno
 import types
 from ls_bsr.util import *
-
+from igs.utils import logging
 
 def test_file(option, opt_str, value, parser):
     try:
@@ -77,6 +77,12 @@ def main(directory, id, filter, processors, genes, usearch, blast, penalty, rewa
         name=get_seq_name(infile)
         os.system("cp %s %s/joined/%s.new" % (infile,dir_path,name))
     if "null" in genes:
+        try:
+            if os.path.exists(usearch):
+                pass
+        except:
+            raise TypeError("-u usearch flag must be set for use with prodigal")
+            sys.exc_clear()
         logging.logPrint("predicting genes with Prodigal")
         predict_genes(dir_path, processors)
         logging.logPrint("Prodigal done")
@@ -93,7 +99,7 @@ def main(directory, id, filter, processors, genes, usearch, blast, penalty, rewa
         subprocess.check_call("rm tmp_blast.out self_blast.out", shell=True)
         os.system("rm *new_genes.*")
         logging.logPrint("starting BLAST")
-        blast_against_each_genome(directory, processors, filter, "consensus.pep", blast, penalty, reward)
+        blast_against_each_genome(dir_path, processors, filter, "consensus.pep", blast, penalty, reward)
     else:
         logging.logPrint("Using pre-compiled set of predicted genes")
         gene_path=os.path.abspath("%s" % genes)
@@ -112,7 +118,7 @@ def main(directory, id, filter, processors, genes, usearch, blast, penalty, rewa
             ref_scores=parse_self_blast(open("self_blast.out", "U"))
             subprocess.check_call("rm tmp_blast.out self_blast.out", shell=True)
             logging.logPrint("starting BLAST")
-            blast_against_each_genome(directory, processors, filter, "genes.pep", blast, penalty, reward)
+            blast_against_each_genome(dir_path, processors, filter, "genes.pep", blast, penalty, reward)
         else:
             logging.logPrint("using blastn")
             try:
@@ -125,7 +131,7 @@ def main(directory, id, filter, processors, genes, usearch, blast, penalty, rewa
             ref_scores=parse_self_blast(open("self_blast.out", "U"))
             subprocess.check_call("rm tmp_blast.out self_blast.out", shell=True)
             logging.logPrint("starting BLAST")
-            blast_against_each_genome(directory, processors, filter, gene_path, blast, penalty, reward)
+            blast_against_each_genome(dir_path, processors, filter, gene_path, blast, penalty, reward)
     logging.logPrint("BLAST done")
     parse_blast_report()
     get_unique_lines()
@@ -159,8 +165,8 @@ if __name__ == "__main__":
     parser.add_option("-g", "--genes", dest="genes", action="callback", callback=test_file,
                       help="predicted genes (nucleotide) to screen against genomes, will not use prodigal",
                       type="string",default="null")
-    parser.add_option("-u", "--usearch", dest="usearch", action="callback", callback=test_usearch,
-                      help="path to usearch v6 [REQUIRED]",
+    parser.add_option("-u", "--usearch", dest="usearch", action="store",
+                      help="path to usearch v6, required for use with Prodigal",
                       type="string")
     parser.add_option("-b", "--blast", dest="blast", action="callback", callback=test_blast,
                       help="use tblast or blastn, only used in conjunction with -g option, default is blastn",
@@ -174,7 +180,7 @@ if __name__ == "__main__":
                       
     options, args = parser.parse_args()
     
-    mandatories = ["directory", "usearch"]
+    mandatories = ["directory"]
     for m in mandatories:
         if not getattr(options, m, None):
             print "\nMust provide %s.\n" %m
