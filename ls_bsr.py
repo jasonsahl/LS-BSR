@@ -64,7 +64,17 @@ def test_usearch(option, opt_str, value, parser):
         print "usearch can't be found"
         sys.exit()
 
-def main(directory, id, filter, processors, genes, usearch, blast, penalty, reward):
+def test_fplog(option, opt_str, value, parser):
+    if "F" in value:
+        setattr(parser.values, option.dest, value)
+    elif "T" in value:
+        setattr(parser.values, option.dest, value)
+    else:
+        print "select from T or F for f_plog setting"
+        sys.exit()
+
+def main(directory, id, filter, processors, genes, usearch, blast, penalty, reward, length,
+         max_plog, min_hlog, f_plog):
     start_dir = os.getcwd()
     ap=os.path.abspath("%s" % start_dir)
     dir_path=os.path.abspath("%s" % directory)
@@ -100,6 +110,7 @@ def main(directory, id, filter, processors, genes, usearch, blast, penalty, rewa
         os.system("rm *new_genes.*")
         logging.logPrint("starting BLAST")
         blast_against_each_genome(dir_path, processors, filter, "consensus.pep", blast, penalty, reward)
+        find_dups(ref_scores, length, max_plog, min_hlog)
     else:
         logging.logPrint("Using pre-compiled set of predicted genes")
         gene_path=os.path.abspath("%s" % genes)
@@ -139,8 +150,13 @@ def main(directory, id, filter, processors, genes, usearch, blast, penalty, rewa
     subprocess.check_call("paste ref.list *.matrix > bsr_matrix", shell=True)
     divide_values("bsr_matrix", ref_scores)
     subprocess.check_call("paste ref.list BSR_matrix_values.txt > %s/bsr_matrix_values.txt" % start_dir, shell=True)
+    if "T" in f_plog:
+        filter_paralogs("%s/bsr_matrix_values.txt" % start_dir, "paralog_ids.txt")
+        os.system("cp bsr_matrix_values_filtered.txt %s" % start_dir)
+    else:
+        pass
     try:
-        subprocess.check_call("cp names.txt consensus.pep consensus.fasta %s" % start_dir, shell=True, stderr=open(os.devnull, 'w'))
+        subprocess.check_call("cp names.txt consensus.pep consensus.fasta duplicate_ids.txt paralog_ids.txt %s" % start_dir, shell=True, stderr=open(os.devnull, 'w'))
     except:
         sys.exc_clear()
     logging.logPrint("all Done")
@@ -177,7 +193,18 @@ if __name__ == "__main__":
     parser.add_option("-r", "--reward", dest="reward", action="store",
                       help="match reward, only to be used with blastn and -g option, default is 5",
                       default="5", type="int")
-                      
+    parser.add_option("-l", "--length", dest="length", action="store",
+                      help="minimum BSR value to be called a duplicate, defaults to 0.7",
+                      default="0.7", type="float")
+    parser.add_option("-m", "--max_plog", dest="max_plog", action="store",
+                      help="maximum value to be called a paralog, defaults to 0.85",
+                      default="0.85", type="float")
+    parser.add_option("-n", "--min_hlog", dest="min_hlog", action="store",
+                      help="minimum BLAST ID to be called a homolog, defaults to 75",
+                      default="75", type="int")
+    parser.add_option("-t", "--f_plog", dest="f_plog", action="callback", callback=test_fplog,
+                      help="filter ORFs with a paralog from BSR matrix? Default is F, values can be T or F",
+                      default="F", type="string")
     options, args = parser.parse_args()
     
     mandatories = ["directory"]
@@ -188,5 +215,5 @@ if __name__ == "__main__":
             exit(-1)
 
     main(options.directory, options.id, options.filter, options.processors, options.genes, options.usearch, options.blast,
-         options.penalty, options.reward)
+         options.penalty, options.reward, options.length, options.max_plog, options.min_hlog, options.f_plog)
 

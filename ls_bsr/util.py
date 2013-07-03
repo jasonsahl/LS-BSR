@@ -494,3 +494,135 @@ def filter_matrix(to_keep, in_matrix, prefix):
         outdata.append(fields)
     outfile.close()
     return outdata
+
+def get_core_gene_stats(matrix, threshold, lower):
+    in_matrix=open(matrix, "U")
+    outfile = open("core_gene_ids.txt", "w")
+    singletons = open("unique_gene_ids.txt", "w")
+    firstLine = in_matrix.readline()
+    fields = firstLine.split()
+    positives = [ ]
+    singles = [ ]
+    for line in in_matrix:
+	fields = line.split()
+	totals = len(fields[1:])
+	presents = [ ]
+	uniques = [ ]
+        try:
+            for x in fields[1:]:
+                if float(x)>=float(threshold):
+                    presents.append(fields[0])
+                if float(x)>=float(lower):
+                    uniques.append(fields[0])
+            if int(len(presents))/int(totals)>=1:
+		positives.append(fields[0])
+            if int(len(uniques))==1:
+		singles.append(fields[0])
+        except:
+            raise TypeError("problem in input file found")
+            
+    print "# of conserved genes = %s" % len(positives)
+    print "# of unique genes = %s" % len(singles)
+    ratio = int(len(singles))/int(totals)
+    print >> outfile, "\n".join(positives)
+    print >> singletons, "\n".join(singles)
+    print "# of unique genes per genome = %s" % ratio
+    in_matrix.close()
+    outfile.close()
+    singletons.close()
+    return len(positives), len(singles)
+    
+def get_frequencies(matrix, threshold):
+    in_matrix=open(matrix, "U")
+    firstLine = in_matrix.readline()
+    fields = firstLine.split()
+    outfile = open("frequency_data.txt", "w")
+    my_dict = {}
+    out_data = [ ]
+    all = [ ]
+    for line in in_matrix:
+	presents = [ ]
+	tempo = [ ]
+	fields = line.split()
+        try:
+            for x in fields[1:]:
+                if float(x)>=float(threshold):
+                    presents.append(fields[0])
+        except:
+            raise TypeError("problem found with input file")
+	tempo.append(len(presents))
+	tempo.append("1")
+	all.append(tempo)
+    for x, y in all:
+	try:
+	    my_dict[x].append(y)
+	except KeyError:
+	    my_dict[x]=[y]
+    print >> outfile, "Frequency distribution:\n",
+    for k,v in my_dict.iteritems():
+	print >> outfile, k,"\t",len(v),"\n",
+        out_data.append(k)
+        out_data.append(len(v))
+    in_matrix.close()
+    return out_data
+
+def find_dups(ref_scores, length, max_plog, min_hlog):
+    curr_dir=os.getcwd()
+    my_dict_o = {}
+    dup_dict = {}
+    paralogs = [ ]
+    duplicate_file = open("duplicate_ids.txt", "w")
+    paralog_file = open("paralog_ids.txt", "w")
+    for infile in glob.glob(os.path.join(curr_dir, "*_blast.out")):
+        try:
+            for line in open(infile, "U"):
+                fields = line.split()
+                if float(fields[2])>=int(min_hlog) and (float(fields[11])/float(ref_scores.get(fields[0])))>=float(length):
+                    try:
+                        my_dict_o[fields[0]].append(fields[11])
+                    except KeyError:
+                        my_dict_o[fields[0]] = [fields[11]]
+                    else:
+                        continue
+        except:
+            raise TypeError("problem parsing input file")
+
+    for k,v in my_dict_o.iteritems():
+        if int(len(v))>=2:
+            dup_dict.update({k:v})
+    for k,v in dup_dict.iteritems():
+        max_value = max(v)
+        for x in v:
+            if float(x)/float(max_value)<=max_plog:
+                paralogs.append(k)
+            else:
+                continue
+    for k, v in dup_dict.iteritems():
+        print >> duplicate_file, k,"\n",
+    nr=[x for i, x in enumerate(paralogs) if x not in paralogs[i+1:]]
+    print >> paralog_file, "\n".join(nr),
+    return nr, dup_dict
+    duplicate_file.close()
+    paralog_file.close()
+
+def filter_paralogs(matrix, ids):
+    in_matrix = open(matrix, "U")
+    outfile = open("bsr_matrix_values_filtered.txt", "w")
+    outdata = [ ]
+    genomes_file = open(ids, "rU").read().splitlines()
+    firstLine = in_matrix.readline()
+    print >> outfile, firstLine,
+    for line in in_matrix:
+        fields = line.split()
+        if fields[0] not in genomes_file:
+            print >> outfile, line,
+            outdata.append(fields[0])
+        else:
+            pass
+    return outdata
+    in_matrix.close()
+    outfile.close()
+            
+
+
+
