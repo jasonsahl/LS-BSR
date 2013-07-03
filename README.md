@@ -36,7 +36,7 @@ You can test your installation by running the tests:
 
 python /Users/jsahl/LS-BSR/tests/test_all_functions.py
 
--If your installation is correct, all 43 tests should pass
+-If your installation is correct, all 52 tests should pass
 
 Command line options include:
 
@@ -64,6 +64,20 @@ sequence must be in frame, or questionable results will be obtained.  If this fl
    Optimized to return longer matches.  Only certain q/r ratios are allowed.  See BLAST
    documentation for more details.
    
+-l LENGTH, minimum BSR value to be called a duplicate, defaults to 0.7.  The BSR of the
+   "duplicate" divided by the reference bit score must be greater than this value to be
+   called a duplicate
+   
+-m MAX_PLOG, maximum value to be called a paralog, defaults to 0.85.  If the BSR value
+   is greater than this value, then it is considered to be an ortholog
+  
+-n MIN_HLOG, minimum BLAST ID to be called a homolog, defaults to 75.  If the BLAST
+   ID is below this value, it is considered a remote homolog
+   
+-t F_PLOG, filter ORFs with a paralog from BSR matrix? Default is F (do not filter), 
+   values can be T (filter paralogs) or F
+
+   
 Test data is present in the test_data directory.  This data consists of:
 
 1.  Genomes (4 E.coli genomes from 4 different pathogenic variants).  Genomes are:
@@ -89,7 +103,7 @@ You can test out the LS-BSR functionality in 3 different ways:
 
 -run LS-BSR
 
-python /Users/jsahl/LS-BSR/ls_bsr.py -d genomes -g genes/ecoli_markers.fasta -u /usr/local/bin/usearch6
+python /Users/jsahl/LS-BSR/ls_bsr.py -d genomes -g genes/ecoli_markers.fasta
 
 -the output should show how each gene is only present in the correct pathovar
 
@@ -99,7 +113,7 @@ python /Users/jsahl/LS-BSR/ls_bsr.py -d genomes -g genes/ecoli_markers.fasta -u 
 
 -run LS-BSR
 
-python /Users/jsahl/LS-BSR/ls_bsr.py -d genomes -g genes/ecoli_markers.fasta -u /usr/local/bin/usearch6 -b blastn
+python /Users/jsahl/LS-BSR/ls_bsr.py -d genomes -g genes/ecoli_markers.fasta -b blastn
 
 3.  Test the de novo gene prediction method:
 
