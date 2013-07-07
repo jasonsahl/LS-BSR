@@ -1,4 +1,4 @@
-#!/usr/bin/env
+#!/usr/bin/env python
 
 """calculate several pan-genome type stats
 from a BSR matrix"""
