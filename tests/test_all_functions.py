@@ -783,7 +783,38 @@ class Test20(unittest.TestCase):
         shutil.rmtree(tdir)
         os.system("rm bsr_matrix_values_filtered.txt")
         
+class Test21(unittest.TestCase):
+    def test(self):
+        """tests the basic functionality of the filter_variome function"""
+        tdir = tempfile.mkdtemp(prefix="filetest_",)
+        fpath = os.path.join(tdir,"sample_matrix.txt")
+        fp = open(fpath, "w")
+        fp.write("        E2348_69_all    H10407_all      O157_H7_sakai_all       SSON_046_all\n")
+        fp.write("IpaH3   0.80    1.00    1.00    1.00\n")
+        fp.write("LT      0.00    1.00    0.79    0.00\n")
+        fp.write("ST1     0.00    1.00    0.12    0.12\n")
+        fp.write("bfpB    1.00    0.00    0.00    0.00\n")
+        fp.write("stx2a   0.07    0.08    0.98    0.07\n")
+        fp.close()
+        self.assertEqual(filter_variome(fpath, "0.8", "1"), ['LT', 'ST1', 'bfpB', 'stx2a'])
+        shutil.rmtree(tdir)
+        os.system("rm variome_BSR_matrix")
+    def test2(self):
+        """tests the case where a malformed file is found"""
+        tdir = tempfile.mkdtemp(prefix="filetest_",)
+        fpath = os.path.join(tdir,"sample_matrix.txt")
+        fp = open(fpath, "w")
+        fp.write("        E2348_69_all    H10407_all      O157_H7_sakai_all       SSON_046_all\n")
+        fp.write("IpaH3   0.80    1.00    1.00    1.00\n")
+        fp.write("LT      0.00    1.00    0.79    0.00\n")
+        fp.write("ST1     0.00    1.00    0.12    0.12\n")
+        fp.write("bfpB    1.00    0.00    0.00    0.00\n")
+        fp.write("")
+        fp.close()
+        self.assertEqual(filter_variome(fpath, "0.8", "1"), ['LT', 'ST1', 'bfpB'])
+        shutil.rmtree(tdir)
+        os.system("rm variome_BSR_matrix")
+        
 if __name__ == "__main__":
     unittest.main()
     main()
-
