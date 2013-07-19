@@ -623,6 +623,28 @@ def filter_paralogs(matrix, ids):
     in_matrix.close()
     outfile.close()
             
+def filter_variome(matrix, threshold, step):
+    in_matrix = open(matrix, "U")
+    outfile = open("variome_BSR_matrix", "w")
+    firstLine = in_matrix.readline()
+    outdata = [ ]
+    print >> outfile, firstLine,
+    for line in in_matrix:
+        fields = line.split()
+        totals = len(fields[1:])
+        presents = [ ]
+        for x in fields[1:]:
+            try:
+                if float(x)>=float(threshold):
+                    presents.append(fields[0])
+            except:
+                raise TypeError("problem in input file observed")
+        if int(len(presents))<(totals-int(step)):
+            outdata.append(fields[0])
+            print >> outfile, line,
+    in_matrix.close()
+    outfile.close()
+    return outdata
 
 
 
