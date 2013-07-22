@@ -646,5 +646,14 @@ def filter_variome(matrix, threshold, step):
     outfile.close()
     return outdata
 
+def run_usearch(usearch, id):
+    curr_dir=os.getcwd()
+    for infile in glob.glob(os.path.join(curr_dir, "x*")):
+        cmd = ["%s" % usearch,
+           "-cluster_fast", "%s" % infile,
+           "-id", str(id),
+           "-uc", "results.uc",
+           "-centroids", "%s.usearch.out" % str(autoIncrement())]
+        subprocess.check_call(cmd)
 
 

@@ -99,6 +99,17 @@ def main(directory, id, filter, processors, genes, usearch, blast, penalty, rewa
         os.system("cat *genes.seqs > all_gene_seqs.out")
         uclust_sort(usearch)
         rename_fasta_header("tmp_sorted.txt", "all_sorted.txt")
+        """new code"""
+        os.system("mkdir split_files")
+        os.system("cp all_sorted.txt split_files/")
+        os.system("rm all_sorted.txt")
+        os.chdir("split_files/")
+        os.system("split -l 200000 all_sorted.txt")
+        run_usearch(usearch, id)
+        os.system("cat *.usearch.out > all_sorted.txt")
+        os.system("mv all_sorted.txt %s/joined" % dir_path)
+        os.chdir("%s/joined" % dir_path)
+        """end of new code"""
         uclust_cluster(usearch, id)
         translate_consensus("consensus.fasta")
         filter_seqs("tmp.pep")
