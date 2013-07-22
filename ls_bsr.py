@@ -97,6 +97,8 @@ def main(directory, id, filter, processors, genes, usearch, blast, penalty, rewa
         predict_genes(dir_path, processors)
         logging.logPrint("Prodigal done")
         os.system("cat *genes.seqs > all_gene_seqs.out")
+        filter_scaffolds("all_gene_seqs.out")
+        os.system("mv tmp.out all_gene_seqs.out")
         uclust_sort(usearch)
         rename_fasta_header("tmp_sorted.txt", "all_sorted.txt")
         """new code"""

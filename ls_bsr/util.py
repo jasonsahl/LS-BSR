@@ -656,4 +656,15 @@ def run_usearch(usearch, id):
            "-centroids", "%s.usearch.out" % str(autoIncrement())]
         subprocess.check_call(cmd)
 
+def filter_scaffolds(in_fasta):
+    infile = open(in_fasta, "U")
+    outrecords = [ ]
+    for record in SeqIO.parse(infile, "fasta"):
+        if "N" not in record.seq:
+            outrecords.append(record)
+    output_handle = open("tmp.out", "w")
+    SeqIO.write(outrecords, output_handle, "fasta")
+    output_handle.close()
+
+        
 
