@@ -11,20 +11,20 @@ import shutil
 curr_dir=os.getcwd()
 
 class Test1(unittest.TestCase):
-    def test(self):
+    def test_get_seq_name_basic_function(self):
         self.assertEqual(get_seq_name("/path/to/test.fasta"), "test.fasta")
     """tests the condition where you use a tilda instead of full path"""
-    def test2(self):
+    def test_get_seq_name_tilda(self):
         self.assertEqual(get_seq_name("~/test.fasta"), "test.fasta")
     """tests the case where no path is passed"""
-    def test3(self):
+    def test_get_seq_name_empty(self):
         self.assertEqual(get_seq_name(""), "")
     """tests the case where something weird is passed"""
-    def test4(self):
+    def test_get_seq_name_wrong_slash(self):
         self.assertEqual(get_seq_name("\wrong\way"), "\\wrong\\way")
         
 class Test2(unittest.TestCase):
-    def test(self):
+    def test_translate_consensus_basic_function(self):
         """tests standard functionality of the translate_consensus function"""
         tdir = tempfile.mkdtemp(prefix="filetest_",)
         fpath = os.path.join(tdir,"testfile")
@@ -34,7 +34,8 @@ class Test2(unittest.TestCase):
         fp.close()
         self.assertEqual(translate_consensus(fpath), 'MTSFP')
         shutil.rmtree(tdir)
-    def test2(self):
+        os.system("rm tmp.pep")
+    def test_translate_consensus_premature_stop(self):
         """tests the case of a difference seqeunce.  Also, tests
         wheter a stop codon will be recognized and excluded"""
         tdir = tempfile.mkdtemp(prefix="filetest_",)
@@ -45,7 +46,8 @@ class Test2(unittest.TestCase):
         fp.close()
         self.assertEqual(translate_consensus(fpath), 'MNHY')
         shutil.rmtree(tdir)
-    def test3(self):
+        os.system("rm tmp.pep")
+    def test_translate_consensus_integer(self):
         """Tests the condition of having an integer, instead
         of sequence.  This should make the script throw a typeerror"""
         tdir = tempfile.mkdtemp(prefix="filetest_",)
@@ -57,7 +59,7 @@ class Test2(unittest.TestCase):
         self.assertRaises(TypeError, translate_consensus, fpath)
         shutil.rmtree(tdir)
         os.system("rm tmp.pep")
-    def test4(self):
+    def test_translate_consensus_empty_sequence(self):
         """Tests the condition where no sequence is present"""
         tdir = tempfile.mkdtemp(prefix="filetest_",)
         fpath = os.path.join(tdir,"testfile")
@@ -70,7 +72,7 @@ class Test2(unittest.TestCase):
         os.system("rm tmp.pep")
         
 class Test3(unittest.TestCase):
-    def test(self):
+    def test_filter_seqs_length_filter(self):
         """Tests several conditions in one shot"""
         tdir = tempfile.mkdtemp(prefix="filetest_",)
         fpath = os.path.join(tdir,"testfile")
@@ -88,7 +90,7 @@ class Test3(unittest.TestCase):
         self.assertEqual(filter_seqs(fpath),[50])
         os.system("rm consensus.pep")
         shutil.rmtree(tdir)
-    def test2(self):
+    def test_filter_seqs_non_nucleotide(self):
         """tests condition where you have non nucleotide
         characters.  Won't throw an error, but will give
         you an empty set"""
@@ -103,7 +105,7 @@ class Test3(unittest.TestCase):
         shutil.rmtree(tdir)
         
 class Test4(unittest.TestCase):
-    def test(self):
+    def test_parse_self_blast_basic_function(self):
         """Tests the basic functionality of the parse_self_blast
         function"""
         tdir = tempfile.mkdtemp(prefix="filetest_",)
@@ -115,7 +117,7 @@ class Test4(unittest.TestCase):
         fp.close()
         self.assertEqual(parse_self_blast(open(fpath,"U")), {'Cluster2': '60.6', 'Cluster0': '30.2', 'Cluster1': '40.5'})
         shutil.rmtree(tdir)
-    def test2(self):
+    def test_parse_self_blast_missing_fields(self):
         """tests the condition where too few fields are observed in the blast report.
         should throw an error"""
         tdir = tempfile.mkdtemp(prefix="filetest_",)
@@ -126,7 +128,7 @@ class Test4(unittest.TestCase):
         fp.close()
         self.assertRaises(TypeError, parse_self_blast, open(fpath, "U"))
         shutil.rmtree(tdir)
-    def test3(self):
+    def test_parse_self_blast_empty_file(self):
         """tests the condition where the file is empty
         should create an empty dictionary"""
         tdir = tempfile.mkdtemp(prefix="filetest_",)
@@ -138,7 +140,7 @@ class Test4(unittest.TestCase):
         shutil.rmtree(tdir)
         
 class Test5(unittest.TestCase):
-    def test(self):
+    def test_parse_blast_report_basic_function(self):
         """"tests the basic functionality of the parse_blast_report
         function"""
         tdir = tempfile.mkdtemp(prefix="filetest_",)
@@ -150,7 +152,7 @@ class Test5(unittest.TestCase):
         self.assertEqual(parse_blast_report(), ['Cluster0', '30.2'])
         os.chdir("%s" % curr_dir)
         shutil.rmtree(tdir)
-    def test2(self):
+    def test_parse_blast_report_missing_fields(self):
         """tests the condition where too few fields are present
         .  Should throw a typeerror"""
         ndir = tempfile.mkdtemp(prefix="filetest_",)
@@ -164,7 +166,7 @@ class Test5(unittest.TestCase):
         shutil.rmtree(ndir)
 
 class Test6(unittest.TestCase):
-    def test(self):
+    def test_get_unique_lines_basic_function(self):
         """tests basic functionality of the get_unique_lines function"""
         tdir = tempfile.mkdtemp(prefix="filetest_",)
         fpath = os.path.join(tdir,"testfile.filtered")
@@ -176,7 +178,7 @@ class Test6(unittest.TestCase):
         self.assertEqual(get_unique_lines(), ['Cluster0\t30.2\n'])
         os.chdir("%s" % curr_dir)
         shutil.rmtree(tdir)
-    def test2(self):
+    def test_get_unique_lines_empty_file(self):
         """if file is empty, you can't get an error
         but you can get an empty set"""
         tdir = tempfile.mkdtemp(prefix="filetest_",)
@@ -188,7 +190,7 @@ class Test6(unittest.TestCase):
         self.assertEqual(get_unique_lines(), [])
         os.chdir("%s" % curr_dir)
         shutil.rmtree(tdir)
-    def test3(self):
+    def test_get_unique_lines_missing_fields(self):
         """tests condition where you have a different number
         of input fields"""
         tdir = tempfile.mkdtemp(prefix="filetest_",)
@@ -203,7 +205,7 @@ class Test6(unittest.TestCase):
         shutil.rmtree(tdir)
         
 class Test7(unittest.TestCase):
-    def test(self):
+    def test_make_table_basic_function(self):
         """tests to make sure that list is being populated correctly.  The second file
         is missing a value and the list should be populated with a 0"""
         tdir = tempfile.mkdtemp(prefix="filetest_",)
@@ -219,10 +221,10 @@ class Test7(unittest.TestCase):
         fp2.write("Cluster0	15.2\n")
         fp2.write("Cluster2	30.6")
         fp2.close()
-        self.assertEqual(make_table(2), (['30.2', '40.5', '60.6', '15.2', 0, '30.6'], ['Cluster0', 'Cluster1', 'Cluster2']))
+        self.assertEqual(make_table(2), ([{'Cluster2': '60.6', 'Cluster0': '30.2', 'Cluster1': '40.5'}, {'Cluster2': '30.6', 'Cluster0': '15.2', 'Cluster1': 0}]))
         os.chdir("%s" % curr_dir)
         shutil.rmtree(tdir)
-    def test2(self):
+    def test_make_table_integer(self):
         """tests the case where you have a non float or integer in second field"""
         tdir = tempfile.mkdtemp(prefix="filetest_",)
         fpath = os.path.join(tdir,"testfile.fasta.new_blast.out.filtered.filtered.unique")
@@ -237,10 +239,10 @@ class Test7(unittest.TestCase):
         fp2.write("Cluster0	15.2\n")
         fp2.write("Cluster1     ABCDE")
         fp2.close()
-        self.assertEqual(make_table(2), (['30.2', '40.5', '60.6', '15.2','ABCDE',0], ['Cluster0', 'Cluster1', 'Cluster2']))
+        self.assertEqual(make_table(2), ([{'Cluster0': '30.2', 'Cluster1': '40.5', 'Cluster2': '60.6'}, {'Cluster0': '15.2', 'Cluster1': 'ABCDE', 'Cluster2':0}]))
         os.chdir("%s" % curr_dir)
         shutil.rmtree(tdir)
-    def test3(self):
+    def test_make_table_empty_file(self):
         """tests the case where you have an empty file"""
         tdir = tempfile.mkdtemp(prefix="filetest_",)
         fpath = os.path.join(tdir,"testfile.fasta.new_blast.out.filtered.filtered.unique")
@@ -253,12 +255,12 @@ class Test7(unittest.TestCase):
         fp.close()
         fp2 = open(fpath2, "w")
         fp2.close()
-        self.assertEqual(make_table(2), (['30.2', '40.5', '60.6', 0, 0, 0], ['Cluster0', 'Cluster1', 'Cluster2']))
+        self.assertEqual(make_table(2), ([{'Cluster0':'30.2', 'Cluster1':'40.5', 'Cluster2':'60.6'}, {'Cluster0':0, 'Cluster1':0, 'Cluster2':0}]))
         os.chdir("%s" % curr_dir)
         shutil.rmtree(tdir)
         
 class Test8(unittest.TestCase):
-    def test(self):
+    def test_divide_values_basic_function(self):
         """tests basic functionality of the divide_values function"""
         tdir = tempfile.mkdtemp(prefix="filetest_",)
         fpath = os.path.join(tdir,"testfile.filtered")
@@ -271,7 +273,7 @@ class Test8(unittest.TestCase):
         self.assertEqual(divide_values(fpath, {'Cluster2': '60.6', 'Cluster0': '30.2', 'Cluster1': '40.5'}),
                      [[1.0, 0.5033112582781457], [1.0, 0.0], [1.0, 0.504950495049505]])
         shutil.rmtree(tdir)
-    def test2(self):
+    def test_divide_values_missing_values(self):
         """tests if a condition has a missing value"""
         tdir = tempfile.mkdtemp(prefix="filetest_",)
         fpath = os.path.join(tdir,"testfile.filtered")
@@ -284,7 +286,7 @@ class Test8(unittest.TestCase):
         self.assertRaises(TypeError, divide_values, {'Cluster2': '60.6', 'Cluster0': '30.2', 'Cluster1': '40.5'})
         os.system("rm BSR_matrix_values.txt")
         shutil.rmtree(tdir)
-    def test3(self):
+    def test_divide_values_weird_value(self):
         """tests if a non float or integer value is encountered
         should raise an error"""
         tdir = tempfile.mkdtemp(prefix="filetest_",)
@@ -298,7 +300,7 @@ class Test8(unittest.TestCase):
         shutil.rmtree(tdir)
         
 class Test9(unittest.TestCase):
-    def test(self):
+    def test_translate_genes_basic_function(self):
         """tests to see if the translation is correct, and if shorter sequences
         get filtered out"""
         tdir = tempfile.mkdtemp(prefix="filetest_",)
@@ -312,7 +314,7 @@ class Test9(unittest.TestCase):
         self.assertEqual(translate_genes(fpath), 'MNPHLTEHPPVGDIDALLQDTWLQVISLRQGVTCAEGEGQAFWQRCVADIERVHQALKDAGHSEQSCQHIRYAQCALLDE')
         os.system("rm genes.pep")
         shutil.rmtree(tdir)
-    def test2(self):
+    def test_translate_genes_out_of_frame(self):
         """test the condition where the sequence is not in frame"""
         tdir = tempfile.mkdtemp(prefix="filetest_",)
         fpath = os.path.join(tdir,"testfile.filtered")
@@ -322,7 +324,7 @@ class Test9(unittest.TestCase):
         self.assertEqual(translate_genes(fpath), [])
         os.system("rm genes.pep")
         shutil.rmtree(tdir)
-    def test3(self):
+    def test_translate_genes_odd_characters(self):
         """tests the condition where weird characters are encountered"""
         tdir = tempfile.mkdtemp(prefix="filetest_",)
         fpath = os.path.join(tdir,"testfile.filtered")
@@ -333,7 +335,7 @@ class Test9(unittest.TestCase):
         self.assertRaises(TypeError, translate_genes, fpath)
         os.system("rm genes.pep")
         shutil.rmtree(tdir)
-    def test4(self):
+    def test_translate_genes_non_fasta(self):
         """tests the condition where the file is not fasta.  Will
         not throw an error, but will report an empty set"""
         tdir = tempfile.mkdtemp(prefix="filetest_",)
@@ -346,7 +348,7 @@ class Test9(unittest.TestCase):
         shutil.rmtree(tdir)
         
 class Test10(unittest.TestCase):
-    def test(self):
+    def test_rename_fasta_basic_function(self):
         """tests standard functionality of rename_fasta_header function"""
         tdir = tempfile.mkdtemp(prefix="filetest_",)
         fpath = os.path.join(tdir,"testfile.filtered")
@@ -359,7 +361,7 @@ class Test10(unittest.TestCase):
         self.assertEqual(rename_fasta_header(fpath, "tmp.out"), ['>centroid_gi|22123922|ref|NC_004088.1|_3285', '>centroid_gi|22123922|ref|NC_004088.1|_1575'])
         os.system("rm tmp.out")
         shutil.rmtree(tdir)
-    def test2(self):
+    def test_rename_fasta_odd_characters(self):
         """tests condition where non-normal characters are encountered"""
         tdir = tempfile.mkdtemp(prefix="filetest_",)
         fpath = os.path.join(tdir,"testfile.filtered")
@@ -370,7 +372,7 @@ class Test10(unittest.TestCase):
         self.assertEqual(rename_fasta_header(fpath, "tmp.out"), ['>centroid_gi|22123922|ref|NC_004088.1|_3285'])
         os.system("rm tmp.out")
         shutil.rmtree(tdir)
-    def test3(self):
+    def test_rename_fasta_non_fasta(self):
         """tests condition where the file is not fasta"""
         tdir = tempfile.mkdtemp(prefix="filetest_",)
         fpath = os.path.join(tdir,"testfile.filtered")
@@ -382,11 +384,11 @@ class Test10(unittest.TestCase):
         shutil.rmtree(tdir)
 
 class Test11(unittest.TestCase):
-    def test(self):
+    def test_auto_increment_function(self):
         self.assertEqual(autoIncrement(), 5)
         
 class Test12(unittest.TestCase):
-    def test(self):
+    def test_prune_matrix_basic_function(self):
         """tests the basic functionaly of the prune_matrix function"""
         tdir = tempfile.mkdtemp(prefix="filetest_",)
         fpath = os.path.join(tdir,"testfile.filtered")
@@ -409,7 +411,7 @@ class Test12(unittest.TestCase):
         self.assertEqual(prune_matrix(fpath,npath,opath), (['E2348_69_all'], ['H10407_all'], [0, 2, 3, 4], [0, 1, 3, 4]))
         shutil.rmtree(tdir)
         os.system("rm group*_pruned.txt")
-    def test2(self):
+    def test_prune_matrix_empty_file(self):
         """tests the case where one of the group files is empty"""
         tdir = tempfile.mkdtemp(prefix="filetest_",)
         fpath = os.path.join(tdir,"testfile.filtered")
@@ -431,7 +433,7 @@ class Test12(unittest.TestCase):
         self.assertEqual(prune_matrix(fpath,npath,opath), (['E2348_69_all'], [], [0, 2, 3, 4], [0, 1, 2, 3, 4]))
         shutil.rmtree(tdir)
         os.system("rm group*_pruned.txt")
-    def test3(self):
+    def test_prune_matrix_no_match(self):
         """tests the case where the genome file isn't in the matrix"""
         tdir = tempfile.mkdtemp(prefix="filetest_",)
         fpath = os.path.join(tdir,"testfile.filtered")
@@ -456,7 +458,7 @@ class Test12(unittest.TestCase):
         os.system("rm group*_pruned.txt")
 
 class Test13(unittest.TestCase):
-    def test(self):
+    def test_compare_values_basic_function(self):
         """test basic functionality of compare_values function.  Tests
         that the values are being parsed, and that the Numpy mean feature
         is working correctly"""
@@ -481,7 +483,7 @@ class Test13(unittest.TestCase):
         np.close()
         self.assertEqual(compare_values(fpath, npath, "0.8", "0.4"), (['1.00', '0.92', '1.00'], ['1.00', '1.00'], [0.03, 0.5, 0.46, 0.5, 0.07500000000000001]))
         shutil.rmtree(tdir)
-    def test2(self):
+    def test_compare_values_border_cases(self):
         """tests the condition where BSR values are near the border regions
         differentiated by the function"""
         tdir = tempfile.mkdtemp(prefix="filetest_",)
@@ -508,7 +510,7 @@ class Test13(unittest.TestCase):
         os.system("rm group*_out.txt")
         
 class Test14(unittest.TestCase):
-    def test(self):
+    def test_find_uniques_basic_function(self):
         """tests the basic functionality of the find_uniques function"""
         tdir = tempfile.mkdtemp(prefix="filetest_",)
         fpath = os.path.join(tdir,"combined.txt")
@@ -531,7 +533,7 @@ class Test14(unittest.TestCase):
         self.assertEqual(find_uniques(fpath, npath), (['bfpB'], ['LT', 'ST2'], ['bfpB']))
         shutil.rmtree(tdir)
         os.system("rm group*_unique_seqs.fasta")
-    def test2(self):
+    def test_find_uniques_mismatched_headers(self):
         """tests the case where headers don't match to those headers
         in a matrix"""
         tdir = tempfile.mkdtemp(prefix="filetest_",)
@@ -557,7 +559,7 @@ class Test14(unittest.TestCase):
         os.system("rm group*_unique_seqs.fasta")
         
 class Test15(unittest.TestCase):
-    def test(self):
+    def test_filter_genomes_basic_function(self):
         """test the basic functionality of the filter_genomes function"""
         tdir = tempfile.mkdtemp(prefix="filetest_",)
         fpath = os.path.join(tdir,"sample_matrix.txt")
@@ -578,7 +580,7 @@ class Test15(unittest.TestCase):
         are the genomes that should be removed"""
         self.assertEqual(filter_genomes(npath, fpath), [1, 3])
         shutil.rmtree(tdir)
-    def test2(self):
+    def test_filter_genomes_no_matches(self):
         """tests the condition where the group names provided are not in
         the input matrix"""
         tdir = tempfile.mkdtemp(prefix="filetest_",)
@@ -600,7 +602,7 @@ class Test15(unittest.TestCase):
         shutil.rmtree(tdir)
         
 class Test16(unittest.TestCase):
-    def test(self):
+    def test_filter_matrix_basic_function(self):
         """test the basic functionality of the filter_matrix function"""
         tdir = tempfile.mkdtemp(prefix="filetest_",)
         fpath = os.path.join(tdir,"sample_matrix.txt")
@@ -615,7 +617,7 @@ class Test16(unittest.TestCase):
         self.assertEqual(filter_matrix([1, 3], fpath, "test"), [['', 'E2348_69_all', 'O157_H7_sakai_all'],['IpaH3', '0.03', '0.03'],['LT', '0.00', '0.00'],['ST1', '0.00', '0.12'],['bfpB', '1.00', '0.00'],['stx2a', '0.07', '0.98']])
         shutil.rmtree(tdir)
         os.system("rm test_genomes.matrix")
-    def test2(self):
+    def test_filter_matrix_non_numerics(self):
         """tests the case where non-numeric values are in matrix"""
         tdir = tempfile.mkdtemp(prefix="filetest_",)
         fpath = os.path.join(tdir,"sample_matrix.txt")
@@ -632,7 +634,7 @@ class Test16(unittest.TestCase):
         os.system("rm test_genomes.matrix")
 
 class Test17(unittest.TestCase):
-    def test(self):
+    def test_get_core_gene_stats_basic_function(self):
         """test the basic functionality of the get_core_gene_stats function"""
         tdir = tempfile.mkdtemp(prefix="filetest_",)
         fpath = os.path.join(tdir,"sample_matrix.txt")
@@ -647,7 +649,7 @@ class Test17(unittest.TestCase):
         self.assertEqual(get_core_gene_stats(fpath, 0.8, 0.4), (1, 4))
         shutil.rmtree(tdir)
         os.system("rm core_gene_ids.txt unique_gene_ids.txt")
-    def test2(self):
+    def test_get_core_gene_stats_empty_line(self):
         """tests the case where an empty line is found"""
         tdir = tempfile.mkdtemp(prefix="filetest_",)
         fpath = os.path.join(tdir,"sample_matrix.txt")
@@ -664,7 +666,7 @@ class Test17(unittest.TestCase):
         os.system("rm core_gene_ids.txt unique_gene_ids.txt")
 
 class Test18(unittest.TestCase):
-    def test(self):
+    def test_get_frequencies_basic_function(self):
         """test the basic functionality of the get_frequencies function"""
         tdir = tempfile.mkdtemp(prefix="filetest_",)
         fpath = os.path.join(tdir,"sample_matrix.txt")
@@ -678,7 +680,7 @@ class Test18(unittest.TestCase):
         fp.close()
         self.assertEqual(get_frequencies(fpath, 0.8), [1, 4, 4, 1])
         shutil.rmtree(tdir)
-    def test2(self):
+    def test_get_frequencies_borders(self):
         """test the border case"""
         tdir = tempfile.mkdtemp(prefix="filetest_",)
         fpath = os.path.join(tdir,"sample_matrix.txt")
@@ -695,7 +697,7 @@ class Test18(unittest.TestCase):
         os.system("rm frequency_data.txt")
 
 class Test19(unittest.TestCase):
-    def test(self):
+    def test_find_dups_basic_function(self):
         """tests the basic functionality of find_dups function"""
         tdir = tempfile.mkdtemp(prefix="filetest_",)
         fpath = os.path.join(tdir,"testfile_blast.out")
@@ -710,7 +712,7 @@ class Test19(unittest.TestCase):
         self.assertEqual(find_dups({'Cluster0': '500', 'Cluster1': '40.5', 'Cluster2': '60.6'}, 0.7, 0.85, 75), (['Cluster0'], {'Cluster0': ['500', '420'], 'Cluster1': ['40.5', '40.5']}))
         os.chdir("%s" % curr_dir)
         shutil.rmtree(tdir)
-    def test2(self):
+    def test_find_dups_multiple_dups(self):
         """Tests the case where more than two duplicates are found for a given hit"""
         tdir = tempfile.mkdtemp(prefix="filetest_",)
         fpath = os.path.join(tdir,"testfile_blast.out")
@@ -726,7 +728,7 @@ class Test19(unittest.TestCase):
         self.assertEqual(find_dups({'Cluster0': '500', 'Cluster1': '40.5', 'Cluster2': '60.6'}, 0.7, 0.85, 75), (['Cluster0'], {'Cluster0': ['500', '420', '430'], 'Cluster1': ['40.5', '40.5']}))
         os.chdir("%s" % curr_dir)
         shutil.rmtree(tdir)
-    def test3(self):
+    def test_find_dups_bad_input(self):
         """Tests the case where a malformed input file is found"""
         tdir = tempfile.mkdtemp(prefix="filetest_",)
         fpath = os.path.join(tdir,"testfile_blast.out")
@@ -743,7 +745,7 @@ class Test19(unittest.TestCase):
         shutil.rmtree(tdir)
 
 class Test20(unittest.TestCase):
-    def test(self):
+    def test_filter_paralogs_basic_function(self):
         """tests the basic functionality of the filter_paralogs function"""
         tdir = tempfile.mkdtemp(prefix="filetest_",)
         fpath = os.path.join(tdir,"sample_matrix.txt")
@@ -763,7 +765,7 @@ class Test20(unittest.TestCase):
         self.assertEqual(filter_paralogs(fpath, npath), ['IpaH3', 'ST1', 'bfpB'])
         shutil.rmtree(tdir)
         os.system("rm bsr_matrix_values_filtered.txt")
-    def test2(self):
+    def test_filter_paralogs_no_matches(self):
         """tests the case where no matching names are found"""
         tdir = tempfile.mkdtemp(prefix="filetest_",)
         fpath = os.path.join(tdir,"sample_matrix.txt")
@@ -784,7 +786,7 @@ class Test20(unittest.TestCase):
         os.system("rm bsr_matrix_values_filtered.txt")
         
 class Test21(unittest.TestCase):
-    def test(self):
+    def test_filter_variome_basic_function(self):
         """tests the basic functionality of the filter_variome function"""
         tdir = tempfile.mkdtemp(prefix="filetest_",)
         fpath = os.path.join(tdir,"sample_matrix.txt")
@@ -799,7 +801,7 @@ class Test21(unittest.TestCase):
         self.assertEqual(filter_variome(fpath, "0.8", "1"), ['LT', 'ST1', 'bfpB', 'stx2a'])
         shutil.rmtree(tdir)
         os.system("rm variome_BSR_matrix")
-    def test2(self):
+    def test_filter_variome_bad_input(self):
         """tests the case where a malformed file is found"""
         tdir = tempfile.mkdtemp(prefix="filetest_",)
         fpath = os.path.join(tdir,"sample_matrix.txt")

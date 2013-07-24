@@ -72,7 +72,7 @@ def make_table(processors):
         for key in sorted(cluster_names.iterkeys()):
             for x in reduced:
                 open("%s.tmp.matrix" % x, 'a').write("%s\n" % cluster_names[key])
-                outdata.append(cluster_names[key])
+                outdata.append(cluster_names)
         lock.release()
     results = set(p_func.pmap(_perform_workflow,
                               files_and_temp_names,
@@ -83,7 +83,8 @@ def make_table(processors):
     open("ref.list", "a").write("\n")
     for x in nr_sorted:
         open("ref.list", "a").write("%s\n" % x)
-    return outdata, nr_sorted
+    myout=[x for i, x in enumerate(outdata) if x not in outdata[i+1:]]
+    return myout
     
 def divide_values(file, ref_scores):
     """divide each BSR value in a row by that row's maximum value"""
@@ -130,6 +131,7 @@ def rename_fasta_header(fasta_in, fasta_out):
     """this is used for renaming the output,
     in the off chance that there are duplicate
     names for separate peptides"""
+    rec=1
     handle = open(fasta_out, "w")
     outdata = [ ]
     for record in SeqIO.parse(open(fasta_in), "fasta"):
@@ -647,6 +649,7 @@ def filter_variome(matrix, threshold, step):
     return outdata
 
 def run_usearch(usearch, id):
+    rec=1
     curr_dir=os.getcwd()
     for infile in glob.glob(os.path.join(curr_dir, "x*")):
         cmd = ["%s" % usearch,
