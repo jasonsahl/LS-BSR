@@ -26,10 +26,10 @@ if __name__ == "__main__":
                       help="/path/to/bsr_matrix [REQUIRED]",
                       action="callback", callback=test_file, type="string")
     parser.add_option("-t", "--threshold", dest="threshold",
-                      help="upper threshold for ORF presence",
+                      help="upper threshold for ORF presence, defaults to 0.8",
                       action="store", default="0.8", type="float")
     parser.add_option("-l", "--lower", dest="lower",
-                      help="lower threshold for ORF presence",
+                      help="lower threshold for ORF presence, defaults to 0.4",
                       action="store", default="0.4", type="float")
     options, args = parser.parse_args()
     

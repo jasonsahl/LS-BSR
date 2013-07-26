@@ -221,7 +221,7 @@ class Test7(unittest.TestCase):
         fp2.write("Cluster0	15.2\n")
         fp2.write("Cluster2	30.6")
         fp2.close()
-        self.assertEqual(make_table(2), ([{'Cluster2': '60.6', 'Cluster0': '30.2', 'Cluster1': '40.5'}, {'Cluster2': '30.6', 'Cluster0': '15.2', 'Cluster1': 0}]))
+        self.assertEqual(make_table(2), ([0,'15.2','30.2','30.6','40.5','60.6']))
         os.chdir("%s" % curr_dir)
         shutil.rmtree(tdir)
     def test_make_table_integer(self):
@@ -239,7 +239,7 @@ class Test7(unittest.TestCase):
         fp2.write("Cluster0	15.2\n")
         fp2.write("Cluster1     ABCDE")
         fp2.close()
-        self.assertEqual(make_table(2), ([{'Cluster0': '30.2', 'Cluster1': '40.5', 'Cluster2': '60.6'}, {'Cluster0': '15.2', 'Cluster1': 'ABCDE', 'Cluster2':0}]))
+        self.assertEqual(make_table(2), ([0,'15.2','30.2','40.5','60.6','ABCDE']))
         os.chdir("%s" % curr_dir)
         shutil.rmtree(tdir)
     def test_make_table_empty_file(self):
@@ -255,7 +255,7 @@ class Test7(unittest.TestCase):
         fp.close()
         fp2 = open(fpath2, "w")
         fp2.close()
-        self.assertEqual(make_table(2), ([{'Cluster0':'30.2', 'Cluster1':'40.5', 'Cluster2':'60.6'}, {'Cluster0':0, 'Cluster1':0, 'Cluster2':0}]))
+        self.assertEqual(make_table(2), ([0,0,0,'30.2','40.5','60.6']))
         os.chdir("%s" % curr_dir)
         shutil.rmtree(tdir)
         

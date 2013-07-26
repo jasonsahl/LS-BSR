@@ -18,7 +18,6 @@ def test_file(option, opt_str, value, parser):
 
 def main(in_matrix, prefix, genomes):
     to_keep=filter_genomes(genomes, in_matrix)
-    print to_keep
     filter_matrix(to_keep, in_matrix, prefix)
     
 if __name__ == "__main__":

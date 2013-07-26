@@ -1,10 +1,11 @@
 #!/usr/bin/env python
 
-"""Calculate the BSR value for all predicted ORFs
-in a set of genomes in fasta format.  V3 - replaced
-transeq with BioPython.  V4 - changed to true BSR
-test.  V5 - fixed bug in how BSR was calculated.
-V6 - changed gene caller from Glimmer to Prodigal"""
+"""Calculate the BSR value for all predicted CDSs
+in a set of genomes in fasta format.
+
+written by Jason Sahl
+contacted at jasonsahl@gmail.com
+"""
 
 import sys
 import os
@@ -101,7 +102,6 @@ def main(directory, id, filter, processors, genes, usearch, blast, penalty, rewa
         os.system("mv tmp.out all_gene_seqs.out")
         uclust_sort(usearch)
         rename_fasta_header("tmp_sorted.txt", "all_sorted.txt")
-        """new code"""
         os.system("mkdir split_files")
         os.system("cp all_sorted.txt split_files/")
         os.system("rm all_sorted.txt")
@@ -111,7 +111,6 @@ def main(directory, id, filter, processors, genes, usearch, blast, penalty, rewa
         os.system("cat *.usearch.out > all_sorted.txt")
         os.system("mv all_sorted.txt %s/joined" % dir_path)
         os.chdir("%s/joined" % dir_path)
-        """end of new code"""
         uclust_cluster(usearch, id)
         translate_consensus("consensus.fasta")
         filter_seqs("tmp.pep")
@@ -189,7 +188,7 @@ if __name__ == "__main__":
                       help="to use blast filtering or not, default is F or filter, change to T to turn off filtering",
                       default="F", type="string")
     parser.add_option("-p", "--parallel_workers", dest="processors",
-                      help="How much work to do in parallel, defaults to 2, should number of CPUs your machine has",
+                      help="How much work to do in parallel, defaults to 2",
                       default="2", type="int")
     parser.add_option("-g", "--genes", dest="genes", action="callback", callback=test_file,
                       help="predicted genes (nucleotide) to screen against genomes, will not use prodigal",

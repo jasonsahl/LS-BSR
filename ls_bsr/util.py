@@ -23,8 +23,6 @@ def make_table(processors):
     """make the BSR matrix table"""
     clusters=[ ]
     curr_dir=os.getcwd()
-    """I only use this loop to grab names...combine with next loop?
-       I need the nr values before the next loop"""
     for infile in glob.glob(os.path.join(curr_dir, "*.filtered.unique")):
         file=open(infile, "rU")
         for line in file:
@@ -72,7 +70,7 @@ def make_table(processors):
         for key in sorted(cluster_names.iterkeys()):
             for x in reduced:
                 open("%s.tmp.matrix" % x, 'a').write("%s\n" % cluster_names[key])
-                outdata.append(cluster_names)
+                outdata.append(cluster_names[key])
         lock.release()
     results = set(p_func.pmap(_perform_workflow,
                               files_and_temp_names,
@@ -84,7 +82,7 @@ def make_table(processors):
     for x in nr_sorted:
         open("ref.list", "a").write("%s\n" % x)
     myout=[x for i, x in enumerate(outdata) if x not in outdata[i+1:]]
-    return myout
+    return sorted(outdata)
     
 def divide_values(file, ref_scores):
     """divide each BSR value in a row by that row's maximum value"""

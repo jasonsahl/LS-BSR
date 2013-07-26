@@ -12,10 +12,11 @@ contact: jsahl at tgen.org
 
 To run the program, the following dependencies are required:
 
-1.  USearch (tested version is 6.0.307), passed as command-line option - only required
-    if a set of gene sequences is not supplied
+1.  USearch (tested version is 6.0.307), path is passed as command-line option - only required
+    if a set of gene sequences is not supplied.  32-bit version should be sufficient.
 2.  BioPython, must be in PythonPath
-3.  blastall (tested version is 2.2.25), must be in path as 'blastall'
+3.  blastall (tested version is 2.2.25), must be in path as 'blastall'.  Known issues
+    seen with v2.2.26
 4.  Prodigal (tested version is 2.60), must be in path as 'prodigal' - only required
     if a set of gene sequences is not supplied
 5.  Numpy, must be in PythonPath.  Numpy is only required for the compare matrices tool.
@@ -36,7 +37,7 @@ You can test your installation by running the tests:
 
 python /Users/jsahl/LS-BSR/tests/test_all_functions.py
 
--If your installation is correct, all 52 tests should pass
+-If your installation is correct, all 54 tests should pass
 
 Command line options include:
 
@@ -82,10 +83,10 @@ Test data is present in the test_data directory.  This data consists of:
 
 1.  Genomes (4 E.coli genomes from 4 different pathogenic variants).  Genomes are:
 
--H10407 - ETEC
--E2348/69 - EPEC
--O157:H7 sakai - STEC
--SSON046 - Shigella sonnei
+-H10407 - enterotoxigenic E. coli (ETEC) 
+-E2348/69 - enteropathogenic E. coli (EPEC) 
+-O157:H7 sakai - shiga toxin E. coli (STEC) 
+-SSON046 - Shigella sonnei 
 
 2.  Genes (5 different markers that deliniate between the variants).  These include:
 
@@ -126,12 +127,25 @@ python /Users/jsahl/LS-BSR/ls_bsr.py -d genomes -u /usr/local/bin/usearch6
 -To inspect the output, you can look up the following entries in the BSR matrix.  They
 should correspond with the results obtained with the gene screen methods:
 
-IpaH3 -> centroid_1724
-LT -> centroid_11953
-ST2 -> centroid_19265
-bfpB -> centroid_1922
+IpaH3 -> centroid_1724,
+LT -> centroid_11953,
+ST2 -> centroid_19265,
+bfpB -> centroid_1922,
 stx2a -> centroid_7471
 
-                        
+Sample output for each method is shown in the test_data directory
+
+##Tools
+1.  compare_BSR_matrices.py - Find CDSs conserved in one group and missing from another.
+    Group names must be in new-line delimited text files.  The default is to identify CDSs
+    with a BSR >=0.8 in one group and <0.4 in the second group.  These values can be
+    changed with command line parameters
+2.  filter_column_BSR.py - Filter out a sample from your BSR matrix.  This is helpful
+    if you have a problematic genome
+3.  pan_genome_stats.py - Calculates core and accessory genome statistics from user-defined
+    thresholds
+4.  filter_BSR_variome.py - Filters out the "core" genome based on a user-defined threshold.
+    Sometimes we are only interested in the variable part of the pan-genome     
+                   
 
   
