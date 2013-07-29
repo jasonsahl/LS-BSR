@@ -156,13 +156,6 @@ def translate_consensus(consensus):
             raise TypeError("invalid character observed in sequence %s" % record.id)
     for record in outdata: return str(record)
     
-def uclust_sort(usearch):
-    """sort with Usearch. Updated to V6"""
-    cmd = ["%s" % usearch, 
-           "-sortbylength", "all_gene_seqs.out",
-           "-output", "tmp_sorted.txt"]
-    subprocess.check_call(cmd)
-
 def uclust_cluster(usearch, id):
     """cluster with Uclust.  Updated to V6"""
     cmd = ["%s" % usearch,
@@ -649,7 +642,7 @@ def filter_variome(matrix, threshold, step):
 def run_usearch(usearch, id):
     rec=1
     curr_dir=os.getcwd()
-    for infile in glob.glob(os.path.join(curr_dir, "x*")):
+    for infile in glob.glob(os.path.join(curr_dir, "z.*")):
         cmd = ["%s" % usearch,
            "-cluster_fast", "%s" % infile,
            "-id", str(id),
@@ -667,5 +660,19 @@ def filter_scaffolds(in_fasta):
     SeqIO.write(outrecords, output_handle, "fasta")
     output_handle.close()
 
+def sort_usearch(usearch):
+    rec=1
+    curr_dir=os.getcwd()
+    for infile in glob.glob(os.path.join(curr_dir, "x*")):
+        cmd = ["%s" % usearch,
+               "-sortbylength", "%s" % infile,
+               "-output", "z.%s.sorted" % str(autoIncrement())]
+        subprocess.check_call(cmd)
         
 
+def uclust_sort(usearch):
+    """sort with Usearch. Updated to V6"""
+    cmd = ["%s" % usearch, 
+           "-sortbylength", "all_gene_seqs.out",
+           "-output", "tmp_sorted.txt"]
+    subprocess.check_call(cmd)
