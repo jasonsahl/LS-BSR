@@ -100,7 +100,6 @@ def main(directory, id, filter, processors, genes, usearch, blast, penalty, rewa
         os.system("cat *genes.seqs > all_gene_seqs.out")
         filter_scaffolds("all_gene_seqs.out")
         os.system("mv tmp.out all_gene_seqs.out")
-        #uclust_sort(usearch)
         rename_fasta_header("all_gene_seqs.out", "all_sorted.txt")
         os.system("mkdir split_files")
         os.system("cp all_sorted.txt split_files/")
