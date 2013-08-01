@@ -120,7 +120,7 @@ def predict_genes(dir_path, processors):
                             for idx, f in enumerate(files)]
     def _perform_workflow(data):
         tn, f = data
-        subprocess.check_call("prodigal -i %s -d %s_genes.seqs -a %s_genes.pep > /dev/null 2>&1" % (f, f, f), shell=True)
+        subprocess.check_call("prodigal -i %s -d %s_genes.seqs > /dev/null 2>&1" % (f, f), shell=True)
     results = set(p_func.pmap(_perform_workflow,
                               files_and_temp_names,
                               num_workers=processors))
@@ -176,18 +176,21 @@ def blast_against_each_genome(dir_path, processors, filter, peptides, blast, pen
         if ".fasta.new" in f:
             subprocess.check_call("formatdb -i %s -p F > /dev/null 2>&1" % f, shell=True)
         if ".fasta.new" in f:
-            cmd = ["blastall",
-                   "-p", blast,
-                   "-i", peptides,
-                   "-d", f,
-                   "-a", str(processors),
-                   "-e", "0.1",
-                   "-m", "8",
-                   "-F", str(filter),
-                   "-q", str(penalty),
-                   "-r", str(reward),
-                   "-o", "%s_blast.out" % f]
-            subprocess.check_call(cmd)
+            try:
+                cmd = ["blastall",
+                       "-p", blast,
+                       "-i", peptides,
+                       "-d", f,
+                       "-a", str(processors),
+                       "-e", "0.1",
+                       "-m", "8",
+                       "-F", str(filter),
+                       "-q", str(penalty),
+                       "-r", str(reward),
+                       "-o", "%s_blast.out" % f]
+                subprocess.check_call(cmd)
+            except:
+                print "genomes %s cannot be used" % f
             
     results = set(p_func.pmap(_perform_workflow,
                               files_and_temp_names,
@@ -348,43 +351,6 @@ def prune_matrix(matrix, group1, group2):
         deque((list.pop(fields, i) for i in sorted(group2_idx, reverse=True)), maxlen=0)
         print >> group2_out,"".join(name),"\t","\t".join(fields)
     return group1_ids, group2_ids, group1_idx, group2_idx
-
-def compare_values(pruned_1,pruned_2,upper,lower):
-    group1 = open(pruned_1, "rU")
-    group2 = open(pruned_2, "rU")
-    group1_out = open("group1_out.txt", "w")
-    group2_out = open("group2_out.txt", "w")
-    group1_presents=[ ]
-    group2_presents=[ ]
-    group1_mean = [ ]
-    next(group1)
-    for line in group1:
-	fields = line.split()
-	presents = [ ]
-	homolog = [ ]
-	ints=map(float, fields[1:])
-	mean = float(np.mean(ints))
-        group1_mean.append(mean)
-	for x in fields[1:]:
-		if float(x)>=float(upper): presents.append(x)
-                if float(x)>=float(upper): group1_presents.append(x)
-	for x in fields[1:]:
-		if float(x)>=float(lower): homolog.append(x)
-	print >> group1_out,fields[0],"\t",mean,"\t",len(presents),"\t",len(fields[1:]),"\t",len(homolog)
-    next(group2)
-    for line in group2:
-	fields = line.split()
-	presents = [ ]
-	homolog = [ ]
-	ints=map(float, fields[1:])
-	mean = float(np.mean(ints))
-	for x in fields[1:]:
-		if float(x)>=float(upper): presents.append(x)
-                if float(x)>=float(upper): group2_presents.append(x)
-	for x in fields[1:]:
-		if float(x)>=float(lower): homolog.append(x)
-	print >> group2_out,mean,"\t",len(presents),"\t",len(fields[1:]),"\t",len(homolog)
-    return group1_presents, group2_presents, group1_mean
 
 def compare_values(pruned_1,pruned_2,upper,lower):
     group1 = open(pruned_1, "rU")
