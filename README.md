@@ -8,7 +8,7 @@ provides one with the BSR, which can range from 0 to 1; scores slightly higher
 than 1.0 can be observed due to variable bit scores obtained by BLAST.  In my opinion,
 they should be treated as 1.0.
 
-contact: jsahl at tgen.org
+contact: jasonsahl at gmail dot com
 
 To run the program, the following dependencies are required:
 
