@@ -19,7 +19,7 @@ import types
 from collections import deque
 import numpy as np
 
-def make_table(processors):
+def make_table(processors, test):
     """make the BSR matrix table"""
     clusters=[ ]
     curr_dir=os.getcwd()
@@ -81,8 +81,11 @@ def make_table(processors):
     open("ref.list", "a").write("\n")
     for x in nr_sorted:
         open("ref.list", "a").write("%s\n" % x)
-    myout=[x for i, x in enumerate(outdata) if x not in outdata[i+1:]]
-    return sorted(outdata)
+    if "T" in test:
+        myout=[x for i, x in enumerate(outdata) if x not in outdata[i+1:]]
+        return sorted(outdata)
+    else:
+        pass
     
 def divide_values(file, ref_scores):
     """divide each BSR value in a row by that row's maximum value"""
