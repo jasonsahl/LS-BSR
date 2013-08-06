@@ -539,7 +539,8 @@ def find_dups(ref_scores, length, max_plog, min_hlog):
         try:
             for line in open(infile, "U"):
                 fields = line.split()
-                if float(fields[2])>=int(min_hlog) and (float(fields[11])/float(ref_scores.get(fields[0])))>=float(length):
+                if fields[0] not in ref_scores: pass
+                elif float(fields[2])>=int(min_hlog) and (float(fields[11])/float(ref_scores.get(fields[0])))>=float(length):
                     try:
                         my_dict_o[fields[0]].append(fields[11])
                     except KeyError:
