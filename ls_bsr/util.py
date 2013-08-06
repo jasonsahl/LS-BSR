@@ -544,8 +544,6 @@ def find_dups(ref_scores, length, max_plog, min_hlog):
                         my_dict_o[fields[0]].append(fields[11])
                     except KeyError:
                         my_dict_o[fields[0]] = [fields[11]]
-                    else:
-                        continue
                 else:
                     continue
         except:
