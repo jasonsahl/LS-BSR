@@ -546,8 +546,10 @@ def find_dups(ref_scores, length, max_plog, min_hlog):
                         my_dict_o[fields[0]] = [fields[11]]
                     else:
                         continue
+                else:
+                    continue
         except:
-            raise TypeError("problem parsing input file")
+            raise TypeError("problem parsing %s" % infile)
 
     for k,v in my_dict_o.iteritems():
         if int(len(v))>=2:
