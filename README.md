@@ -13,7 +13,8 @@ contact: jasonsahl at gmail dot com
 To run the program, the following dependencies are required:
 
 1.  USearch (tested version is 6.0.307), path is passed as command-line option - only required
-    if a set of gene sequences is not supplied.  32-bit version should be sufficient.
+    if a set of gene sequences is not supplied.  32-bit version should be sufficient.  Tested successfully
+    with version v7.0.959.
 2.  BioPython, must be in PythonPath
 3.  blastall (tested version is 2.2.25), must be in path as 'blastall'.  Known issues
     seen with v2.2.26
