@@ -1,4 +1,4 @@
-LS-BSR (Large Scale Blast Score Ratio) is released under the MIT license.  See "license.txt" for more information
+LS-BSR (Large Scale Blast Score Ratio) is released under the GPL version 3 license.  See "license.txt" for more information
 
 LS-BSR is a method to compare all coding regions in a large set of genomes.
 Each peptide is compared against it's nucleotide sequence in order to obtain
