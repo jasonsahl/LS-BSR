@@ -481,7 +481,7 @@ class Test13(unittest.TestCase):
         np.write("bfpB    0.00\n")
         np.write("stx2a   0.08")
         np.close()
-        self.assertEqual(compare_values(fpath, npath, "0.8", "0.4"), (['1.00', '0.92', '1.00'], ['1.00', '1.00'], [0.03, 0.5, 0.46, 0.5, 0.07500000000000001]))
+        self.assertEqual(compare_values(fpath, npath, "0.8", "0.4"), ([1.00, 0.92, 1.00], [1.00, 1.00], [0.03, 0.5, 0.46, 0.5, 0.07500000000000001]))
         shutil.rmtree(tdir)
     def test_compare_values_border_cases(self):
         """tests the condition where BSR values are near the border regions
@@ -505,7 +505,7 @@ class Test13(unittest.TestCase):
         np.write("bfpB    0.00\n")
         np.write("stx2a   0.79")
         np.close()
-        self.assertEqual(compare_values(fpath, npath, "0.8", "0.4"), (['0.81'], ['0.80', '1.00'], [0.03, 0.0, 0.0, 0.81, 0.07]))
+        self.assertEqual(compare_values(fpath, npath, "0.8", "0.4"), ([0.81], [0.80, 1.00], [0.03, 0.0, 0.0, 0.81, 0.07]))
         shutil.rmtree(tdir)
         os.system("rm group*_out.txt")
         
