@@ -107,6 +107,8 @@ def divide_values(file, ref_scores):
             try:
                 values.append(float(x)/float(ref_scores.get(all_fields[0])))
             except:
+                """somewhat arbitrary, but covers the case where the reference
+                value is missing"""
                 values.append(float(x)/float("1000"))
         sort_values=['%.2f' % elem for elem in values]
         print >> outfile, '\t'.join([str(item) for item in sort_values])
@@ -371,10 +373,9 @@ def compare_values(pruned_1,pruned_2,upper,lower):
 	ints=map(float, fields[1:])
 	mean = float(np.mean(ints))
         group1_mean.append(mean)
-	for x in fields[1:]:
+	for x in ints:
 		if float(x)>=float(upper): presents.append(x)
                 if float(x)>=float(upper): group1_presents.append(x)
-	for x in fields[1:]:
 		if float(x)>=float(lower): homolog.append(x)
 	print >> group1_out,fields[0],"\t",mean,"\t",len(presents),"\t",len(fields[1:]),"\t",len(homolog)
     next(group2)
@@ -384,10 +385,9 @@ def compare_values(pruned_1,pruned_2,upper,lower):
 	homolog = [ ]
 	ints=map(float, fields[1:])
 	mean = float(np.mean(ints))
-	for x in fields[1:]:
+	for x in ints:
 		if float(x)>=float(upper): presents.append(x)
                 if float(x)>=float(upper): group2_presents.append(x)
-	for x in fields[1:]:
 		if float(x)>=float(lower): homolog.append(x)
 	print >> group2_out,mean,"\t",len(presents),"\t",len(fields[1:]),"\t",len(homolog)
     return group1_presents, group2_presents, group1_mean

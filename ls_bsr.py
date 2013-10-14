@@ -75,7 +75,7 @@ def test_fplog(option, opt_str, value, parser):
         sys.exit()
 
 def main(directory, id, filter, processors, genes, usearch, blast, penalty, reward, length,
-         max_plog, min_hlog, f_plog):
+         max_plog, min_hlog, f_plog, keep):
     start_dir = os.getcwd()
     ap=os.path.abspath("%s" % start_dir)
     dir_path=os.path.abspath("%s" % directory)
@@ -173,7 +173,10 @@ def main(directory, id, filter, processors, genes, usearch, blast, penalty, rewa
         sys.exc_clear()
     logging.logPrint("all Done")
     os.chdir("%s" % dir_path)
-    os.system("rm -rf joined")
+    if "T" == keep:
+        pass
+    else:
+        os.system("rm -rf joined")
     
 if __name__ == "__main__":
     usage="usage: %prog [options]"
@@ -217,6 +220,9 @@ if __name__ == "__main__":
     parser.add_option("-t", "--f_plog", dest="f_plog", action="callback", callback=test_fplog,
                       help="filter ORFs with a paralog from BSR matrix? Default is F, values can be T or F",
                       default="F", type="string")
+    parser.add_option("-k", "--keep", dest="keep", action="callback", callback=test_filter,
+                      help="keep or remove temp files, choose from T or F, defaults to F",
+                      default="F", type="string")
     options, args = parser.parse_args()
     
     mandatories = ["directory"]
@@ -227,5 +233,5 @@ if __name__ == "__main__":
             exit(-1)
 
     main(options.directory, options.id, options.filter, options.processors, options.genes, options.usearch, options.blast,
-         options.penalty, options.reward, options.length, options.max_plog, options.min_hlog, options.f_plog)
+         options.penalty, options.reward, options.length, options.max_plog, options.min_hlog, options.f_plog, options.keep)
 
