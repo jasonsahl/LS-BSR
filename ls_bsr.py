@@ -79,6 +79,11 @@ def main(directory, id, filter, processors, genes, usearch, blast, penalty, rewa
     start_dir = os.getcwd()
     ap=os.path.abspath("%s" % start_dir)
     dir_path=os.path.abspath("%s" % directory)
+    ab = subprocess.call(['which', 'blastall'])
+    if ab == 0:
+        pass
+    else:
+        print "blastall isn't in your path, but needs to be!"
     try:
         os.makedirs('%s/joined' % dir_path)
     except OSError, e:
@@ -88,6 +93,11 @@ def main(directory, id, filter, processors, genes, usearch, blast, penalty, rewa
         name=get_seq_name(infile)
         os.system("cp %s %s/joined/%s.new" % (infile,dir_path,name))
     if "null" in genes:
+        rc = subprocess.call(['which', 'prodigal'])
+        if rc == 0:
+            pass
+        else:
+            print "prodigal is not in your path, but needs to be!"
         try:
             if os.path.exists(usearch):
                 pass

@@ -125,7 +125,7 @@ def predict_genes(dir_path, processors):
                             for idx, f in enumerate(files)]
     def _perform_workflow(data):
         tn, f = data
-        subprocess.check_call("prodigal -i %s -d %s_genes.seqs > /dev/null 2>&1" % (f, f), shell=True)
+        subprocess.check_call("prodigal -i %s -d %s_genes.seqs -a %s_genes.pep > /dev/null 2>&1" % (f, f, f), shell=True)
     results = set(p_func.pmap(_perform_workflow,
                               files_and_temp_names,
                               num_workers=processors))
