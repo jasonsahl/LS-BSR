@@ -144,7 +144,7 @@ def main(directory, id, filter, processors, genes, usearch, blast, penalty, rewa
             try:
                 subprocess.check_call("formatdb -i %s -p F" % gene_path, shell=True)
             except:
-                logging.logPrint("BLAST not found")
+                logging.logPrint("problem encountered with BLAST database")
                 sys.exit()
             blast_against_self(gene_path, "genes.pep", "tmp_blast.out", filter, blast, penalty, reward)
             subprocess.check_call("sort -u -k 1,1 tmp_blast.out > self_blast.out", shell=True)

@@ -179,7 +179,10 @@ def blast_against_each_genome(dir_path, processors, filter, peptides, blast, pen
     def _perform_workflow(data):
 	tn, f = data
         if ".fasta.new" in f:
-            subprocess.check_call("formatdb -i %s -p F > /dev/null 2>&1" % f, shell=True)
+            try:
+                subprocess.check_call("formatdb -i %s -p F > /dev/null 2>&1" % f, shell=True)
+            except:
+                print "problem found in formatting genome %s" % f
         if ".fasta.new" in f:
             try:
                 cmd = ["blastall",
