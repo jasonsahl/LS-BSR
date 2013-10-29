@@ -210,7 +210,7 @@ if __name__ == "__main__":
                       help="path to usearch v6, required for use with Prodigal",
                       type="string")
     parser.add_option("-b", "--blast", dest="blast", action="callback", callback=test_blast,
-                      help="use tblast or blastn, only used in conjunction with -g option, default is blastn",
+                      help="use tblastn or blastn, only used in conjunction with -g option, default is blastn",
                       default="tblastn", type="string")
     parser.add_option("-q", "--penalty", dest="penalty", action="store",
                       help="mismatch penalty, only to be used with blastn and -g option, default is -4",
