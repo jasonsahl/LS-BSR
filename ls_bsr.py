@@ -16,6 +16,7 @@ import errno
 import types
 from ls_bsr.util import *
 from igs.utils import logging
+import glob
 
 def test_file(option, opt_str, value, parser):
     try:
@@ -135,6 +136,12 @@ def main(directory, id, filter, processors, genes, usearch, blast, penalty, rewa
         find_dups(ref_scores, length, max_plog, min_hlog)
     else:
         logging.logPrint("Using pre-compiled set of predicted genes")
+        files = glob.glob(os.path.join(dir_path, "*.fasta"))
+        if len(files)==0:
+            print "no usable reference genomes found!"
+            sys.exit()
+        else:
+            pass
         gene_path=os.path.abspath("%s" % genes)
         os.system("cp %s %s/joined/" % (gene_path,dir_path))
         os.chdir("%s/joined" % dir_path)

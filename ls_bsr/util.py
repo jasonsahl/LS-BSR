@@ -630,6 +630,9 @@ def filter_scaffolds(in_fasta):
         if "N" not in record.seq:
             outrecords.append(record)
     output_handle = open("tmp.out", "w")
+    if int(len(outrecords))==0:
+        print "no usable fasta records were found"
+        sys.exit()
     SeqIO.write(outrecords, output_handle, "fasta")
     output_handle.close()
 
