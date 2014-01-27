@@ -40,7 +40,7 @@ def test_blast(option, opt_str, value, parser):
     elif "blastn" in value:
         setattr(parser.values, option.dest, value)
     else:
-        print "Blast option not supported.  Only select from blastn and blastn"
+        print "Blast option not supported.  Only select from tblastn or blastn"
         sys.exit()
 
 def test_dir(option, opt_str, value, parser):
@@ -80,6 +80,7 @@ def main(directory, id, filter, processors, genes, usearch, blast, penalty, rewa
     start_dir = os.getcwd()
     ap=os.path.abspath("%s" % start_dir)
     dir_path=os.path.abspath("%s" % directory)
+    logging.logPrint("Testing paths of dependencies")
     ab = subprocess.call(['which', 'blastall'])
     if ab == 0:
         pass
@@ -90,6 +91,7 @@ def main(directory, id, filter, processors, genes, usearch, blast, penalty, rewa
     except OSError, e:
      	if e.errno != errno.EEXIST:
             raise
+    print "citation: Altschul SF, Madden TL, Schaffer AA, Zhang J, Zhang Z, Miller W, and Lipman DJ. 1997. Gapped BLAST and PSI-BLAST: a new generation of protein database search programs. Nucleic Acids Res 25:3389-3402"
     for infile in glob.glob(os.path.join(dir_path, '*.fasta')):
         name=get_seq_name(infile)
         os.system("cp %s %s/joined/%s.new" % (infile,dir_path,name))
@@ -99,9 +101,10 @@ def main(directory, id, filter, processors, genes, usearch, blast, penalty, rewa
             pass
         else:
             print "prodigal is not in your path, but needs to be!"
+        print "citation: Hyatt D, Chen GL, Locascio PF, Land ML, Larimer FW, and Hauser LJ. 2010. Prodigal: prokaryotic gene recognition and translation initiation site identification. BMC Bioinformatics 11:119"
         try:
             if os.path.exists(usearch):
-                pass
+                print "citation: Edgar RC. 2010. Search and clustering orders of magnitude faster than BLAST. Bioinformatics 26:2460-2461"
         except:
             raise TypeError("-u usearch flag must be set for use with prodigal")
             sys.exc_clear()
@@ -217,7 +220,7 @@ if __name__ == "__main__":
                       help="path to usearch v6, required for use with Prodigal",
                       type="string")
     parser.add_option("-b", "--blast", dest="blast", action="callback", callback=test_blast,
-                      help="use tblastn or blastn, only used in conjunction with -g option, default is blastn",
+                      help="use tblastn or blastn;only used in conjunction with -g option, default is tblastn",
                       default="tblastn", type="string")
     parser.add_option("-q", "--penalty", dest="penalty", action="store",
                       help="mismatch penalty, only to be used with blastn and -g option, default is -4",
