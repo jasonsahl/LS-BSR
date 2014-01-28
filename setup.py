@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 from distutils.core import setup
-import re
 
 __author__ = "Jason Sahl"
 __credits__ = ["Jason Sahl"]
