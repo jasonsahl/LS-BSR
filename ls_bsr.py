@@ -126,16 +126,26 @@ def main(directory, id, filter, processors, genes, usearch, blast, penalty, rewa
         os.system("mv all_sorted.txt %s/joined" % dir_path)
         os.chdir("%s/joined" % dir_path)
         uclust_cluster(usearch, id)
-        translate_consensus("consensus.fasta")
-        filter_seqs("tmp.pep")
         subprocess.check_call("formatdb -i consensus.fasta -p F", shell=True)
-        blast_against_self("consensus.fasta", "consensus.pep", "tmp_blast.out", filter, blast, penalty, reward)
+        if "tblastn" == blast:
+            translate_consensus("consensus.fasta")
+            filter_seqs("tmp.pep")
+            blast_against_self("consensus.fasta", "consensus.pep", "tmp_blast.out", filter, blast, penalty, reward, processors)
+        elif "blastn" == blast:
+            blast_against_self("consensus.fasta", "consensus.fasta", "tmp_blast.out", filter, blast, penalty, reward, processors)
+        else:
+            pass
         subprocess.check_call("sort -u -k 1,1 tmp_blast.out > self_blast.out", shell=True)
         ref_scores=parse_self_blast(open("self_blast.out", "U"))
         subprocess.check_call("rm tmp_blast.out self_blast.out", shell=True)
         os.system("rm *new_genes.*")
         logging.logPrint("starting BLAST")
-        blast_against_each_genome(dir_path, processors, filter, "consensus.pep", blast, penalty, reward)
+        if "tblastn" == blast:
+            blast_against_each_genome(dir_path, processors, filter, "consensus.pep", blast, penalty, reward)
+        elif "blastn" == blast:
+            blast_against_each_genome(dir_path, processors, filter, "consensus.fasta", blast, penalty, reward)
+        else:
+            pass
         find_dups(ref_scores, length, max_plog, min_hlog)
     else:
         logging.logPrint("Using pre-compiled set of predicted genes")
@@ -156,7 +166,7 @@ def main(directory, id, filter, processors, genes, usearch, blast, penalty, rewa
             except:
                 logging.logPrint("problem encountered with BLAST database")
                 sys.exit()
-            blast_against_self(gene_path, "genes.pep", "tmp_blast.out", filter, blast, penalty, reward)
+            blast_against_self(gene_path, "genes.pep", "tmp_blast.out", filter, blast, penalty, reward, processors)
             subprocess.check_call("sort -u -k 1,1 tmp_blast.out > self_blast.out", shell=True)
             ref_scores=parse_self_blast(open("self_blast.out", "U"))
             subprocess.check_call("rm tmp_blast.out self_blast.out", shell=True)
@@ -169,7 +179,7 @@ def main(directory, id, filter, processors, genes, usearch, blast, penalty, rewa
             except:
                 logging.logPrint("BLAST not found")
                 sys.exit()
-            blast_against_self(gene_path, gene_path, "tmp_blast.out", filter, blast, penalty, reward)
+            blast_against_self(gene_path, gene_path, "tmp_blast.out", filter, blast, penalty, reward, processors)
             subprocess.check_call("sort -u -k 1,1 tmp_blast.out > self_blast.out", shell=True)
             ref_scores=parse_self_blast(open("self_blast.out", "U"))
             subprocess.check_call("rm tmp_blast.out self_blast.out", shell=True)

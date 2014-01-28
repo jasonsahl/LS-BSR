@@ -259,12 +259,12 @@ def get_unique_lines():
                 outdata.append(line)
     return outdata
 
-def blast_against_self(genes_nt, genes_pep, output, filter, blast, penalty, reward):
+def blast_against_self(genes_nt, genes_pep, output, filter, blast, penalty, reward, processors):
     cmd = ["blastall",
            "-p", blast,
            "-i", genes_pep,
            "-d", genes_nt,
-           "-a", "2",
+           "-a", str(processors),
            "-e", "0.1",
            "-m", "8",
            "-F", str(filter),

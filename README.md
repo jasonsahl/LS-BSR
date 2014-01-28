@@ -126,12 +126,12 @@ python /Users/jsahl/LS-BSR/ls_bsr.py -d genomes -g genes/ecoli_markers.fasta -b 
 python /Users/jsahl/LS-BSR/ls_bsr.py -d genomes -u /usr/local/bin/usearch6
 
 -To inspect the output, you can look up the following entries in the BSR matrix.  They
-should correspond with the results obtained with the gene screen methods:
+should correspond with the results obtained with the gene screen methods (TBLASTN only):
 
-IpaH3 -> centroid_1724,
-LT -> centroid_11953,
-ST2 -> centroid_19265,
-bfpB -> centroid_1922,
+IpaH3 -> centroid_1724
+LT -> centroid_11953
+ST2 -> centroid_19265
+bfpB -> centroid_1922
 stx2a -> centroid_7471
 
 Sample output for each method is shown in the test_data directory
