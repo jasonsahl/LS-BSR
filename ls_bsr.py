@@ -126,6 +126,7 @@ def main(directory, id, filter, processors, genes, usearch, blast, penalty, rewa
         os.system("mv all_sorted.txt %s/joined" % dir_path)
         os.chdir("%s/joined" % dir_path)
         uclust_cluster(usearch, id)
+        clusters = get_cluster_ids("consensus.fasta")
         subprocess.check_call("formatdb -i consensus.fasta -p F", shell=True)
         if "tblastn" == blast:
             translate_consensus("consensus.fasta")
@@ -156,6 +157,7 @@ def main(directory, id, filter, processors, genes, usearch, blast, penalty, rewa
         else:
             pass
         gene_path=os.path.abspath("%s" % genes)
+        clusters = get_cluster_ids(gene_path)
         os.system("cp %s %s/joined/" % (gene_path,dir_path))
         os.chdir("%s/joined" % dir_path)
         if "tblastn" in blast:
@@ -188,7 +190,7 @@ def main(directory, id, filter, processors, genes, usearch, blast, penalty, rewa
     logging.logPrint("BLAST done")
     parse_blast_report()
     get_unique_lines()
-    make_table(processors, "F")
+    make_table(processors, "F", clusters)
     subprocess.check_call("paste ref.list *.matrix > bsr_matrix", shell=True)
     divide_values("bsr_matrix", ref_scores)
     subprocess.check_call("paste ref.list BSR_matrix_values.txt > %s/bsr_matrix_values.txt" % start_dir, shell=True)

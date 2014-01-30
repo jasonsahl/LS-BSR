@@ -19,18 +19,16 @@ import types
 from collections import deque
 import numpy as np
 
-def make_table(processors, test):
+def get_cluster_ids(in_fasta):
+    clusters = []
+    infile = open(in_fasta, "U")
+    for record in SeqIO.parse(infile, "fasta"):
+        clusters.append(record.id)
+    return clusters
+
+def make_table(processors, test, clusters):
     """make the BSR matrix table"""
-    clusters=[ ]
     curr_dir=os.getcwd()
-    for infile in glob.glob(os.path.join(curr_dir, "*.filtered.unique")):
-        file=open(infile, "rU")
-        for line in file:
-		fields=line.split()
-                if fields[0] not in clusters:
-                    clusters.append(fields[0])
-    """de-replicate the clusters"""
-    nr=[x for i, x in enumerate(clusters) if x not in clusters[i+1:]]
     names = [ ]
     outdata = [ ]
     files = glob.glob(os.path.join(curr_dir, "*.filtered.unique"))
@@ -61,8 +59,8 @@ def make_table(processors, test):
         cluster_names={}
         """add in values, including any potentially missing ones"""
         for k,v in dict.iteritems():
-            if k in nr: cluster_names.update({k:v})
-        for x in nr:
+            if k in clusters: cluster_names.update({k:v})
+        for x in clusters:
             if x not in dict.keys():cluster_names.update({x:0})
         """need to write a blank space"""
         for x in reduced: open("%s.tmp.matrix" % x, 'a').write('%s\n' % x)
@@ -77,7 +75,7 @@ def make_table(processors, test):
                               num_workers=processors))
     names_out = open("names.txt", "w")
     for x in names: print >> names_out, "".join(x)
-    nr_sorted=sorted(nr)
+    nr_sorted=sorted(clusters)
     open("ref.list", "a").write("\n")
     for x in nr_sorted:
         open("ref.list", "a").write("%s\n" % x)
