@@ -46,29 +46,34 @@ def make_table(processors, test, clusters):
         """remove the junk at the end of the file"""
         for x in name:reduced.append(x.replace('.fasta.new_blast.out.filtered.filtered.unique',''))
         names.append(reduced)
-        dict={}
+        my_dict={}
         file=open(f, "rU")
         tmpfile=open("tmp.txt", "w")
         """make a dictionary of all clusters and values"""
         try:
             for line in file:
                 fields=line.split()
-                dict.update({fields[0]:fields[1]})
+                my_dict.update({fields[0]:fields[1]})
         except:
             raise TypeError("abnormal number of fields")
-        cluster_names={}
+        #cluster_names={}
         """add in values, including any potentially missing ones"""
-        for k,v in dict.iteritems():
-            if k in clusters: cluster_names.update({k:v})
+        #for k,v in dict.iteritems():
+        #    if k in clusters: cluster_names.update({k:v})
         for x in clusters:
-            if x not in dict.keys():cluster_names.update({x:0})
+            if x not in my_dict.keys():my_dict.update({x:0})
         """need to write a blank space"""
         for x in reduced: open("%s.tmp.matrix" % x, 'a').write('%s\n' % x)
         """sort keys to get the same order between samples"""
-        for key in sorted(cluster_names.iterkeys()):
-            for x in reduced:
-                open("%s.tmp.matrix" % x, 'a').write("%s\n" % cluster_names[key])
-                outdata.append(cluster_names[key])
+        sorted_dict = sorted(my_dict.iterkeys())
+        #for key in sorted(my_dict.iterkeys()):
+        #print sorted_dict
+        for x in reduced:
+            for y in sorted_dict:
+                #open("%s.tmp.matrix" % x, 'a').write("%s\n" % cluster_names[key])
+                open("%s.tmp.matrix" % x, "a").write("%s\n" % my_dict[y])
+                outdata.append(my_dict[y])
+        #        outdata.append(v)
         lock.release()
     results = set(p_func.pmap(_perform_workflow,
                               files_and_temp_names,
