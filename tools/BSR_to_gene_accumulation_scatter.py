@@ -41,7 +41,7 @@ def core_accumulation(matrix, upper, iterations):
     my_matrix.close()
     total_dict = {}
     for j in range(0,iterations):
-        for i in range(1,genomes):
+        for i in range(1,genomes+1):
             positives = [ ]
             outseqs=random.sample(set(indexes), int(i))
             with open(matrix, "U") as f:
@@ -76,7 +76,7 @@ def gene_accumulation(matrix, upper, iterations):
     my_matrix.close()
     total_dict = {}
     for j in range(0,iterations):
-        for i in range(1,genomes):
+        for i in range(1,genomes+1):
             positives = [ ]
             outseqs=random.sample(set(indexes), int(i))
             with open(matrix, "U") as f:
@@ -111,7 +111,7 @@ def gene_uniques(matrix, upper, lower, iterations):
     my_matrix.close()
     total_dict = {}
     for j in range(0,iterations):
-        for i in range(1,genomes):
+        for i in range(1,genomes+1):
             positives = [ ]
             outseqs=random.sample(set(indexes), int(i))
             with open(matrix, "U") as f:
@@ -119,13 +119,13 @@ def gene_uniques(matrix, upper, lower, iterations):
                 for line in f:
                     fields = line.split()
                     positive_lines=[]
-                    for field in fields[1:]:
-                        if float(field)>=float(lower):
-                            positive_lines.append("1")
+                    #for field in fields[1:]:
+                    #    if float(field)>=float(lower):
+                    #        positive_lines.append("1")
                     for outseq in outseqs:
-                        if float(fields[outseq])>=float(upper):
+                        if float(fields[outseq])>=float(lower):
                             positive_lines.append("1")
-                    if len(positive_lines)==len(outseqs):
+                    if len(positive_lines)==1:
                         positives.append("1")
             try:
                 total_dict[i].append(len(positives))
