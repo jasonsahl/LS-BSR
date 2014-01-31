@@ -36,6 +36,7 @@ def make_table(processors, test, clusters):
                             for idx, f in enumerate(files)]
     lock = threading.Lock()
     def _perform_workflow(data):
+        """cannot perform this work in parallel??"""
         lock.acquire()
         tn, f = data
         """get the name of each of the files to be iterated"""
@@ -56,10 +57,7 @@ def make_table(processors, test, clusters):
                 my_dict.update({fields[0]:fields[1]})
         except:
             raise TypeError("abnormal number of fields")
-        #cluster_names={}
         """add in values, including any potentially missing ones"""
-        #for k,v in dict.iteritems():
-        #    if k in clusters: cluster_names.update({k:v})
         for x in clusters:
             if x not in my_dict.keys():my_dict.update({x:0})
         """need to write a blank space"""
@@ -67,19 +65,21 @@ def make_table(processors, test, clusters):
         """sort keys to get the same order between samples"""
         sorted_dict = sorted(my_dict.iterkeys())
         #for key in sorted(my_dict.iterkeys()):
-        #print sorted_dict
         for x in reduced:
             for y in sorted_dict:
                 #open("%s.tmp.matrix" % x, 'a').write("%s\n" % cluster_names[key])
                 open("%s.tmp.matrix" % x, "a").write("%s\n" % my_dict[y])
-                outdata.append(my_dict[y])
-        #        outdata.append(v)
+                """only run this for unit testing"""
+                if "T" in test:
+                    outdata.append(my_dict[y])
         lock.release()
     results = set(p_func.pmap(_perform_workflow,
                               files_and_temp_names,
                               num_workers=processors))
     names_out = open("names.txt", "w")
     for x in names: print >> names_out, "".join(x)
+    """this makes sure that the ref.list file is
+    in the same order as the tmp matrix"""
     nr_sorted=sorted(clusters)
     open("ref.list", "a").write("\n")
     for x in nr_sorted:
