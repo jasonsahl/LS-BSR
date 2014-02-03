@@ -63,15 +63,18 @@ def make_table(processors, test, clusters):
         """need to write a blank space"""
         for x in reduced: open("%s.tmp.matrix" % x, 'a').write('%s\n' % x)
         """sort keys to get the same order between samples"""
-        sorted_dict = sorted(my_dict.iterkeys())
+            #sorted_dict = sorted(my_dict.iterkeys())
         #for key in sorted(my_dict.iterkeys()):
         for x in reduced:
-            for y in sorted_dict:
+            for key in sorted(my_dict.iterkeys()):
+                open("%s.tmp.matrix" % x, "a").write("%s\n" % my_dict[key])
+                #print "%s: %s" % (key, mydict[key])
+            #for y in sorted_dict:
                 #open("%s.tmp.matrix" % x, 'a').write("%s\n" % cluster_names[key])
-                open("%s.tmp.matrix" % x, "a").write("%s\n" % my_dict[y])
+                #open("%s.tmp.matrix" % x, "a").write("%s\n" % my_dict[y])
                 """only run this for unit testing"""
                 if "T" in test:
-                    outdata.append(my_dict[y])
+                    outdata.append(my_dict[key])
         lock.release()
     results = set(p_func.pmap(_perform_workflow,
                               files_and_temp_names,
