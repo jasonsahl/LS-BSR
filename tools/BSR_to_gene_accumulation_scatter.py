@@ -73,7 +73,7 @@ def process_pangenome(matrix, upper, lower, iterations, type):
                                 positive_lines_core.append("1")
                         if type == "uni" or type == "all":
                             """this was changed from lower to upper"""
-                            if float(fields[outseq])>=float(lower):
+                            if float(fields[outseq])>=float(lower) and float(fields[outseq])>=float(upper):
                                 positive_lines_unis.append("1")
                     if len(positive_lines_acc)>=1:
                         positives_acc.append("1")
