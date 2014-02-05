@@ -88,9 +88,9 @@ def main(directory, id, filter, processors, genes, usearch, blast, penalty, rewa
         print "blastall isn't in your path, but needs to be!"
     try:
         os.makedirs('%s/joined' % dir_path)
-    except OSError, e:
-     	if e.errno != errno.EEXIST:
-            raise
+    except:
+        print "old run directory exists in your genomes directory.  Delete and run again"
+        sys.exit()
     print "citation: Altschul SF, Madden TL, Schaffer AA, Zhang J, Zhang Z, Miller W, and Lipman DJ. 1997. Gapped BLAST and PSI-BLAST: a new generation of protein database search programs. Nucleic Acids Res 25:3389-3402"
     for infile in glob.glob(os.path.join(dir_path, '*.fasta')):
         name=get_seq_name(infile)

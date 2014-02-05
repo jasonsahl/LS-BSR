@@ -17,6 +17,7 @@ import errno
 import threading
 import types
 from collections import deque
+import collections
 import numpy as np
 
 def get_cluster_ids(in_fasta):
@@ -65,16 +66,21 @@ def make_table(processors, test, clusters):
         """sort keys to get the same order between samples"""
             #sorted_dict = sorted(my_dict.iterkeys())
         #for key in sorted(my_dict.iterkeys()):
+        """testing new method"""
+        od = collections.OrderedDict(sorted(my_dict.items()))
         for x in reduced:
-            for key in sorted(my_dict.iterkeys()):
-                open("%s.tmp.matrix" % x, "a").write("%s\n" % my_dict[key])
+            newout = open("%s.tmp.matrix" % x, "a")
+            for k,v in od.iteritems():
+                print >> newout,v
+                #for key in sorted(my_dict.iterkeys()):
+                #open("%s.tmp.matrix" % x, "a").write("%s\n" % my_dict[key])"""
                 #print "%s: %s" % (key, mydict[key])
             #for y in sorted_dict:
                 #open("%s.tmp.matrix" % x, 'a').write("%s\n" % cluster_names[key])
                 #open("%s.tmp.matrix" % x, "a").write("%s\n" % my_dict[y])
-                """only run this for unit testing"""
                 if "T" in test:
-                    outdata.append(my_dict[key])
+                    outdata.append(v)
+                    #outdata.append(my_dict[key])
         lock.release()
     results = set(p_func.pmap(_perform_workflow,
                               files_and_temp_names,

@@ -26,12 +26,21 @@ def test_types(option, opt_str, value, parser):
     elif "all" in value:
         setattr(parser.values, option.dest, value)
     else:
-        print "option not supported.  Only select acc, uni, or both"
+        print "option not supported.  Only select acc, uni, or all"
         sys.exit()
 
-def core_accumulation(matrix, upper, iterations):
+def process_pangenome(matrix, upper, lower, iterations, type):
     my_matrix = open(matrix, "U")
-    outfile = open("core_replicates.txt", "w")
+    if type == "acc":
+        acc_outfile = open("accumulation_replicates.txt", "w")
+    elif type == "uni":
+        uni_outfile = open("uniques_replicates.txt", "w")
+    elif type == "core":
+        core_outfile = open("core_replicates.txt", "w")
+    else:
+        acc_outfile = open("accumulation_replicates.txt", "w")
+        uni_outfile = open("uniques_replicates.txt", "w")
+        core_outfile = open("core_replicates.txt", "w")
     firstLine = my_matrix.readline()
     first_fields = firstLine.split()
     genomes = len(first_fields)
@@ -39,116 +48,88 @@ def core_accumulation(matrix, upper, iterations):
     for x in first_fields:
         indexes.append(first_fields.index(x)+1)
     my_matrix.close()
-    total_dict = {}
-    for j in range(0,iterations):
+    acc_dict = {}
+    core_dict = {}
+    uni_dict = {}
+    for j in range(1,iterations+1):
         for i in range(1,genomes+1):
-            positives = [ ]
+            positives_acc = []
+            positives_core = []
+            positives_unis = []
             outseqs=random.sample(set(indexes), int(i))
             with open(matrix, "U") as f:
                 next(f)
                 for line in f:
                     fields = line.split()
-                    positive_lines=[]
+                    positive_lines_acc=[]
+                    positive_lines_core=[]
+                    positive_lines_unis=[]
                     for outseq in outseqs:
-                        if float(fields[outseq])>=float(upper):
-                             positive_lines.append("1")
-                    if len(positive_lines)==len(outseqs):
-                        positives.append("1")
+                        if type == "acc" or type == "all":
+                            if float(fields[outseq])>=float(upper):
+                                positive_lines_acc.append("1")
+                        if type == "core" or type == "all":
+                            if float(fields[outseq])>=float(upper):
+                                positive_lines_core.append("1")
+                        if type == "uni" or type == "all":
+                            """this was changed from lower to upper"""
+                            if float(fields[outseq])>=float(lower):
+                                positive_lines_unis.append("1")
+                    if len(positive_lines_acc)>=1:
+                        positives_acc.append("1")
+                    if len(positive_lines_core)==len(outseqs):
+                        positives_core.append("1")
+                    if int(len(positive_lines_unis))==1:
+                        positives_unis.append("1")
+                    positive_lines_acc=[]
+                    positive_lines_core=[]
+                    positive_lines_unis=[]
             try:
-                total_dict[i].append(len(positives))
+                acc_dict[i].append(len(positives_acc))
             except KeyError:
-                total_dict[i] = [len(positives)]
-    sorted_dict = collections.OrderedDict(sorted(total_dict.items()))
-    for k,v in sorted_dict.iteritems():
-        for z in v:
-            print >> outfile, str(k)+"\t"+str(z)+"\n",
-    outfile.close()
-       
-def gene_accumulation(matrix, upper, iterations):
-    my_matrix = open(matrix, "U")
-    outfile = open("accumulation_replicates.txt", "w")
-    firstLine = my_matrix.readline()
-    first_fields = firstLine.split()
-    genomes = len(first_fields)
-    indexes = []
-    for x in first_fields:
-        indexes.append(first_fields.index(x)+1)
-    my_matrix.close()
-    total_dict = {}
-    for j in range(0,iterations):
-        for i in range(1,genomes+1):
-            positives = [ ]
-            outseqs=random.sample(set(indexes), int(i))
-            with open(matrix, "U") as f:
-                next(f)
-                for line in f:
-                    fields = line.split()
-                    positive_lines=[]
-                    for outseq in outseqs:
-                        if float(fields[outseq])>=float(upper):
-                             positive_lines.append("1")
-                    if len(positive_lines)>=1:
-                        positives.append("1")
+                acc_dict[i] = [len(positives_acc)]
             try:
-                total_dict[i].append(len(positives))
+                core_dict[i].append(len(positives_core))
             except KeyError:
-                total_dict[i] = [len(positives)]
-    sorted_dict = collections.OrderedDict(sorted(total_dict.items()))
-    for k,v in sorted_dict.iteritems():
-        for z in v:
-            print >> outfile, str(k)+"\t"+str(z)+"\n",
-    outfile.close()
-    
-def gene_uniques(matrix, upper, lower, iterations):
-    my_matrix = open(matrix, "U")
-    outfile = open("uniques_replicates.txt", "w")
-    firstLine = my_matrix.readline()
-    first_fields = firstLine.split()
-    genomes = len(first_fields)
-    indexes = []
-    for x in first_fields:
-        indexes.append(first_fields.index(x)+1)
-    my_matrix.close()
-    total_dict = {}
-    for j in range(0,iterations):
-        for i in range(1,genomes+1):
-            positives = [ ]
-            outseqs=random.sample(set(indexes), int(i))
-            with open(matrix, "U") as f:
-                next(f)
-                for line in f:
-                    fields = line.split()
-                    positive_lines=[]
-                    #for field in fields[1:]:
-                    #    if float(field)>=float(lower):
-                    #        positive_lines.append("1")
-                    for outseq in outseqs:
-                        if float(fields[outseq])>=float(lower):
-                            positive_lines.append("1")
-                    if len(positive_lines)==1:
-                        positives.append("1")
+                core_dict[i] = [len(positives_core)]
             try:
-                total_dict[i].append(len(positives))
+                uni_dict[i].append(len(positives_unis))
             except KeyError:
-                total_dict[i] = [len(positives)]
-    sorted_dict = collections.OrderedDict(sorted(total_dict.items()))
-    for k,v in sorted_dict.iteritems():
-        for z in v:
-            print >> outfile, str(k)+"\t"+str(z)+"\n",
-    outfile.close()
+                uni_dict[i] = [len(positives_unis)]
+    try:
+        sorted_acc_dict = collections.OrderedDict(sorted(acc_dict.items()))
+        sorted_uni_dict = collections.OrderedDict(sorted(uni_dict.items()))
+        sorted_core_dict = collections.OrderedDict(sorted(core_dict.items()))
+    except:
+        pass
+    if type == "acc" or type == "all":
+        print "accumulation means"
+        for k,v in sorted_acc_dict.iteritems():
+            print k, sum(v)/len(v)
+            for z in v:
+                print >> acc_outfile, str(k)+"\t"+str(z)+"\n",
+    if type == "uni" or type == "all":
+        print "unique means"
+        for k,v in sorted_uni_dict.iteritems():
+            print k, sum(v)/len(v)
+            for z in v:
+                print >> uni_outfile, str(k)+"\t"+str(z)+"\n",
+    if type == "core" or type == "all":
+        print "core means"
+        for k,v in sorted_core_dict.iteritems():
+            print k, sum(v)/len(v)
+            for z in v:
+                print >> core_outfile, str(k)+"\t"+str(z)+"\n",
+    try:
+        acc_outfile.close()
+        uni_outfile.close()
+        core_outfile.close()
+    except:
+        pass
     
 def main(matrix, upper, lower, iterations, type):
-    if "core" == type:
-        core_accumulation(matrix, upper, iterations)
-    elif "acc" == type:
-        gene_accumulation(matrix, upper, iterations)
-    elif "uni" == type:
-        gene_uniques(matrix, upper, lower, iterations)
-    else:
-        core_accumulation(matrix, upper, iterations)
-        gene_accumulation(matrix, upper, iterations)
-        gene_uniques(matrix, upper, lower, iterations)
-        
+    process_pangenome(matrix, upper, lower, iterations, type)
+            
 if __name__ == "__main__":
     usage="usage: %prog [options]"
     parser = OptionParser(usage=usage) 
