@@ -13,17 +13,17 @@ contact: jasonsahl at gmail dot com
 To run the program, the following dependencies are required:
 
 1.  USearch (tested version is 6.0.307), path is passed as command-line option - only required
-    if a set of gene sequences is not supplied.  32-bit version should be sufficient.  Tested successfully
-    with version v7.0.959.
+    if a set of gene sequences is not supplied.  32-bit version should be sufficient for most
+    applications, including the analysis of 1000 E. coli genomes.  Tested successfully
+    with versions v7.0.959 and 7.0.1090.
 2.  BioPython, must be in PythonPath
 3.  blastall (tested version is 2.2.25), must be in path as 'blastall'.  Known issues
     seen with v2.2.26
 4.  Prodigal (tested version is 2.60), must be in path as 'prodigal' - only required
     if a set of gene sequences is not supplied
 5.  Numpy, must be in PythonPath.  Numpy is only required for the compare matrices tool.
-	If you don't want to install numpy, comment out this line in ls_bsr/util.py
-	
-	import numpy as np
+	If you don't want to install numpy, you should be fine, but won't be able to run
+	the compare script.
 
 
 ##To install:

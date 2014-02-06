@@ -18,7 +18,6 @@ import threading
 import types
 from collections import deque
 import collections
-import numpy as np
 
 def get_cluster_ids(in_fasta):
     clusters = []
@@ -362,6 +361,7 @@ def prune_matrix(matrix, group1, group2):
     return group1_ids, group2_ids, group1_idx, group2_idx
 
 def compare_values(pruned_1,pruned_2,upper,lower):
+    import numpy as np
     group1 = open(pruned_1, "rU")
     group2 = open(pruned_2, "rU")
     group1_out = open("group1_out.txt", "w")
