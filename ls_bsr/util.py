@@ -64,23 +64,12 @@ def make_table(processors, test, clusters):
         """need to write a blank space"""
         for x in reduced: open("%s.tmp.matrix" % x, 'a').write('%s\n' % x)
         """sort keys to get the same order between samples"""
-            #sorted_dict = sorted(my_dict.iterkeys())
-        #for key in sorted(my_dict.iterkeys()):
-        """testing new method"""
         od = collections.OrderedDict(sorted(my_dict.items()))
-        for x in reduced:
-            newout = open("%s.tmp.matrix" % x, "a")
-            for k,v in od.iteritems():
-                print >> newout,v
-                #for key in sorted(my_dict.iterkeys()):
-                #open("%s.tmp.matrix" % x, "a").write("%s\n" % my_dict[key])"""
-                #print "%s: %s" % (key, mydict[key])
-            #for y in sorted_dict:
-                #open("%s.tmp.matrix" % x, 'a').write("%s\n" % cluster_names[key])
-                #open("%s.tmp.matrix" % x, "a").write("%s\n" % my_dict[y])
-                if "T" in test:
-                    outdata.append(v)
-                    #outdata.append(my_dict[key])
+        newout = open("%s.tmp.matrix" % "".join(reduced), "a")
+        for k,v in od.iteritems():
+            print >> newout,v
+            if "T" in test:
+                outdata.append(v)
         lock.release()
     results = set(p_func.pmap(_perform_workflow,
                               files_and_temp_names,
