@@ -1,7 +1,5 @@
 #!/usr/bin/env python
 
-import Bio
-from Bio import SeqIO
 import sys
 import os
 import glob
@@ -9,10 +7,20 @@ import optparse
 import subprocess
 import shlex
 from subprocess import call
-from Bio.SeqRecord import SeqRecord
-from igs.utils import functional as func
-from igs.utils import logging
-from igs.threading import functional as p_func
+try:
+    from Bio.SeqRecord import SeqRecord
+    import Bio
+    from Bio import SeqIO
+except:
+    print "BioPython is not in your PATH, but needs to be"
+    sys.exit()
+try:
+    from igs.utils import functional as func
+    from igs.utils import logging
+    from igs.threading import functional as p_func
+except:
+    print "Your environment is not set correctly.  Please add LS-BSR to your PYTHONPATH and try again"
+    sys.exit()
 import errno
 import threading
 import types
