@@ -6,7 +6,7 @@ by panGP"""
 
 from optparse import OptionParser
 import sys
-
+from ls_bsr.util import bsr_to_pangp
 
 def test_file(option, opt_str, value, parser):
     try:
@@ -16,22 +16,7 @@ def test_file(option, opt_str, value, parser):
         sys.exit()
 
 def main(matrix, lower):
-    my_matrix = open(matrix, "U")
-    outfile = open("panGP_matrix.txt","w")
-    firstLine = my_matrix.readline()
-    print >> outfile, firstLine,
-    for line in my_matrix:
-        new_fields = [ ]
-        fields = line.split()
-        new_fields.append(fields[0])
-        for x in fields[1:]:
-            if float(x)>=float(lower):
-                new_fields.append("1")
-            else:
-                new_fields.append("-")
-        print >> outfile, "\t".join(new_fields)
-    my_matrix.close()
-    outfile.close()
+    bsr_to_pangp(matrix, lower)
                 
 if __name__ == "__main__":
     usage="usage: %prog [options]"

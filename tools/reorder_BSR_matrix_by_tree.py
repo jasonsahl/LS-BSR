@@ -4,35 +4,14 @@
 list of genomes.  This will typically be associated
 with the order of genomes in a phylogeny"""
 
+import os
 import sys
 import optparse
-from Bio import Phylo
 
-def transpose_matrix(matrix):
-    out_matrix = open("tmp.matrix", "w")
-    in_matrix = open(matrix, "U")
-    reduced = [ ]
-    for line in in_matrix:
-        fields = line.split("\t")
-        reduced.append(fields)
-    test=map(list, zip(*reduced))
-    for x in test:
-        print >> out_matrix, "\t".join(x)
-    in_matrix.close()
-    out_matrix.close()
-    
-def reorder_matrix(in_matrix, names):
-    my_matrix = open(in_matrix, "U")
-    outfile = open("reordered_matrix.txt", "w")
-    firstLine = my_matrix.readline()
-    print >> outfile, firstLine,
-    my_matrix.close()
-    for name in names:
-         for line in open(in_matrix, "U"):
-            fields = line.split("\t")
-            if name == fields[0]:
-                print >> outfile, line,
-           
+from ls_bsr.util import transpose_matrix
+from ls_bsr.util import reorder_matrix
+from ls_bsr.util import parse_tree
+
 def test_file(option, opt_str, value, parser):
     try:
         with open(value): setattr(parser.values, option.dest, value)
@@ -40,19 +19,11 @@ def test_file(option, opt_str, value, parser):
         print '%s file cannot be opened' % option
         sys.exit()
 
-def parse_tree(tree):
-    names = []
-    mytree = Phylo.read(tree, 'newick')
-    tree_names = [ ]
-    for clade in mytree.find_clades():
-        if clade.name:
-            names.append(clade.name)
-    return names
-
 def main(matrix, tree):
     transpose_matrix(matrix)
     names = parse_tree(tree)
     reorder_matrix("tmp.matrix", names)
+    os.system("rm tmp.matrix")
 
 if __name__ == "__main__":
     usage="usage: %prog [options]"

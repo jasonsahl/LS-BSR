@@ -10,11 +10,11 @@ import shlex
 from subprocess import call
 import random
 import collections
-
 try:
     from Bio.SeqRecord import SeqRecord
     import Bio
     from Bio import SeqIO
+    from Bio import Phylo
 except:
     print "BioPython is not in your PATH, but needs to be"
     sys.exit()
@@ -48,7 +48,6 @@ def make_table(processors, test, clusters):
                             for idx, f in enumerate(files)]
     lock = threading.Lock()
     def _perform_workflow(data):
-        """cannot perform this work in parallel??"""
         lock.acquire()
         tn, f = data
         """get the name of each of the files to be iterated"""
@@ -98,10 +97,11 @@ def make_table(processors, test, clusters):
         return sorted(outdata)
     else:
         pass
+    names_out.close()
     
 def divide_values(file, ref_scores):
     """divide each BSR value in a row by that row's maximum value"""
-    infile = open(file, "rU")
+    infile = open(file, "U")
     firstLine = infile.readline()
     FL_F=firstLine.split()
     outfile = open("BSR_matrix_values.txt", "a")
@@ -126,6 +126,7 @@ def divide_values(file, ref_scores):
         print >> outfile, '\t'.join([str(item) for item in sort_values])
         outdata.append(values)
     return outdata
+    outfile.close()
         
 def predict_genes(dir_path, processors):
     """simple gene prediction using Prodigal in order
@@ -172,6 +173,7 @@ def translate_consensus(consensus):
         except:
             raise TypeError("invalid character observed in sequence %s" % record.id)
     for record in outdata: return str(record)
+    output_handle.close()
     
 def uclust_cluster(usearch, id):
     """cluster with Uclust.  Updated to V6"""
@@ -252,7 +254,9 @@ def parse_blast_report():
                 outdata.append(fields[11])
             except:
                 raise TypeError("malformed blast line found")
+        outfile.close()
     return outdata
+    
             
 def get_unique_lines():
     """only return the top hit for each query"""
@@ -269,6 +273,7 @@ def get_unique_lines():
                 d[unique] = 1
                 print >> outfile,line,
                 outdata.append(line)
+        outfile.close()
     return outdata
 
 def blast_against_self(genes_nt, genes_pep, output, filter, blast, penalty, reward, processors):
@@ -330,7 +335,7 @@ def autoIncrement():
 def prune_matrix(matrix, group1, group2):
     """prune out genomes of interest from a BSR matrix.
     Not done efficiently, but appears to work"""
-    in_matrix = open(matrix, "rU")
+    in_matrix = open(matrix, "U")
     group1_ids = [ ]
     group2_ids = [ ]
     group1_out = open("group1_pruned.txt", "w")
@@ -356,7 +361,7 @@ def prune_matrix(matrix, group1, group2):
         name = fields[0]
         deque((list.pop(fields, i) for i in sorted(group1_idx, reverse=True)), maxlen=0)
 	print >> group1_out,"".join(name),"\t","\t".join(fields)
-    in_matrix = open(matrix, "rU")
+    in_matrix = open(matrix, "U")
     firstLine = in_matrix.readline()
     fields = firstLine.split()
     fields.insert(0, "cluster")
@@ -371,11 +376,12 @@ def prune_matrix(matrix, group1, group2):
         deque((list.pop(fields, i) for i in sorted(group2_idx, reverse=True)), maxlen=0)
         print >> group2_out,"".join(name),"\t","\t".join(fields)
     return group1_ids, group2_ids, group1_idx, group2_idx
-
+    in_matrix.close()
+    
 def compare_values(pruned_1,pruned_2,upper,lower):
     import numpy as np
-    group1 = open(pruned_1, "rU")
-    group2 = open(pruned_2, "rU")
+    group1 = open(pruned_1, "U")
+    group2 = open(pruned_2, "U")
     group1_out = open("group1_out.txt", "w")
     group2_out = open("group2_out.txt", "w")
     group1_presents=[ ]
@@ -407,9 +413,13 @@ def compare_values(pruned_1,pruned_2,upper,lower):
 		if float(x)>=float(lower): homolog.append(x)
 	print >> group2_out,mean,"\t",len(presents),"\t",len(fields[1:]),"\t",len(homolog)
     return group1_presents, group2_presents, group1_mean
+    group1.close()
+    group2.close()
+    group1_out.close()
+    group2_out.close()
 
 def find_uniques(combined,fasta):
-    infile = open(combined, "rU")
+    infile = open(combined, "U")
     group1_unique_ids = [ ]
     seqrecords=[ ]
     testids = [ ]
@@ -542,6 +552,7 @@ def get_frequencies(matrix, threshold):
         out_data.append(k)
         out_data.append(len(v))
     in_matrix.close()
+    outfile.close()
     return out_data
 
 def find_dups(ref_scores, length, max_plog, min_hlog):
@@ -657,7 +668,6 @@ def sort_usearch(usearch):
                "-sortbylength", "%s" % infile,
                "-output", "z.%s.sorted" % str(autoIncrement())]
         subprocess.check_call(cmd)
-        
 
 def uclust_sort(usearch):
     """sort with Usearch. Updated to V6"""
@@ -770,3 +780,58 @@ def process_pangenome(matrix, upper, lower, iterations, type):
     except:
         pass
     return test_accums, test_uniques, test_cores
+
+def bsr_to_pangp(matrix, lower):
+    my_matrix = open(matrix, "U")
+    outfile = open("panGP_matrix.txt","w")
+    firstLine = my_matrix.readline()
+    print >> outfile, firstLine,
+    for line in my_matrix:
+        new_fields = [ ]
+        fields = line.split()
+        new_fields.append(fields[0])
+        for x in fields[1:]:
+            if float(x)>=float(lower):
+                new_fields.append("1")
+            else:
+                new_fields.append("-")
+        print >> outfile, "\t".join(new_fields)
+    my_matrix.close()
+    outfile.close()
+    return new_fields
+
+def transpose_matrix(matrix):
+    out_matrix = open("tmp.matrix", "w")
+    in_matrix = open(matrix, "U")
+    reduced = [ ]
+    for line in in_matrix:
+        fields = line.split("\t")
+        reduced.append(fields)
+    test=map(list, zip(*reduced))
+    for x in test:
+        print >> out_matrix, "\t".join(x)
+    in_matrix.close()
+    out_matrix.close()
+
+def reorder_matrix(in_matrix, names):
+    my_matrix = open(in_matrix, "U")
+    outfile = open("reordered_matrix.txt", "w")
+    firstLine = my_matrix.readline()
+    print >> outfile, firstLine,
+    my_matrix.close()
+    for name in names:
+         for line in open(in_matrix, "U"):
+            fields = line.split("\t")
+            if name == fields[0]:
+                print >> outfile, line,
+    my_matrix.close()
+    outfile.close()
+
+def parse_tree(tree):
+    names = []
+    mytree = Phylo.read(tree, 'newick')
+    tree_names = [ ]
+    for clade in mytree.find_clades():
+        if clade.name:
+            names.append(clade.name)
+    return names

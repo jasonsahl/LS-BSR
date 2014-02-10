@@ -907,6 +907,61 @@ class Test22(unittest.TestCase):
         shutil.rmtree(tdir)
         os.system("rm core_replicates.txt uniques_replicates.txt accumulation_replicates.txt")
 
+class Test23(unittest.TestCase):
+    def test_bsr_to_pangb_basic_function(self):
+        """tests the basic functionality"""
+        tdir = tempfile.mkdtemp(prefix="filetest_",)
+        fpath = os.path.join(tdir,"sample_matrix.txt")
+        fp = open(fpath, "w")
+        fp.write("        E2348_69_all    H10407_all      O157_H7_sakai_all       SSON_046_all\n")
+        fp.write("ST1     0.00    1.00    0.12    0.12\n")
+        fp.write("bfpB    1.00    0.81    0.00    0.00\n")
+        fp.write("")
+        fp.close()
+        self.assertEqual(bsr_to_pangp(fpath,0.8), ['bfpB','1','1','-','-'])
+        shutil.rmtree(tdir)
+        os.system("rm panGP_matrix.txt")
+    def test_bsr_to_pangb_equal_function(self):
+        """tests the basic functionality"""
+        tdir = tempfile.mkdtemp(prefix="filetest_",)
+        fpath = os.path.join(tdir,"sample_matrix.txt")
+        fp = open(fpath, "w")
+        fp.write("        E2348_69_all    H10407_all      O157_H7_sakai_all       SSON_046_all\n")
+        fp.write("ST1     0.00    1.00    0.12    0.12\n")
+        fp.write("bfpB    1.00    0.80    0.00    0.00\n")
+        fp.write("")
+        fp.close()
+        self.assertEqual(bsr_to_pangp(fpath,0.8), ['bfpB','1','1','-','-'])
+        shutil.rmtree(tdir)
+        os.system("rm panGP_matrix.txt")
+
+class Test24(unittest.TestCase):
+    def test_get_cluster_ids_basic_function(self):
+        """basic functionality"""
+        tdir = tempfile.mkdtemp(prefix="filetest_",)
+        npath = os.path.join(tdir,"fasta")
+        np = open(npath, "w")
+        np.write(">bfpB\n")
+        np.write("ATGAAACTTGGCAGGTATTCACTTTTCTTATTG\n")
+        np.write(">LT\n")
+        np.write("ATGCCCAGAGGGCATAATGAGTACTTCGA\n")
+        np.write(">ST2\n")
+        np.write("ATGAAGAAATCAATATTATTTATTTTTCTTTCTGTATTGTCTTTT")
+        np.close()
+        self.assertEqual(get_cluster_ids(npath), ['bfpB','LT','ST2'])
+        shutil.rmtree(tdir)
+    def test_get_cluster_ids_weird_characters(self):
+        tdir = tempfile.mkdtemp(prefix="filetest_",)
+        npath = os.path.join(tdir,"fasta")
+        np = open(npath, "w")
+        np.write(">bfp-B\n")
+        np.write("ATGAAACTTGGCAGGTATTCACTTTTCTTATTG\n")
+        np.write(">LT_X\n")
+        np.write("ATGCCCAGAGGGCATAATGAGTACTTCGA\n")
+        np.write(">ST#%$\n")
+        np.write("ATGAAGAAATCAATATTATTTATTTTTCTTTCTGTATTGTCTTTT")
+        np.close()
+        self.assertEqual(get_cluster_ids(npath), ['bfp-B','LT_X','ST#%$'])
 if __name__ == "__main__":
     unittest.main()
     main()
