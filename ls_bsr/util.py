@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+from __future__ import division
 import sys
 import os
 import glob
@@ -7,6 +8,9 @@ import optparse
 import subprocess
 import shlex
 from subprocess import call
+import random
+import collections
+
 try:
     from Bio.SeqRecord import SeqRecord
     import Bio
@@ -661,3 +665,108 @@ def uclust_sort(usearch):
            "-sortbylength", "all_gene_seqs.out",
            "-output", "tmp_sorted.txt"]
     subprocess.check_call(cmd)
+
+def process_pangenome(matrix, upper, lower, iterations, type):
+    my_matrix = open(matrix, "U")
+    if type == "acc":
+        acc_outfile = open("accumulation_replicates.txt", "w")
+    elif type == "uni":
+        uni_outfile = open("uniques_replicates.txt", "w")
+    elif type == "core":
+        core_outfile = open("core_replicates.txt", "w")
+    else:
+        acc_outfile = open("accumulation_replicates.txt", "w")
+        uni_outfile = open("uniques_replicates.txt", "w")
+        core_outfile = open("core_replicates.txt", "w")
+    firstLine = my_matrix.readline()
+    first_fields = firstLine.split()
+    genomes = len(first_fields)
+    indexes = []
+    for x in first_fields:
+        indexes.append(first_fields.index(x)+1)
+    my_matrix.close()
+    acc_dict = {}
+    core_dict = {}
+    uni_dict = {}
+    for j in range(1,iterations+1):
+        for i in range(1,genomes+1):
+            positives_acc = []
+            positives_core = []
+            positives_unis = []
+            outseqs=random.sample(set(indexes), int(i))
+            with open(matrix, "U") as f:
+                next(f)
+                for line in f:
+                    fields = line.split()
+                    positive_lines_acc=[]
+                    positive_lines_core=[]
+                    positive_lines_unis=[]
+                    for outseq in outseqs:
+                        if type == "acc" or type == "all":
+                            if float(fields[outseq])>=float(upper):
+                                positive_lines_acc.append("1")
+                        if type == "core" or type == "all":
+                            if float(fields[outseq])>=float(upper):
+                                positive_lines_core.append("1")
+                        if type == "uni" or type == "all":
+                            """this was changed from lower to upper"""
+                            if float(fields[outseq])>=float(lower) and float(fields[outseq])>=float(upper):
+                                positive_lines_unis.append("1")
+                    if len(positive_lines_acc)>=1:
+                        positives_acc.append("1")
+                    if len(positive_lines_core)==len(outseqs):
+                        positives_core.append("1")
+                    if int(len(positive_lines_unis))==1:
+                        positives_unis.append("1")
+                    positive_lines_acc=[]
+                    positive_lines_core=[]
+                    positive_lines_unis=[]
+            try:
+                acc_dict[i].append(len(positives_acc))
+            except KeyError:
+                acc_dict[i] = [len(positives_acc)]
+            try:
+                core_dict[i].append(len(positives_core))
+            except KeyError:
+                core_dict[i] = [len(positives_core)]
+            try:
+                uni_dict[i].append(len(positives_unis))
+            except KeyError:
+                uni_dict[i] = [len(positives_unis)]
+    try:
+        sorted_acc_dict = collections.OrderedDict(sorted(acc_dict.items()))
+        sorted_uni_dict = collections.OrderedDict(sorted(uni_dict.items()))
+        sorted_core_dict = collections.OrderedDict(sorted(core_dict.items()))
+    except:
+        pass
+    test_accums = []
+    test_uniques = []
+    test_cores = []
+    if type == "acc" or type == "all":
+        print "accumulation means"
+        for k,v in sorted_acc_dict.iteritems():
+            test_accums.append(v)
+            print k, sum(v)/len(v)
+            for z in v:
+                print >> acc_outfile, str(k)+"\t"+str(z)+"\n",
+    if type == "uni" or type == "all":
+        print "unique means"
+        for k,v in sorted_uni_dict.iteritems():
+            test_uniques.append(v)
+            print k, (sum(v)/len(v))/int(k)
+            for z in v:
+                print >> uni_outfile, str(k)+"\t"+str(z)+"\n",
+    if type == "core" or type == "all":
+        print "core means"
+        for k,v in sorted_core_dict.iteritems():
+            test_cores.append(v)
+            print k, sum(v)/len(v)
+            for z in v:
+                print >> core_outfile, str(k)+"\t"+str(z)+"\n",
+    try:
+        acc_outfile.close()
+        uni_outfile.close()
+        core_outfile.close()
+    except:
+        pass
+    return test_accums, test_uniques, test_cores
