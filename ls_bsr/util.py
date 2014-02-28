@@ -835,3 +835,24 @@ def parse_tree(tree):
         if clade.name:
             names.append(clade.name)
     return names
+
+def blat_against_self(query,reference,output,processors):
+    subprocess.check_call("blat -out=blast8 -minIdentity=75 %s %s %s > /dev/null 2>&1" % (reference,query,output), shell=True)
+
+def blat_against_each_genome(dir_path,database,processors):
+    """BLAT all genes against each genome"""
+    curr_dir=os.getcwd()
+    files = os.listdir(curr_dir)
+    files_and_temp_names = [(str(idx), os.path.join(curr_dir, f))
+                            for idx, f in enumerate(files)]
+    def _perform_workflow(data):
+	tn, f = data
+        if ".fasta.new" in f:
+            try:
+                subprocess.check_call("blat -out=blast8 -minIdentity=75 %s %s %s_blast.out > /dev/null 2>&1" % (f,database,f), shell=True)
+            except:
+                print "genomes %s cannot be used" % f
+            
+    results = set(p_func.pmap(_perform_workflow,
+                              files_and_temp_names,
+                              num_workers=processors))

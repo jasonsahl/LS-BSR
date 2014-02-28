@@ -39,6 +39,8 @@ def test_blast(option, opt_str, value, parser):
         setattr(parser.values, option.dest, value)
     elif "blastn" in value:
         setattr(parser.values, option.dest, value)
+    elif "blat" in value:
+        setattr(parser.values, option.dest, value)
     else:
         print "Blast option not supported.  Only select from tblastn or blastn"
         sys.exit()
@@ -81,17 +83,18 @@ def main(directory, id, filter, processors, genes, usearch, blast, penalty, rewa
     ap=os.path.abspath("%s" % start_dir)
     dir_path=os.path.abspath("%s" % directory)
     logging.logPrint("Testing paths of dependencies")
-    ab = subprocess.call(['which', 'blastall'])
-    if ab == 0:
-        pass
-    else:
-        print "blastall isn't in your path, but needs to be!"
+    if blast=="blastn" or blast=="tblastn":
+        ab = subprocess.call(['which', 'blastall'])
+        if ab == 0:
+            print "citation: Altschul SF, Madden TL, Schaffer AA, Zhang J, Zhang Z, Miller W, and Lipman DJ. 1997. Gapped BLAST and PSI-BLAST: a new generation of protein database search programs. Nucleic Acids Res 25:3389-3402"
+        else:
+            print "blastall isn't in your path, but needs to be!"
+            sys.exit()
     try:
         os.makedirs('%s/joined' % dir_path)
     except:
-        print "old run directory exists in your genomes directory.  Delete and run again"
+        print "old run directory exists in your genomes directory (%s/joined).  Delete and run again" % dir_path
         sys.exit()
-    print "citation: Altschul SF, Madden TL, Schaffer AA, Zhang J, Zhang Z, Miller W, and Lipman DJ. 1997. Gapped BLAST and PSI-BLAST: a new generation of protein database search programs. Nucleic Acids Res 25:3389-3402"
     for infile in glob.glob(os.path.join(dir_path, '*.fasta')):
         name=get_seq_name(infile)
         os.system("cp %s %s/joined/%s.new" % (infile,dir_path,name))
@@ -108,6 +111,13 @@ def main(directory, id, filter, processors, genes, usearch, blast, penalty, rewa
         except:
             raise TypeError("-u usearch flag must be set for use with prodigal")
             sys.exc_clear()
+        if blast=="blat":
+            ac = subprocess.call(['which', 'blat'])
+            if ac == 0:
+                print "citation: W.James Kent. 2002. BLAT - The BLAST-Like Alignment Tool.  Genome Research 12:656-664"
+            else:
+                print "You have requested blat, but it is not in your PATH"
+                sys.exit()
         logging.logPrint("predicting genes with Prodigal")
         predict_genes(dir_path, processors)
         logging.logPrint("Prodigal done")
@@ -134,6 +144,8 @@ def main(directory, id, filter, processors, genes, usearch, blast, penalty, rewa
             blast_against_self("consensus.fasta", "consensus.pep", "tmp_blast.out", filter, blast, penalty, reward, processors)
         elif "blastn" == blast:
             blast_against_self("consensus.fasta", "consensus.fasta", "tmp_blast.out", filter, blast, penalty, reward, processors)
+        elif "blat" == blast:
+            blat_against_self("consensus.fasta", "consensus.fasta", "tmp_blast.out", processors)
         else:
             pass
         subprocess.check_call("sort -u -k 1,1 tmp_blast.out > self_blast.out", shell=True)
@@ -145,6 +157,8 @@ def main(directory, id, filter, processors, genes, usearch, blast, penalty, rewa
             blast_against_each_genome(dir_path, processors, filter, "consensus.pep", blast, penalty, reward)
         elif "blastn" == blast:
             blast_against_each_genome(dir_path, processors, filter, "consensus.fasta", blast, penalty, reward)
+        elif "blat" == blast:
+            blat_against_each_genome(dir_path, "consensus.fasta",processors)
         else:
             pass
         find_dups(ref_scores, length, max_plog, min_hlog)
@@ -160,7 +174,7 @@ def main(directory, id, filter, processors, genes, usearch, blast, penalty, rewa
         clusters = get_cluster_ids(gene_path)
         os.system("cp %s %s/joined/" % (gene_path,dir_path))
         os.chdir("%s/joined" % dir_path)
-        if "tblastn" in blast:
+        if "tblastn" == blast:
             logging.logPrint("using tblastn")
             translate_genes(gene_path,)
             try:
@@ -174,7 +188,7 @@ def main(directory, id, filter, processors, genes, usearch, blast, penalty, rewa
             subprocess.check_call("rm tmp_blast.out self_blast.out", shell=True)
             logging.logPrint("starting BLAST")
             blast_against_each_genome(dir_path, processors, filter, "genes.pep", blast, penalty, reward)
-        else:
+        elif "blastn" == blast:
             logging.logPrint("using blastn")
             try:
                 subprocess.check_call("formatdb -i %s -p F" % gene_path, shell=True)
@@ -187,7 +201,20 @@ def main(directory, id, filter, processors, genes, usearch, blast, penalty, rewa
             subprocess.check_call("rm tmp_blast.out self_blast.out", shell=True)
             logging.logPrint("starting BLAST")
             blast_against_each_genome(dir_path, processors, filter, gene_path, blast, penalty, reward)
-    logging.logPrint("BLAST done")
+        elif "blat" == blast:
+            logging.logPrint("using blat")
+            blat_against_self(gene_path, gene_path, "tmp_blast.out", processors)
+            subprocess.check_call("sort -u -k 1,1 tmp_blast.out > self_blast.out", shell=True)
+            ref_scores=parse_self_blast(open("self_blast.out", "U"))
+            subprocess.check_call("rm tmp_blast.out self_blast.out", shell=True)
+            logging.logPrint("starting BLAT")
+            blat_against_each_genome(dir_path,gene_path,processors)
+        else:
+            pass
+    if blast=="blat":
+        logging.logPrint("BLAT done")
+    else:
+        logging.logPrint("BLAST done")
     parse_blast_report()
     get_unique_lines()
     make_table(processors, "F", clusters)
@@ -232,7 +259,7 @@ if __name__ == "__main__":
                       help="path to usearch v6, required for use with Prodigal",
                       type="string")
     parser.add_option("-b", "--blast", dest="blast", action="callback", callback=test_blast,
-                      help="use tblastn or blastn;only used in conjunction with -g option, default is tblastn",
+                      help="use tblastn, blastn, or blat (nucleotide search only), default is tblastn",
                       default="tblastn", type="string")
     parser.add_option("-q", "--penalty", dest="penalty", action="store",
                       help="mismatch penalty, only to be used with blastn and -g option, default is -4",
