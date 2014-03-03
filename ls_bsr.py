@@ -152,7 +152,10 @@ def main(directory, id, filter, processors, genes, usearch, blast, penalty, rewa
         ref_scores=parse_self_blast(open("self_blast.out", "U"))
         subprocess.check_call("rm tmp_blast.out self_blast.out", shell=True)
         os.system("rm *new_genes.*")
-        logging.logPrint("starting BLAST")
+        if blast == "tblastn" or blast == "blastn":
+            logging.logPrint("starting BLAST")
+        else:
+            logging.logPrint("starting BLAT")
         if "tblastn" == blast:
             blast_against_each_genome(dir_path, processors, filter, "consensus.pep", blast, penalty, reward)
         elif "blastn" == blast:
