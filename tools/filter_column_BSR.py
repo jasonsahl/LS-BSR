@@ -23,7 +23,7 @@ def main(in_matrix, prefix, genomes):
 if __name__ == "__main__":
     usage="usage: %prog [options]"
     parser = OptionParser(usage=usage) 
-    parser.add_option("-m", "--in_matrix", dest="in_matrix",
+    parser.add_option("-b", "--in_matrix", dest="in_matrix",
                       help="/path/to/BSR matrix [REQUIRED]",
                       action="callback", callback=test_file, type="string")
     parser.add_option("-p", "--out_prefix", dest="prefix",

@@ -2,10 +2,11 @@
 
 """from a BSR matrix, report back
 the number of unique CDS regions
-for each genome"""
+for each genome, sorted by a given
+tree"""
 
 from optparse import OptionParser
-import sys
+import sys, os
 from Bio import Phylo
 
 def test_file(option, opt_str, value, parser):
@@ -17,7 +18,7 @@ def test_file(option, opt_str, value, parser):
 
 def get_uniques(matrix, threshold):
     in_matrix = open(matrix, "U")
-    outfile = open("summary_stats.txt", "w")
+    outfile = open("summary_stats.tmp.txt", "w")
     firstLine = in_matrix.readline()
     firstFields = firstLine.split()
     my_dict={}
@@ -43,14 +44,12 @@ def get_uniques(matrix, threshold):
             print >> outfile, firstField, "0"
         
 def sort_uniques_by_tree(summary, tree):
-    #insummary = open(summary, "U")
-    outfile = open("summary_stats_sorted.txt", "w")
+    outfile = open("uniques_sorted_by_tree.txt", "w")
     mytree = Phylo.read(tree, 'newick')
     tree_names = [ ]
     for clade in mytree.find_clades():
         if clade.name:
             tree_names.append(clade.name)
-    print tree_names
     for tree_name in tree_names:
         for line in open(summary, "U"):
             fields = line.split()
@@ -61,7 +60,8 @@ def sort_uniques_by_tree(summary, tree):
     
 def main(matrix, tree, threshold):
     get_uniques(matrix, threshold)
-    sort_uniques_by_tree("summary_stats.txt", tree)
+    sort_uniques_by_tree("summary_stats.tmp.txt", tree)
+    os.system("rm summary_stats.tmp.txt")
     
 if __name__ == "__main__":
     usage="usage: %prog [options]"
@@ -70,7 +70,7 @@ if __name__ == "__main__":
                       help="/path/to/bsr_matrix [REQUIRED]",
                       action="callback", callback=test_file, type="string")
     parser.add_option("-r", "--tree", dest="tree",
-                      help="/path/to/tree [optional]",
+                      help="/path/to/tree [REQUIRED]",
                       action="store", type="string")
     parser.add_option("-t", "--threshold", dest="threshold",
                       help="lower threshold for ORF presence, defaults to 0.8",
@@ -78,7 +78,7 @@ if __name__ == "__main__":
    
     options, args = parser.parse_args()
     
-    mandatories = ["matrix"]
+    mandatories = ["matrix","tree"]
     for m in mandatories:
         if not options.__dict__[m]:
             print "\nMust provide %s.\n" %m
