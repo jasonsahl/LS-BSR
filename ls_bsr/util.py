@@ -802,15 +802,14 @@ def bsr_to_pangp(matrix, lower):
 
 def transpose_matrix(matrix):
     out_matrix = open("tmp.matrix", "w")
-    in_matrix = open(matrix, "U")
     reduced = [ ]
-    for line in in_matrix:
+    for line in open(matrix, "U"):
+        line=line.strip("\n")
         fields = line.split("\t")
         reduced.append(fields)
     test=map(list, zip(*reduced))
     for x in test:
         print >> out_matrix, "\t".join(x)
-    in_matrix.close()
     out_matrix.close()
 
 def reorder_matrix(in_matrix, names):
