@@ -805,7 +805,7 @@ def transpose_matrix(matrix):
     in_matrix = open(matrix, "U")
     reduced = [ ]
     for line in in_matrix:
-        fields = line.split("\t")
+        fields = line.split()
         reduced.append(fields)
     test=map(list, zip(*reduced))
     for x in test:
