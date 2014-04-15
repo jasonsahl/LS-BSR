@@ -9,7 +9,6 @@ import subprocess
 from ls_bsr.util import prune_matrix
 from ls_bsr.util import compare_values
 from ls_bsr.util import find_uniques
-from ls_bsr.util import add_headers
 import sys
 import os
 
@@ -19,6 +18,13 @@ def test_file(option, opt_str, value, parser):
     except IOError:
         print '%s file cannot be opened' % option
         sys.exit()
+
+def add_headers(infile, outfile, lower, upper):
+    file_out = open(outfile, "w")
+    print >> file_out,"marker"+"\t"+"group1_mean"+"\t"+">="+str(upper)+"\t"+"total_in_group_1"+"\t"+">="+str(lower)+"\t"+"group2_mean"+"\t"+">="+str(upper)+"\t"+"total_in_group2"+"\t"+">="+str(lower)
+    for line in open(infile, "U"):
+        print >> file_out, line,
+    file_out.close()
 
 def main(matrix,group1,group2,fasta,upper,lower):
     prune_matrix(matrix,group1,group2)
