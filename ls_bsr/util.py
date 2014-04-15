@@ -28,7 +28,7 @@ except:
 import errno
 import threading
 import types
-from collections import deque
+from collections import deque,OrderedDict
 import collections
 
 def get_cluster_ids(in_fasta):
@@ -36,7 +36,12 @@ def get_cluster_ids(in_fasta):
     infile = open(in_fasta, "U")
     for record in SeqIO.parse(infile, "fasta"):
         clusters.append(record.id)
-    return clusters
+    nr = list(OrderedDict.fromkeys(clusters))
+    if len(clusters) == len(nr):
+        return clusters
+    else:
+        print "Problem with gene list.  Are there duplicate headers in your file?"
+        sys.exit()
 
 def make_table(processors, test, clusters):
     """make the BSR matrix table"""
