@@ -9,6 +9,7 @@ import subprocess
 from ls_bsr.util import prune_matrix
 from ls_bsr.util import compare_values
 from ls_bsr.util import find_uniques
+from ls_bsr.util import add_headers
 import sys
 import os
 
@@ -24,6 +25,7 @@ def main(matrix,group1,group2,fasta,upper,lower):
     compare_values("group1_pruned.txt","group2_pruned.txt",upper,lower)
     subprocess.check_call("paste group1_out.txt group2_out.txt > groups_combined.txt", shell=True)
     find_uniques("groups_combined.txt",fasta)
+    add_headers("groups_combined.txt","groups_combined_header.txt",lower,upper)
     os.system("rm group1_out.txt group2_out.txt")
     
 if __name__ == "__main__":

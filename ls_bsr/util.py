@@ -860,3 +860,10 @@ def blat_against_each_genome(dir_path,database,processors):
     results = set(p_func.pmap(_perform_workflow,
                               files_and_temp_names,
                               num_workers=processors))
+
+def add_headers(infile, outfile, lower, upper):
+    file_out = open(outfile, "w")
+    print >> file_out,"marker"+"\t"+"group1_mean"+"\t"+">="+str(upper)+"\t"+"total_in_group_1"+"\t"+">="+str(lower)+"\t"+"group2_mean"+"\t"+">="+str(upper)+"\t"+"total_in_group2"+"\t"+">="+str(lower)
+    for line in open(infile, "U"):
+        print >> file_out, line,
+    file_out.close()
