@@ -831,13 +831,6 @@ def reorder_matrix(in_matrix, names):
     my_matrix.close()
     outfile.close()
 
-def add_headers(infile, outfile, lower, upper):
-    file_out = open(outfile, "w")
-    print >> file_out,"marker"+"\t"+"group1_mean"+"\t"+">="+str(upper)+"\t"+"total_in_group_1"+"\t"+">="+str(lower)+"\t"+"group2_mean"+"\t"+">="+str(upper)+"\t"+"total_in_group2"+"\t"+">="+str(lower)
-    for line in open(infile, "U"):
-        print >> file_out, line,
-    file_out.close()
-
 def parse_tree(tree):
     names = []
     mytree = Phylo.read(tree, 'newick')
