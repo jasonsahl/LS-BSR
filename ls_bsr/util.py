@@ -770,7 +770,7 @@ def process_pangenome(matrix, upper, lower, iterations, type):
             test_uniques.append(v)
             print k, (sum(v)/len(v))/int(k)
             for z in v:
-                print >> uni_outfile, str(k)+"\t"+str(z)+"\n",
+                print >> uni_outfile, str(k)+"\t"+str(int(z)/int(k))+"\n",
     if type == "core" or type == "all":
         print "core means"
         for k,v in sorted_core_dict.iteritems():
