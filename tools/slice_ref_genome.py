@@ -31,15 +31,19 @@ class Increments:
         
 record_count_1 = Increments(1, 1)
         
+def get_seq_name(in_fasta):
+    """used for renaming the sequences"""
+    return os.path.basename(in_fasta)
+
 def split_sequence_by_window(input_file, step_size, frag_length):
     """cuts up fasta sequences into given chunks"""
     infile = open(input_file, "rU")
     first_record = list(itertools.islice(SeqIO.parse(infile,"fasta"), 1))[0]
     return sliding_window(first_record.seq, frag_length, step_size)
 
-def write_sequences(reads):
+def write_sequences(reads,name):
     """write shredded fasta sequences to disk"""
-    handle = open("seqs_shredded.txt", "w")
+    handle = open("%s_seqs_shredded.txt" % name, "w")
     for read in reads:
         print >> handle, ">%d\n%s" % (record_count_1.next(), read)
     handle.close()
@@ -50,10 +54,11 @@ def sliding_window(sequence, frag_length, step_size=5):
     for i in range(0, numOfChunks, step_size):
         yield sequence[i:i + frag_length]
 
-
 def main(reference,frag_length,step_size):
+    name = get_seq_name(reference)
+    redux_name = name.replace(".fasta","")
     reads = split_sequence_by_window(reference, step_size, frag_length)
-    write_sequences(reads)
+    write_sequences(reads, redux_name)
     
 if __name__ == "__main__":
     usage="usage: %prog [options]"
