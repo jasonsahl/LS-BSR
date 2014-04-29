@@ -238,7 +238,7 @@ def main(directory, id, filter, processors, genes, usearch, blast, penalty, rewa
         logging.logPrint("BLAST done")
     parse_blast_report()
     get_unique_lines()
-    make_table(processors, "F", clusters)
+    make_table_dev(processors, "F", clusters)
     subprocess.check_call("paste ref.list *.matrix > bsr_matrix", shell=True)
     divide_values("bsr_matrix", ref_scores)
     subprocess.check_call("paste ref.list BSR_matrix_values.txt > %s/bsr_matrix_values.txt" % start_dir, shell=True)
