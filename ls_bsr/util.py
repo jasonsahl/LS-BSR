@@ -6,6 +6,7 @@ import os
 import glob
 import optparse
 import subprocess
+from subprocess import Popen
 import shlex
 from subprocess import call
 import random
@@ -81,6 +82,12 @@ def make_table(processors, test, clusters):
         """sort keys to get the same order between samples"""
         od = collections.OrderedDict(sorted(my_dict.items()))
         newout = open("%s.tmp.matrix" % "".join(reduced), "a")
+        """test code"""
+        #mylist = []
+        #for k,v in od.iteritems():
+        #    mylist.append("v")
+        #print >> newout,"\n".join(mylist)
+        """end of test code"""
         for k,v in od.iteritems():
             print >> newout,v
             if "T" in test:
@@ -181,13 +188,14 @@ def translate_consensus(consensus):
     output_handle.close()
     
 def uclust_cluster(usearch, id):
+    devnull = open("/dev/null", "w")
     """cluster with Uclust.  Updated to V6"""
     cmd = ["%s" % usearch,
            "-cluster_fast", "all_sorted.txt",
            "-id", str(id),
            "-uc", "results.uc",
            "-centroids", "consensus.fasta"]
-    subprocess.check_call(cmd)
+    subprocess.call(cmd, stderr=devnull, stdout=devnull)
 
 def blast_against_each_genome(dir_path, processors, filter, peptides, blast, penalty, reward):
     """BLAST all peptides against each genome"""
@@ -204,6 +212,7 @@ def blast_against_each_genome(dir_path, processors, filter, peptides, blast, pen
                 print "problem found in formatting genome %s" % f
         if ".fasta.new" in f:
             try:
+                devnull = open('/dev/null', 'w')
                 cmd = ["blastall",
                        "-p", blast,
                        "-i", peptides,
@@ -215,7 +224,7 @@ def blast_against_each_genome(dir_path, processors, filter, peptides, blast, pen
                        "-q", str(penalty),
                        "-r", str(reward),
                        "-o", "%s_blast.out" % f]
-                subprocess.check_call(cmd)
+                subprocess.call(cmd, stdout=devnull, stderr=devnull)
             except:
                 print "genomes %s cannot be used" % f
             
@@ -282,6 +291,7 @@ def get_unique_lines():
     return outdata
 
 def blast_against_self(genes_nt, genes_pep, output, filter, blast, penalty, reward, processors):
+    devnull = open('/dev/null', 'w')
     cmd = ["blastall",
            "-p", blast,
            "-i", genes_pep,
@@ -293,8 +303,9 @@ def blast_against_self(genes_nt, genes_pep, output, filter, blast, penalty, rewa
            "-q", str(penalty),
            "-r", str(reward),
            "-o", output]
-    subprocess.check_call(cmd)
-
+    subprocess.call(cmd, stdout=devnull, stderr=devnull)
+    #subprocess.check_call(cmd)
+    
 def parse_self_blast(lines):
     my_dict={}
     for line in lines:
@@ -644,14 +655,16 @@ def filter_variome(matrix, threshold, step):
 def run_usearch(usearch, id):
     rec=1
     curr_dir=os.getcwd()
+    devnull = open("/dev/null", "w")
     for infile in glob.glob(os.path.join(curr_dir, "z.*")):
         cmd = ["%s" % usearch,
            "-cluster_fast", "%s" % infile,
            "-id", str(id),
            "-uc", "results.uc",
            "-centroids", "%s.usearch.out" % str(autoIncrement())]
-        subprocess.check_call(cmd)
-
+        subprocess.call(cmd,stdout=devnull,stderr=devnull)
+    devnull.close()
+    
 def filter_scaffolds(in_fasta):
     infile = open(in_fasta, "U")
     outrecords = [ ]
@@ -668,19 +681,23 @@ def filter_scaffolds(in_fasta):
 def sort_usearch(usearch):
     rec=1
     curr_dir=os.getcwd()
+    devnull = open("/dev/null", "w")
     for infile in glob.glob(os.path.join(curr_dir, "x*")):
         cmd = ["%s" % usearch,
                "-sortbylength", "%s" % infile,
                "-output", "z.%s.sorted" % str(autoIncrement())]
-        subprocess.check_call(cmd)
-
+        subprocess.call(cmd,stdout=devnull,stderr=devnull)
+    devnull.close()
+    
 def uclust_sort(usearch):
     """sort with Usearch. Updated to V6"""
+    devnull = open("/dev/null", "w")
     cmd = ["%s" % usearch, 
            "-sortbylength", "all_gene_seqs.out",
            "-output", "tmp_sorted.txt"]
-    subprocess.check_call(cmd)
-
+    subprocess.call(cmd,stdout=devnull,stderr=devnull)
+    devnull.close()
+    
 def process_pangenome(matrix, upper, lower, iterations, type):
     my_matrix = open(matrix, "U")
     if type == "acc":

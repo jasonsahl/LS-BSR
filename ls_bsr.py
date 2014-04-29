@@ -177,43 +177,61 @@ def main(directory, id, filter, processors, genes, usearch, blast, penalty, rewa
         clusters = get_cluster_ids(gene_path)
         os.system("cp %s %s/joined/" % (gene_path,dir_path))
         os.chdir("%s/joined" % dir_path)
-        if "tblastn" == blast:
-            logging.logPrint("using tblastn")
-            translate_genes(gene_path,)
+        if gene_path.endswith(".pep"):
+            logging.logPrint("using tblastn on peptides")
             try:
-                subprocess.check_call("formatdb -i %s -p F" % gene_path, shell=True)
+                subprocess.check_call("formatdb -i %s" % gene_path, shell=True)
             except:
                 logging.logPrint("problem encountered with BLAST database")
                 sys.exit()
-            blast_against_self(gene_path, "genes.pep", "tmp_blast.out", filter, blast, penalty, reward, processors)
+            blast_against_self(gene_path, gene_path, "tmp_blast.out", filter, "blastp", penalty, reward, processors)
             subprocess.check_call("sort -u -k 1,1 tmp_blast.out > self_blast.out", shell=True)
             ref_scores=parse_self_blast(open("self_blast.out", "U"))
             subprocess.check_call("rm tmp_blast.out self_blast.out", shell=True)
             logging.logPrint("starting BLAST")
-            blast_against_each_genome(dir_path, processors, filter, "genes.pep", blast, penalty, reward)
-        elif "blastn" == blast:
-            logging.logPrint("using blastn")
-            try:
-                subprocess.check_call("formatdb -i %s -p F" % gene_path, shell=True)
-            except:
-                logging.logPrint("BLAST not found")
-                sys.exit()
-            blast_against_self(gene_path, gene_path, "tmp_blast.out", filter, blast, penalty, reward, processors)
-            subprocess.check_call("sort -u -k 1,1 tmp_blast.out > self_blast.out", shell=True)
-            ref_scores=parse_self_blast(open("self_blast.out", "U"))
-            subprocess.check_call("rm tmp_blast.out self_blast.out", shell=True)
-            logging.logPrint("starting BLAST")
-            blast_against_each_genome(dir_path, processors, filter, gene_path, blast, penalty, reward)
-        elif "blat" == blast:
-            logging.logPrint("using blat")
-            blat_against_self(gene_path, gene_path, "tmp_blast.out", processors)
-            subprocess.check_call("sort -u -k 1,1 tmp_blast.out > self_blast.out", shell=True)
-            ref_scores=parse_self_blast(open("self_blast.out", "U"))
-            subprocess.check_call("rm tmp_blast.out self_blast.out", shell=True)
-            logging.logPrint("starting BLAT")
-            blat_against_each_genome(dir_path,gene_path,processors)
+            blast_against_each_genome(dir_path, processors, filter, gene_path, "tblastn", penalty, reward)
+        elif gene_path.endswith(".fasta"):    
+            if "tblastn" == blast:
+                logging.logPrint("using tblastn")
+                translate_genes(gene_path,)
+                try:
+                    subprocess.check_call("formatdb -i %s -p F" % gene_path, shell=True)
+                except:
+                    logging.logPrint("problem encountered with BLAST database")
+                    sys.exit()
+                blast_against_self(gene_path, "genes.pep", "tmp_blast.out", filter, blast, penalty, reward, processors)
+                subprocess.check_call("sort -u -k 1,1 tmp_blast.out > self_blast.out", shell=True)
+                ref_scores=parse_self_blast(open("self_blast.out", "U"))
+                subprocess.check_call("rm tmp_blast.out self_blast.out", shell=True)
+                logging.logPrint("starting BLAST")
+                blast_against_each_genome(dir_path, processors, filter, "genes.pep", blast, penalty, reward)
+                os.system("cp genes.pep %s" % start_dir)
+            elif "blastn" == blast:
+                logging.logPrint("using blastn")
+                try:
+                    subprocess.check_call("formatdb -i %s -p F" % gene_path, shell=True)
+                except:
+                    logging.logPrint("BLAST not found")
+                    sys.exit()
+                blast_against_self(gene_path, gene_path, "tmp_blast.out", filter, blast, penalty, reward, processors)
+                subprocess.check_call("sort -u -k 1,1 tmp_blast.out > self_blast.out", shell=True)
+                ref_scores=parse_self_blast(open("self_blast.out", "U"))
+                subprocess.check_call("rm tmp_blast.out self_blast.out", shell=True)
+                logging.logPrint("starting BLAST")
+                blast_against_each_genome(dir_path, processors, filter, gene_path, blast, penalty, reward)
+            elif "blat" == blast:
+                logging.logPrint("using blat")
+                blat_against_self(gene_path, gene_path, "tmp_blast.out", processors)
+                subprocess.check_call("sort -u -k 1,1 tmp_blast.out > self_blast.out", shell=True)
+                ref_scores=parse_self_blast(open("self_blast.out", "U"))
+                subprocess.check_call("rm tmp_blast.out self_blast.out", shell=True)
+                logging.logPrint("starting BLAT")
+                blat_against_each_genome(dir_path,gene_path,processors)
+            else:
+                pass
         else:
-            pass
+            print "input file format not supported"
+            sys.exit()
     if blast=="blat":
         logging.logPrint("BLAT done")
     else:
