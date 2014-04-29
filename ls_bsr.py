@@ -78,7 +78,7 @@ def test_fplog(option, opt_str, value, parser):
         sys.exit()
 
 def main(directory, id, filter, processors, genes, usearch, blast, penalty, reward, length,
-         max_plog, min_hlog, f_plog, keep):
+         max_plog, min_hlog, f_plog, keep, debug_table):
     start_dir = os.getcwd()
     ap=os.path.abspath("%s" % start_dir)
     dir_path=os.path.abspath("%s" % directory)
@@ -130,12 +130,14 @@ def main(directory, id, filter, processors, genes, usearch, blast, penalty, rewa
         os.system("rm all_sorted.txt")
         os.chdir("split_files/")
         os.system("split -l 200000 all_sorted.txt")
+        logging.logPrint("clustering with USEARCH at an ID of %s" % id)
         sort_usearch(usearch)
         run_usearch(usearch, id)
         os.system("cat *.usearch.out > all_sorted.txt")
         os.system("mv all_sorted.txt %s/joined" % dir_path)
         os.chdir("%s/joined" % dir_path)
         uclust_cluster(usearch, id)
+        logging.logPrint("USEARCH clustering finished")
         clusters = get_cluster_ids("consensus.fasta")
         subprocess.check_call("formatdb -i consensus.fasta -p F", shell=True)
         if "tblastn" == blast:
@@ -238,7 +240,32 @@ def main(directory, id, filter, processors, genes, usearch, blast, penalty, rewa
         logging.logPrint("BLAST done")
     parse_blast_report()
     get_unique_lines()
-    make_table_dev(processors, "F", clusters)
+    if debug_table == "old":
+        make_table(processors, "F", clusters)
+    elif debug_table == "new":
+        curr_dir=os.getcwd()
+        table_files = glob.glob(os.path.join(curr_dir, "*.filtered.unique"))
+        files_and_temp_names = [(str(idx), os.path.join(curr_dir, f))
+                                for idx, f in enumerate(table_files)]
+        names=[]
+        def _perform_workflow(data):
+            tn, f = data
+            name=make_table_dev(f, "F", clusters)
+            names.append(name)
+        results = set(p_func.pmap(_perform_workflow,
+                                  files_and_temp_names,
+                                  num_workers=processors))
+        nr_sorted=sorted(clusters)
+        open("ref.list", "a").write("\n")
+        for x in nr_sorted:
+            open("ref.list", "a").write("%s\n" % x)
+        names_out = open("names.txt", "w")
+        names_redux = [val for subl in names for val in subl]
+        for x in names_redux: print >> names_out, "".join(x)
+        names_out.close()
+    else:
+        print "incorrect debug option selected, exiting"
+        sys.exit()
     subprocess.check_call("paste ref.list *.matrix > bsr_matrix", shell=True)
     divide_values("bsr_matrix", ref_scores)
     subprocess.check_call("paste ref.list BSR_matrix_values.txt > %s/bsr_matrix_values.txt" % start_dir, shell=True)
@@ -274,7 +301,7 @@ if __name__ == "__main__":
                       help="How much work to do in parallel, defaults to 2",
                       default="2", type="int")
     parser.add_option("-g", "--genes", dest="genes", action="callback", callback=test_file,
-                      help="predicted genes (nucleotide) to screen against genomes, will not use prodigal",
+                      help="predicted genes (nucleotide) to screen against genomes, will not use prodigal, must end in fasta (nt) or pep (aa)",
                       type="string",default="null")
     parser.add_option("-u", "--usearch", dest="usearch", action="store",
                       help="path to usearch v6, required for use with Prodigal",
@@ -303,6 +330,9 @@ if __name__ == "__main__":
     parser.add_option("-k", "--keep", dest="keep", action="callback", callback=test_filter,
                       help="keep or remove temp files, choose from T or F, defaults to F",
                       default="F", type="string")
+    parser.add_option("-e", "--error", dest="debug_table", 
+                      help="runs two different versions of make_table, can either be new or old [temp option]",
+                      default="new", type="string")
     options, args = parser.parse_args()
     
     mandatories = ["directory"]
@@ -313,5 +343,5 @@ if __name__ == "__main__":
             exit(-1)
 
     main(options.directory, options.id, options.filter, options.processors, options.genes, options.usearch, options.blast,
-         options.penalty, options.reward, options.length, options.max_plog, options.min_hlog, options.f_plog, options.keep)
+         options.penalty, options.reward, options.length, options.max_plog, options.min_hlog, options.f_plog, options.keep,options.debug_table)
 
