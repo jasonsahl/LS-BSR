@@ -901,7 +901,9 @@ def make_table_dev(file, test, clusters):
     od = collections.OrderedDict(sorted(my_dict.items()))
     newout = open("%s.tmp.matrix" % "".join(reduced), "a")
     for k,v in od.iteritems():
-        print >> newout,v
+        #print >> newout,v
+        newout.write(str(v))
+        newout.write("\n")
         if "T" in test:
             outdata.append(v)
     if "T" in test:
