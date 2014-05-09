@@ -78,7 +78,7 @@ def test_fplog(option, opt_str, value, parser):
         sys.exit()
 
 def main(directory, id, filter, processors, genes, usearch, blast, penalty, reward, length,
-         max_plog, min_hlog, f_plog, keep, debug_table):
+         max_plog, min_hlog, f_plog, keep, filter_peps, debug_table):
     start_dir = os.getcwd()
     ap=os.path.abspath("%s" % start_dir)
     dir_path=os.path.abspath("%s" % directory)
@@ -138,16 +138,23 @@ def main(directory, id, filter, processors, genes, usearch, blast, penalty, rewa
         os.chdir("%s/joined" % dir_path)
         uclust_cluster(usearch, id)
         logging.logPrint("USEARCH clustering finished")
-        clusters = get_cluster_ids("consensus.fasta")
+        #clusters = get_cluster_ids("consensus.fasta")
         subprocess.check_call("formatdb -i consensus.fasta -p F", shell=True)
         if "tblastn" == blast:
             translate_consensus("consensus.fasta")
-            filter_seqs("tmp.pep")
+            if filter_peps == "T":
+                filter_seqs("tmp.pep")
+                os.system("rm tmp.pep")
+            else:
+                os.system("mv tmp.pep consensus.pep")
+            clusters = get_cluster_ids("consensus.pep")
             blast_against_self("consensus.fasta", "consensus.pep", "tmp_blast.out", filter, blast, penalty, reward, processors)
         elif "blastn" == blast:
             blast_against_self("consensus.fasta", "consensus.fasta", "tmp_blast.out", filter, blast, penalty, reward, processors)
+            clusters = get_cluster_ids("consensus.fasta")
         elif "blat" == blast:
             blat_against_self("consensus.fasta", "consensus.fasta", "tmp_blast.out", processors)
+            clusters = get_cluster_ids("consensus.fasta")
         else:
             pass
         subprocess.check_call("sort -u -k 1,1 tmp_blast.out > self_blast.out", shell=True)
@@ -195,7 +202,7 @@ def main(directory, id, filter, processors, genes, usearch, blast, penalty, rewa
         elif gene_path.endswith(".fasta"):    
             if "tblastn" == blast:
                 logging.logPrint("using tblastn")
-                translate_genes(gene_path,)
+                translate_genes(gene_path)
                 try:
                     subprocess.check_call("formatdb -i %s -p F" % gene_path, shell=True)
                 except:
@@ -330,6 +337,9 @@ if __name__ == "__main__":
     parser.add_option("-k", "--keep", dest="keep", action="callback", callback=test_filter,
                       help="keep or remove temp files, choose from T or F, defaults to F",
                       default="F", type="string")
+    parser.add_option("-s", "--filter_short_peps", dest="filter_peps", action="callback",
+                      help="remove short peptides, smaller than 50AA?  Defaults to T",
+                      default="T", callback=test_filter, type="string")
     parser.add_option("-e", "--error", dest="debug_table", 
                       help="runs two different versions of make_table, can either be new or old [temp option]",
                       default="new", type="string")
@@ -343,5 +353,6 @@ if __name__ == "__main__":
             exit(-1)
 
     main(options.directory, options.id, options.filter, options.processors, options.genes, options.usearch, options.blast,
-         options.penalty, options.reward, options.length, options.max_plog, options.min_hlog, options.f_plog, options.keep,options.debug_table)
+         options.penalty, options.reward, options.length, options.max_plog, options.min_hlog, options.f_plog, options.keep,
+         options.filter_peps, options.debug_table)
 

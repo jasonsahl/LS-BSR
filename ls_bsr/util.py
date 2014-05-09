@@ -66,7 +66,6 @@ def make_table(processors, test, clusters):
         names.append(reduced)
         my_dict={}
         file=open(f, "rU")
-        #tmpfile=open("tmp.txt", "w")
         """make a dictionary of all clusters and values"""
         try:
             for line in file:
@@ -298,7 +297,6 @@ def blast_against_self(genes_nt, genes_pep, output, filter, blast, penalty, rewa
            "-r", str(reward),
            "-o", output]
     subprocess.call(cmd, stdout=devnull, stderr=devnull)
-    #subprocess.check_call(cmd)
     
 def parse_self_blast(lines):
     my_dict={}
@@ -901,7 +899,9 @@ def make_table_dev(file, test, clusters):
     od = collections.OrderedDict(sorted(my_dict.items()))
     newout = open("%s.tmp.matrix" % "".join(reduced), "a")
     for k,v in od.iteritems():
-        print >> newout,v
+        newout.write(str(v))
+        newout.write("\n")
+        #print >> newout,v
         if "T" in test:
             outdata.append(v)
     if "T" in test:
