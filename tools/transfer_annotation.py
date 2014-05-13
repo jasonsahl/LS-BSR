@@ -36,13 +36,13 @@ def main(peptides,consensus,processors):
     consensus_path=os.path.abspath("%s" % consensus)
     os.system("sed 's/ /_/g' %s > query.peptides.xyx" % pep_path)
     subprocess.check_call("formatdb -i query.peptides.xyx", shell=True)
-    #if consensus_path.endswith(".pep"):
-    #    os.system("blastall -p blastp -i %s -d query.peptides.xyx -m 8 -o xyx.blast.out.xyx -a %s > /dev/null 2>&1" % (consensus_path,processors))
-    #elif consensus_path.endswith(".fasta"):
-    #    os.system("blastall -p blastx -i %s -d %s -m 8 -o xyx.blast.out.xyx -a %s > /dev/null 2>&1" % (consensus_path,processors))
-    #else:
-    #    print "input genes file is of incorrect format, choose from fasta or pep"
-    #    sys.exit()
+    if consensus_path.endswith(".pep"):
+        os.system("blastall -p blastp -i %s -d query.peptides.xyx -m 8 -o xyx.blast.out.xyx -a %s > /dev/null 2>&1" % (consensus_path,processors))
+    elif consensus_path.endswith(".fasta"):
+        os.system("blastall -p blastx -i %s -d %s -m 8 -o xyx.blast.out.xyx -a %s > /dev/null 2>&1" % (consensus_path,processors))
+    else:
+        print "input genes file is of incorrect format, choose from fasta or pep"
+        sys.exit()
     os.system("sort -u -k 1,1 xyx.blast.out.xyx > xyx.blast.unique.xyx")
     transfer_annotation(consensus, "xyx.blast.unique.xyx")
     os.system("rm query.peptides.xyx")
