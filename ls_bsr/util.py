@@ -44,66 +44,7 @@ def get_cluster_ids(in_fasta):
         print "Problem with gene list.  Are there duplicate headers in your file?"
         sys.exit()
 
-def make_table(processors, test, clusters):
-    """make the BSR matrix table"""
-    curr_dir=os.getcwd()
-    names = [ ]
-    outdata = [ ]
-    files = glob.glob(os.path.join(curr_dir, "*.filtered.unique"))
-    files_and_temp_names = [(str(idx), os.path.join(curr_dir, f))
-                            for idx, f in enumerate(files)]
-    lock = threading.Lock()
-    def _perform_workflow(data):
-        lock.acquire()
-        tn, f = data
-        """get the name of each of the files to be iterated"""
-        name=[ ]
-        out=get_seq_name(f)
-        name.append(out)
-        reduced=[ ]
-        """remove the junk at the end of the file"""
-        for x in name:reduced.append(x.replace('.fasta.new_blast.out.filtered.filtered.unique',''))
-        names.append(reduced)
-        my_dict={}
-        file=open(f, "rU")
-        """make a dictionary of all clusters and values"""
-        try:
-            for line in file:
-                fields=line.split()
-                my_dict.update({fields[0]:fields[1]})
-        except:
-            raise TypeError("abnormal number of fields")
-        """add in values, including any potentially missing ones"""
-        for x in clusters:
-            if x not in my_dict.keys():my_dict.update({x:0})
-        """need to write a blank space"""
-        for x in reduced: open("%s.tmp.matrix" % x, 'a').write('%s\n' % x)
-        """sort keys to get the same order between samples"""
-        od = collections.OrderedDict(sorted(my_dict.items()))
-        newout = open("%s.tmp.matrix" % "".join(reduced), "a")
-        for k,v in od.iteritems():
-            print >> newout,v
-            if "T" in test:
-                outdata.append(v)
-        lock.release()
-    results = set(p_func.pmap(_perform_workflow,
-                              files_and_temp_names,
-                              num_workers=processors))
-    names_out = open("names.txt", "w")
-    for x in names: print >> names_out, "".join(x)
-    """this makes sure that the ref.list file is
-    in the same order as the tmp matrix"""
-    nr_sorted=sorted(clusters)
-    open("ref.list", "a").write("\n")
-    for x in nr_sorted:
-        open("ref.list", "a").write("%s\n" % x)
-    if "T" in test:
-        myout=[x for i, x in enumerate(outdata) if x not in outdata[i+1:]]
-        return sorted(outdata)
-    else:
-        pass
-    names_out.close()
-    
+  
 def divide_values(file, ref_scores):
     """divide each BSR value in a row by that row's maximum value"""
     infile = open(file, "U")

@@ -78,7 +78,7 @@ def test_fplog(option, opt_str, value, parser):
         sys.exit()
 
 def main(directory, id, filter, processors, genes, usearch, blast, penalty, reward, length,
-         max_plog, min_hlog, f_plog, keep, filter_peps, debug_table):
+         max_plog, min_hlog, f_plog, keep, filter_peps):
     start_dir = os.getcwd()
     ap=os.path.abspath("%s" % start_dir)
     dir_path=os.path.abspath("%s" % directory)
@@ -246,32 +246,26 @@ def main(directory, id, filter, processors, genes, usearch, blast, penalty, rewa
         logging.logPrint("BLAST done")
     parse_blast_report()
     get_unique_lines()
-    if debug_table == "old":
-        make_table(processors, "F", clusters)
-    elif debug_table == "new":
-        curr_dir=os.getcwd()
-        table_files = glob.glob(os.path.join(curr_dir, "*.filtered.unique"))
-        files_and_temp_names = [(str(idx), os.path.join(curr_dir, f))
-                                for idx, f in enumerate(table_files)]
-        names=[]
-        def _perform_workflow(data):
-            tn, f = data
-            name=make_table_dev(f, "F", clusters)
-            names.append(name)
-        results = set(p_func.pmap(_perform_workflow,
+    curr_dir=os.getcwd()
+    table_files = glob.glob(os.path.join(curr_dir, "*.filtered.unique"))
+    files_and_temp_names = [(str(idx), os.path.join(curr_dir, f))
+                            for idx, f in enumerate(table_files)]
+    names=[]
+    def _perform_workflow(data):
+        tn, f = data
+        name=make_table_dev(f, "F", clusters)
+        names.append(name)
+    results = set(p_func.pmap(_perform_workflow,
                                   files_and_temp_names,
                                   num_workers=processors))
-        nr_sorted=sorted(clusters)
-        open("ref.list", "a").write("\n")
-        for x in nr_sorted:
-            open("ref.list", "a").write("%s\n" % x)
-        names_out = open("names.txt", "w")
-        names_redux = [val for subl in names for val in subl]
-        for x in names_redux: print >> names_out, "".join(x)
-        names_out.close()
-    else:
-        print "incorrect debug option selected, exiting"
-        sys.exit()
+    nr_sorted=sorted(clusters)
+    open("ref.list", "a").write("\n")
+    for x in nr_sorted:
+        open("ref.list", "a").write("%s\n" % x)
+    names_out = open("names.txt", "w")
+    names_redux = [val for subl in names for val in subl]
+    for x in names_redux: print >> names_out, "".join(x)
+    names_out.close()
     subprocess.check_call("paste ref.list *.matrix > bsr_matrix", shell=True)
     divide_values("bsr_matrix", ref_scores)
     subprocess.check_call("paste ref.list BSR_matrix_values.txt > %s/bsr_matrix_values.txt" % start_dir, shell=True)
@@ -339,9 +333,6 @@ if __name__ == "__main__":
     parser.add_option("-s", "--filter_short_peps", dest="filter_peps", action="callback",
                       help="remove short peptides, smaller than 50AA?  Defaults to T",
                       default="T", callback=test_filter, type="string")
-    parser.add_option("-e", "--error", dest="debug_table", 
-                      help="runs two different versions of make_table, can either be new or old [temp option]",
-                      default="new", type="string")
     options, args = parser.parse_args()
     
     mandatories = ["directory"]
@@ -353,5 +344,5 @@ if __name__ == "__main__":
 
     main(options.directory, options.id, options.filter, options.processors, options.genes, options.usearch, options.blast,
          options.penalty, options.reward, options.length, options.max_plog, options.min_hlog, options.f_plog, options.keep,
-         options.filter_peps, options.debug_table)
+         options.filter_peps)
 
