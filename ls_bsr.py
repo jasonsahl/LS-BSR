@@ -138,7 +138,6 @@ def main(directory, id, filter, processors, genes, usearch, blast, penalty, rewa
         os.chdir("%s/joined" % dir_path)
         uclust_cluster(usearch, id)
         logging.logPrint("USEARCH clustering finished")
-        #clusters = get_cluster_ids("consensus.fasta")
         subprocess.check_call("formatdb -i consensus.fasta -p F", shell=True)
         if "tblastn" == blast:
             translate_consensus("consensus.fasta")

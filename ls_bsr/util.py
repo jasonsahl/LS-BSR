@@ -216,6 +216,7 @@ def blast_against_each_genome(dir_path, processors, filter, peptides, blast, pen
                        "-F", str(filter),
                        "-q", str(penalty),
                        "-r", str(reward),
+                       "-C", "F",
                        "-o", "%s_blast.out" % f]
                 subprocess.call(cmd, stdout=devnull, stderr=devnull)
             except:
@@ -295,6 +296,7 @@ def blast_against_self(genes_nt, genes_pep, output, filter, blast, penalty, rewa
            "-F", str(filter),
            "-q", str(penalty),
            "-r", str(reward),
+           "-C", "F",
            "-o", output]
     subprocess.call(cmd, stdout=devnull, stderr=devnull)
     
