@@ -762,7 +762,7 @@ def transpose_matrix(matrix):
     reduced = [ ]
     for line in open(matrix, "U"):
         line=line.strip("\n")
-        fields = line.split("\t")
+        fields = line.split()
         reduced.append(fields)
     test=map(list, zip(*reduced))
     for x in test:
@@ -777,7 +777,7 @@ def reorder_matrix(in_matrix, names):
     my_matrix.close()
     for name in names:
          for line in open(in_matrix, "U"):
-            fields = line.split("\t")
+            fields = line.split()
             if name == fields[0]:
                 print >> outfile, line,
     my_matrix.close()
@@ -844,7 +844,6 @@ def make_table_dev(file, test, clusters):
     for k,v in od.iteritems():
         newout.write(str(v))
         newout.write("\n")
-        #print >> newout,v
         if "T" in test:
             outdata.append(v)
     if "T" in test:
