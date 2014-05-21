@@ -104,6 +104,7 @@ def main(directory, id, filter, processors, genes, usearch, blast, penalty, rewa
             pass
         else:
             print "prodigal is not in your path, but needs to be!"
+            sys.exit()
         print "citation: Hyatt D, Chen GL, Locascio PF, Land ML, Larimer FW, and Hauser LJ. 2010. Prodigal: prokaryotic gene recognition and translation initiation site identification. BMC Bioinformatics 11:119"
         try:
             if os.path.exists(usearch):
