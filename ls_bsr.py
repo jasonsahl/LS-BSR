@@ -268,7 +268,8 @@ def main(directory, id, filter, processors, genes, usearch, blast, penalty, rewa
     names_redux = [val for subl in names for val in subl]
     for x in names_redux: print >> names_out, "".join(x)
     names_out.close()
-    subprocess.check_call("paste ref.list *.matrix > bsr_matrix", shell=True)
+    #subprocess.check_call("paste ref.list *.matrix > bsr_matrix", shell=True)
+    create_bsr_matrix()
     divide_values("bsr_matrix", ref_scores)
     subprocess.check_call("paste ref.list BSR_matrix_values.txt > %s/bsr_matrix_values.txt" % start_dir, shell=True)
     if "T" in f_plog:
