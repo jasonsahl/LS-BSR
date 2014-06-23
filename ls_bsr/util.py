@@ -850,3 +850,22 @@ def make_table_dev(file, test, clusters):
     else:
         pass
     return names
+
+def create_bsr_matrix():
+    new_matrix = open("bsr_matrix", "w")
+    master_list = []
+    tmp_list = []
+    for line in open("ref.list", "U"):
+        fields = line.split()
+        tmp_list.append("\t".join(fields))
+    master_list.append(tmp_list)
+    for infile in glob.glob(os.path.join(".", '*.tmp.matrix')):
+        new_list = []
+        for line in open(infile, "U"):
+            matrix_fields = line.split()
+            new_list.append("\t".join(matrix_fields))
+        master_list.append(new_list)
+    test = map(list, zip(*master_list))
+    for x in test:
+        print >> new_matrix, "\t".join(x)
+    new_matrix.close()
