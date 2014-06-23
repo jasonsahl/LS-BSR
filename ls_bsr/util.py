@@ -192,10 +192,8 @@ def parse_blast_report():
     outdata = [ ]
     for infile in glob.glob(os.path.join(curr_dir, "*_blast.out")):
         names = get_seq_name(infile)
-        ref = open(infile, "rU")
-        data = ref.readlines()
         outfile = open("%s.filtered" % names, "w")
-        for line in data:
+        for line in open(infile, "rU"):
             try:
                 fields = line.split("\t")
                 print >> outfile, fields[0]+"\t"+fields[11],
