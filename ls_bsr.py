@@ -262,6 +262,7 @@ def main(directory, id, filter, processors, genes, usearch, blast, penalty, rewa
         centroid_list.append(x)
     table_list.append(centroid_list)
     """end test code"""
+    logging.logPrint("starting matrix building")
     def _perform_workflow(data):
         tn, f = data
         #name=make_table_dev(f, "F", clusters)
