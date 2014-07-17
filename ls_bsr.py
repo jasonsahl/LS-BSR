@@ -253,14 +253,29 @@ def main(directory, id, filter, processors, genes, usearch, blast, penalty, rewa
     files_and_temp_names = [(str(idx), os.path.join(curr_dir, f))
                             for idx, f in enumerate(table_files)]
     names=[]
+    """test code"""
+    table_list = []
+    nr_sorted=sorted(clusters)
+    centroid_list = []
+    centroid_list.append(" ")
+    for x in nr_sorted:
+        centroid_list.append(x)
+    table_list.append(centroid_list)
+    """end test code"""
+    logging.logPrint("starting matrix building")
     def _perform_workflow(data):
         tn, f = data
-        name=make_table_dev(f, "F", clusters)
+        #name=make_table_dev(f, "F", clusters)
+        """new code"""
+        name,values=make_table_dev(f, "F", clusters)
+        """end of new code"""
         names.append(name)
+        table_list.append(values)
+        logging.logPrint("sample %s processed" % f)
     results = set(p_func.pmap(_perform_workflow,
                                   files_and_temp_names,
                                   num_workers=processors))
-    nr_sorted=sorted(clusters)
+    #nr_sorted=sorted(clusters)
     open("ref.list", "a").write("\n")
     for x in nr_sorted:
         open("ref.list", "a").write("%s\n" % x)
@@ -268,8 +283,10 @@ def main(directory, id, filter, processors, genes, usearch, blast, penalty, rewa
     names_redux = [val for subl in names for val in subl]
     for x in names_redux: print >> names_out, "".join(x)
     names_out.close()
-    #subprocess.check_call("paste ref.list *.matrix > bsr_matrix", shell=True)
-    create_bsr_matrix()
+    #create_bsr_matrix()
+    """new code"""
+    create_bsr_matrix_dev(table_list)
+    """end of new code"""
     divide_values("bsr_matrix", ref_scores)
     subprocess.check_call("paste ref.list BSR_matrix_values.txt > %s/bsr_matrix_values.txt" % start_dir, shell=True)
     if "T" in f_plog:

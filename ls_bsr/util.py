@@ -813,6 +813,9 @@ def blat_against_each_genome(dir_path,database,processors):
 
 def make_table_dev(file, test, clusters):
     """make the BSR matrix table"""
+    """new code here"""
+    values = [ ]
+    """end of new code"""
     names = [ ]
     outdata = [ ]
     name=[ ]
@@ -835,22 +838,30 @@ def make_table_dev(file, test, clusters):
     for x in clusters:
         if x not in my_dict.keys():my_dict.update({x:0})
     """need to write a blank space"""
-    for x in reduced: open("%s.tmp.matrix" % x, 'a').write('%s\n' % x)
+    #for x in reduced: open("%s.tmp.matrix" % x, 'a').write('%s\n' % x)
+    """new code here"""
+    for x in reduced:
+        values.append(x)
+    """end of new code"""
     """sort keys to get the same order between samples"""
     od = collections.OrderedDict(sorted(my_dict.items()))
-    newout = open("%s.tmp.matrix" % "".join(reduced), "a")
+    """new code here"""
     for k,v in od.iteritems():
-        newout.write(str(v))
-        newout.write("\n")
-        if "T" in test:
-            outdata.append(v)
+        values.append(str(v))
+    #newout = open("%s.tmp.matrix" % "".join(reduced), "a")
+    #for k,v in od.iteritems():
+    #    newout.write(str(v))
+    #    newout.write("\n")
+    #    if "T" in test:
+    #        outdata.append(v)
     if "T" in test:
         myout=[x for i, x in enumerate(outdata) if x not in outdata[i+1:]]
         return sorted(outdata)
     else:
         pass
-    return names
-
+    return names, values
+    #return names
+    
 def create_bsr_matrix():
     new_matrix = open("bsr_matrix", "w")
     master_list = []
@@ -865,6 +876,13 @@ def create_bsr_matrix():
             matrix_fields = line.split()
             new_list.append("\t".join(matrix_fields))
         master_list.append(new_list)
+    test = map(list, zip(*master_list))
+    for x in test:
+        print >> new_matrix, "\t".join(x)
+    new_matrix.close()
+
+def create_bsr_matrix_dev(master_list):
+    new_matrix = open("bsr_matrix", "w")
     test = map(list, zip(*master_list))
     for x in test:
         print >> new_matrix, "\t".join(x)
