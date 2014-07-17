@@ -756,8 +756,8 @@ def transpose_matrix(matrix):
     out_matrix = open("tmp.matrix", "w")
     reduced = [ ]
     for line in open(matrix, "U"):
-        line=line.strip("\n")
-        fields = line.split("\t")
+        newline=line.strip("\n")
+        fields = newline.split("\t")
         reduced.append(fields)
     test=map(list, zip(*reduced))
     for x in test:
@@ -772,7 +772,8 @@ def reorder_matrix(in_matrix, names):
     my_matrix.close()
     for name in names:
          for line in open(in_matrix, "U"):
-            fields = line.split("\t")
+            newline = line.strip("\n")
+            fields = newline.split("\t")
             if name == fields[0]:
                 print >> outfile, line,
     my_matrix.close()
