@@ -265,7 +265,6 @@ def main(directory, id, filter, processors, genes, usearch, blast, penalty, rewa
     logging.logPrint("starting matrix building")
     def _perform_workflow(data):
         tn, f = data
-        #name=make_table_dev(f, "F", clusters)
         """new code"""
         name,values=make_table_dev(f, "F", clusters)
         """end of new code"""
@@ -278,7 +277,6 @@ def main(directory, id, filter, processors, genes, usearch, blast, penalty, rewa
     results = set(p_func.pmap(_perform_workflow,
                                   files_and_temp_names,
                                   num_workers=processors))
-    #nr_sorted=sorted(clusters)
     open("ref.list", "a").write("\n")
     for x in nr_sorted:
         open("ref.list", "a").write("%s\n" % x)
@@ -286,10 +284,7 @@ def main(directory, id, filter, processors, genes, usearch, blast, penalty, rewa
     names_redux = [val for subl in names for val in subl]
     for x in names_redux: print >> names_out, "".join(x)
     names_out.close()
-    #create_bsr_matrix()
-    """new code"""
     create_bsr_matrix_dev(table_list)
-    """end of new code"""
     divide_values("bsr_matrix", ref_scores)
     subprocess.check_call("paste ref.list BSR_matrix_values.txt > %s/bsr_matrix_values.txt" % start_dir, shell=True)
     if "T" in f_plog:

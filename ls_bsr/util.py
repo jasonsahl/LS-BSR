@@ -44,7 +44,6 @@ def get_cluster_ids(in_fasta):
         print "Problem with gene list.  Are there duplicate headers in your file?"
         sys.exit()
 
-  
 def divide_values(file, ref_scores):
     """divide each BSR value in a row by that row's maximum value"""
     infile = open(file, "U")
@@ -204,7 +203,6 @@ def parse_blast_report():
         outfile.close()
     return outdata
     
-            
 def get_unique_lines():
     """only return the top hit for each query"""
     curr_dir=os.getcwd()
@@ -525,7 +523,6 @@ def find_dups(ref_scores, length, max_plog, min_hlog):
                     continue
         except:
             raise TypeError("problem parsing %s" % infile)
-
     for k,v in my_dict_o.iteritems():
         if int(len(v))>=2:
             dup_dict.update({k:v})
@@ -838,53 +835,19 @@ def make_table_dev(file, test, clusters):
     """add in values, including any potentially missing ones"""
     for x in clusters:
         if x not in my_dict.keys():my_dict.update({x:0})
-    """need to write a blank space"""
-    #for x in reduced: open("%s.tmp.matrix" % x, 'a').write('%s\n' % x)
-    """new code here"""
     for x in reduced:
         values.append(x)
-    """end of new code"""
     """sort keys to get the same order between samples"""
     od = collections.OrderedDict(sorted(my_dict.items()))
-    """new code here"""
     values_2 = od.values()
     values_3 = values+values_2
-    #for k,v in od.iteritems():
-    #    values.append(str(v))
-    """end of new code"""
-    #newout = open("%s.tmp.matrix" % "".join(reduced), "a")
-    #for k,v in od.iteritems():
-    #    newout.write(str(v))
-    #    newout.write("\n")
-    #    if "T" in test:
-    #        outdata.append(v)
     if "T" in test:
         myout=[x for i, x in enumerate(outdata) if x not in outdata[i+1:]]
         return sorted(outdata)
     else:
         pass
     return names, values_3
-    #return names
     
-def create_bsr_matrix():
-    new_matrix = open("bsr_matrix", "w")
-    master_list = []
-    tmp_list = []
-    for line in open("ref.list", "U"):
-        fields = line.split()
-        tmp_list.append("\t".join(fields))
-    master_list.append(tmp_list)
-    for infile in glob.glob(os.path.join(".", '*.tmp.matrix')):
-        new_list = []
-        for line in open(infile, "U"):
-            matrix_fields = line.split()
-            new_list.append("\t".join(matrix_fields))
-        master_list.append(new_list)
-    test = map(list, zip(*master_list))
-    for x in test:
-        print >> new_matrix, "\t".join(x)
-    new_matrix.close()
-
 def create_bsr_matrix_dev(master_list):
     new_matrix = open("bsr_matrix", "w")
     test = map(list, zip(*master_list))
