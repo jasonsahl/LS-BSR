@@ -6,33 +6,8 @@ with the order of genomes in a phylogeny"""
 
 import sys
 import optparse
+from ls_bsr.util import transpose_matrix, reorder_matrix
 
-def transpose_matrix(matrix):
-    out_matrix = open("tmp.matrix", "w")
-    in_matrix = open(matrix, "U")
-    reduced = [ ]
-    for line in in_matrix:
-        newline = line.strip("\n")    
-        fields = newline.split("\t")
-        reduced.append(fields)
-    test=map(list, zip(*reduced))
-    for x in test:
-        print >> out_matrix, "\t".join(x)
-    in_matrix.close()
-    out_matrix.close()
-    
-def reorder_matrix(in_matrix, genomes):
-    my_matrix = open(in_matrix, "U")
-    outfile = open("reordered_matrix.txt", "w")
-    firstLine = my_matrix.readline()
-    print >> outfile, firstLine,
-    for stuff in open(genomes, "U").read().splitlines():
-        for line in open(in_matrix, "U"):
-	    newline = line.strip()        
-            fields = newline.split("\t")
-            if stuff == fields[0]:
-                print >> outfile, line,
-           
 def test_file(option, opt_str, value, parser):
     try:
         with open(value): setattr(parser.values, option.dest, value)
