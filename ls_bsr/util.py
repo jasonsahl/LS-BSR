@@ -834,6 +834,7 @@ def make_table_dev(file, test, clusters):
             my_dict.update({fields[0]:fields[1]})
     except:
         raise TypeError("abnormal number of fields")
+    my_file.close()
     """add in values, including any potentially missing ones"""
     for x in clusters:
         if x not in my_dict.keys():my_dict.update({x:0})
@@ -846,8 +847,11 @@ def make_table_dev(file, test, clusters):
     """sort keys to get the same order between samples"""
     od = collections.OrderedDict(sorted(my_dict.items()))
     """new code here"""
-    for k,v in od.iteritems():
-        values.append(str(v))
+    values_2 = od.values()
+    values_3 = values+values_2
+    #for k,v in od.iteritems():
+    #    values.append(str(v))
+    """end of new code"""
     #newout = open("%s.tmp.matrix" % "".join(reduced), "a")
     #for k,v in od.iteritems():
     #    newout.write(str(v))
@@ -859,7 +863,7 @@ def make_table_dev(file, test, clusters):
         return sorted(outdata)
     else:
         pass
-    return names, values
+    return names, values_3
     #return names
     
 def create_bsr_matrix():
@@ -885,5 +889,6 @@ def create_bsr_matrix_dev(master_list):
     new_matrix = open("bsr_matrix", "w")
     test = map(list, zip(*master_list))
     for x in test:
-        print >> new_matrix, "\t".join(x)
+        y = map(str, x)
+        print >> new_matrix, "\t".join(y)
     new_matrix.close()

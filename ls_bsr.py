@@ -78,7 +78,7 @@ def test_fplog(option, opt_str, value, parser):
         sys.exit()
 
 def main(directory, id, filter, processors, genes, usearch, blast, penalty, reward, length,
-         max_plog, min_hlog, f_plog, keep, filter_peps):
+         max_plog, min_hlog, f_plog, keep, filter_peps, debug):
     start_dir = os.getcwd()
     ap=os.path.abspath("%s" % start_dir)
     dir_path=os.path.abspath("%s" % directory)
@@ -271,7 +271,10 @@ def main(directory, id, filter, processors, genes, usearch, blast, penalty, rewa
         """end of new code"""
         names.append(name)
         table_list.append(values)
-        logging.logPrint("sample %s processed" % f)
+        if debug == "T":
+            logging.logPrint("sample %s processed" % f)
+        else:
+            pass
     results = set(p_func.pmap(_perform_workflow,
                                   files_and_temp_names,
                                   num_workers=processors))
@@ -353,6 +356,9 @@ if __name__ == "__main__":
     parser.add_option("-s", "--filter_short_peps", dest="filter_peps", action="callback",
                       help="remove short peptides, smaller than 50AA?  Defaults to T",
                       default="T", callback=test_filter, type="string")
+    parser.add_option("-z", "--debug", dest="debug", action="callback",
+                      help="turn debug on?  Defaults to F",
+                      default="F", callback=test_filter, type="string")
     options, args = parser.parse_args()
     
     mandatories = ["directory"]
@@ -364,5 +370,5 @@ if __name__ == "__main__":
 
     main(options.directory, options.id, options.filter, options.processors, options.genes, options.usearch, options.blast,
          options.penalty, options.reward, options.length, options.max_plog, options.min_hlog, options.f_plog, options.keep,
-         options.filter_peps)
+         options.filter_peps,options.debug)
 
