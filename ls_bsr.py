@@ -274,6 +274,7 @@ def main(directory, id, filter, processors, genes, usearch, blast, penalty, rewa
     set(p_func.pmap(_perform_workflow,
                     files_and_temp_names,
                     num_workers=processors))
+    logging.logPrint("matrix built")
     open("ref.list", "a").write("\n")
     for x in nr_sorted:
         open("ref.list", "a").write("%s\n" % x)
