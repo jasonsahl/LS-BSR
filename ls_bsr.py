@@ -253,7 +253,6 @@ def main(directory, id, filter, processors, genes, usearch, blast, penalty, rewa
     files_and_temp_names = [(str(idx), os.path.join(curr_dir, f))
                             for idx, f in enumerate(table_files)]
     names=[]
-    """test code"""
     table_list = []
     nr_sorted=sorted(clusters)
     centroid_list = []
@@ -261,22 +260,20 @@ def main(directory, id, filter, processors, genes, usearch, blast, penalty, rewa
     for x in nr_sorted:
         centroid_list.append(x)
     table_list.append(centroid_list)
-    """end test code"""
     logging.logPrint("starting matrix building")
     def _perform_workflow(data):
         tn, f = data
-        """new code"""
         name,values=make_table_dev(f, "F", clusters)
-        """end of new code"""
         names.append(name)
         table_list.append(values)
         if debug == "T":
             logging.logPrint("sample %s processed" % f)
         else:
             pass
-    results = set(p_func.pmap(_perform_workflow,
-                                  files_and_temp_names,
-                                  num_workers=processors))
+    """removed results"""
+    set(p_func.pmap(_perform_workflow,
+                    files_and_temp_names,
+                    num_workers=processors))
     open("ref.list", "a").write("\n")
     for x in nr_sorted:
         open("ref.list", "a").write("%s\n" % x)
