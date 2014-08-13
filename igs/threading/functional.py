@@ -2,6 +2,7 @@
 import Queue
 
 from igs.threading import threads
+from time import sleep
 
 def pmap(f, iterable, num_workers=1):
     def _worker(work_queue, result):
@@ -23,6 +24,7 @@ def pmap(f, iterable, num_workers=1):
         results.append([])
         worker_threads.append(threads.runThread(_worker, work_queue, results[i]))
 
+    sleep(1)
     for th in worker_threads:
         th.join()
 
