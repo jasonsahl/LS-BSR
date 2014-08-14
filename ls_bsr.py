@@ -42,7 +42,7 @@ def test_blast(option, opt_str, value, parser):
     elif "blat" in value:
         setattr(parser.values, option.dest, value)
     else:
-        print "Blast option not supported.  Only select from tblastn or blastn"
+        print "Blast option not supported.  Only select from tblastn, blat, or blastn"
         sys.exit()
 
 def test_dir(option, opt_str, value, parser):
@@ -97,7 +97,8 @@ def main(directory, id, filter, processors, genes, usearch, blast, penalty, rewa
         sys.exit()
     for infile in glob.glob(os.path.join(dir_path, '*.fasta')):
         name=get_seq_name(infile)
-        os.system("cp %s %s/joined/%s.new" % (infile,dir_path,name))
+        #os.system("cp %s %s/joined/%s.new" % (infile,dir_path,name))
+        os.link("%s" % infile, "%s/joined/%s.new" % (dir_path,name))
     if "null" in genes:
         rc = subprocess.call(['which', 'prodigal'])
         if rc == 0:
