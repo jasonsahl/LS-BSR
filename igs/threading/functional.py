@@ -7,9 +7,12 @@ from time import sleep
 def pmap(f, iterable, num_workers=1):
     def _worker(work_queue, result):
         while not work_queue.empty():
-            idx, work = work_queue.get()
-            result.append((idx, f(work)))
-            work_queue.task_done()
+            try:
+                idx, work = work_queue.get()
+                result.append((idx, f(work)))
+                work_queue.task_done()
+            except:
+                work_queue.task_done()
 
     # We want to ensure the order is the same
     # on the output string so we index each value
@@ -24,7 +27,6 @@ def pmap(f, iterable, num_workers=1):
         results.append([])
         worker_threads.append(threads.runThread(_worker, work_queue, results[i]))
 
-    sleep(1)
     for th in worker_threads:
         th.join()
 
