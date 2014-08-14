@@ -27,15 +27,17 @@ def pmap(f, iterable, num_workers=1):
         results.append([])
         worker_threads.append(threads.runThread(_worker, work_queue, results[i]))
 
-    for th in worker_threads:
-        th.join()
-
     result = []
-    for r in results:
-        result.extend(r)
+    while num_workers > 0:
+        for r in results:
+            result.extend(r)
+            num_workers -= 1
 
     result.sort()
 
+    for th in worker_threads:
+        th.join()
+    
     return [v for _, v in result]
 
 
