@@ -12,9 +12,8 @@ def pmap(f, iterable, num_workers=1):
                 result.append((idx, f(work)))
                 work_queue.task_done()
             except:
-                work_queue.task_done()
                 break
-
+        
     # We want to ensure the order is the same
     # on the output string so we index each value
     # so we can reconstruct it
