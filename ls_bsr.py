@@ -271,6 +271,7 @@ def main(directory, id, filter, processors, genes, usearch, blast, penalty, rewa
             logging.logPrint("sample %s processed" % f)
         else:
             pass
+        pass
     """removed results"""
     set(p_func.pmap(_perform_workflow,
                     files_and_temp_names,

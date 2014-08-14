@@ -24,7 +24,10 @@ def pmap(f, iterable, num_workers=1):
     # so we can reconstruct it
     work_queue = Queue.Queue()
     for idx, v in enumerate(iterable):
-        work_queue.put((idx, v))
+        try:
+            work_queue.put((idx, v))
+        except:
+            pass
 
     results = []
     worker_threads = []
