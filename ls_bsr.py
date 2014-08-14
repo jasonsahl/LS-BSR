@@ -262,29 +262,33 @@ def main(directory, id, filter, processors, genes, usearch, blast, penalty, rewa
         centroid_list.append(x)
     table_list.append(centroid_list)
     logging.logPrint("starting matrix building")
-    def _perform_workflow(data):
-        tn, f = data
-        name,values=make_table_dev(f, "F", clusters)
-        names.append(name)
-        table_list.append(values)
-        if debug == "T":
-            logging.logPrint("sample %s processed" % f)
-        else:
-            pass
-        pass
-    """removed results"""
-    set(p_func.pmap(_perform_workflow,
-                    files_and_temp_names,
-                    num_workers=processors))
+    """test"""
+    new_names,new_table = new_loop(files_and_temp_names, processors, clusters, debug)
+    #def _perform_workflow(data):
+    #    tn, f = data
+    #    name,values=make_table_dev(f, "F", clusters)
+    #    names.append(name)
+    #    table_list.append(values)
+    #    if debug == "T":
+    #        logging.logPrint("sample %s processed" % f)
+    #    else:
+    #        pass
+    #set(p_func.pmap(_perform_workflow,
+    #                files_and_temp_names,
+    #                num_workers=processors))
+    new_table_list = table_list+new_table
+    """end test"""
     logging.logPrint("matrix built")
     open("ref.list", "a").write("\n")
     for x in nr_sorted:
         open("ref.list", "a").write("%s\n" % x)
     names_out = open("names.txt", "w")
-    names_redux = [val for subl in names for val in subl]
+    #names_redux = [val for subl in names for val in subl]
+    names_redux = [val for subl in new_names for val in subl]
     for x in names_redux: print >> names_out, "".join(x)
     names_out.close()
-    create_bsr_matrix_dev(table_list)
+    #create_bsr_matrix_dev(table_list)
+    create_bsr_matrix_dev(new_table_list)
     divide_values("bsr_matrix", ref_scores)
     subprocess.check_call("paste ref.list BSR_matrix_values.txt > %s/bsr_matrix_values.txt" % start_dir, shell=True)
     if "T" in f_plog:

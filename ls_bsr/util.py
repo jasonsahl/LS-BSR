@@ -856,3 +856,20 @@ def create_bsr_matrix_dev(master_list):
         y = map(str, x)
         print >> new_matrix, "\t".join(y)
     new_matrix.close()
+
+def new_loop(to_iterate, processors, clusters, debug):
+    names = []
+    table_list = []
+    def _perform_workflow(data):
+        tn, f = data
+        name,values=make_table_dev(f, "F", clusters)
+        names.append(name)
+        table_list.append(values)
+        if debug == "T":
+            logging.logPrint("sample %s processed" % f)
+        else:
+            pass
+    set(p_func.pmap(_perform_workflow,
+                    to_iterate,
+                    num_workers=processors))
+    return names,table_list
