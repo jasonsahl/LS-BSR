@@ -8,7 +8,9 @@ def pmap(f, iterable, num_workers=1):
     def _worker(work_queue, result):
         while not work_queue.empty():
             idx, work = work_queue.get()
+            sleep(0.1)
             result.append((idx, f(work)))
+            sleep(0.1)
             work_queue.task_done()
         while True:
             try:
