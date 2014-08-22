@@ -262,7 +262,6 @@ def main(directory, id, filter, processors, genes, usearch, blast, penalty, rewa
         centroid_list.append(x)
     table_list.append(centroid_list)
     logging.logPrint("starting matrix building")
-    """test"""
     new_names,new_table = new_loop(files_and_temp_names, processors, clusters, debug)
     #def _perform_workflow(data):
     #    tn, f = data
