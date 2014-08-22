@@ -258,10 +258,11 @@ def main(directory, genes, blast, processors):
         parse_blast_xml_report("%s.blast.out" % name)
         parsed_blast_to_seqs("%s.blast.unique" % name)
         check_and_align_seqs("%s.extracted.seqs" % name, num_genomes)
+        os.system("rm %s.blast.out %s.blast.unique %s.extracted.seqs" % (name,name,name))
     set(p_func.pmap(_perform_workflow,
                     files_and_temp_names,
                     num_workers=processors))
-    os.system("rm *.blast.out *.blast.unique *.extracted.seqs")
+        #os.system("rm *.blast.out *.blast.unique *.extracted.seqs")
     pull_seqs(names)
     concatenate()
     os.system("cat *.concat > all.concat")
