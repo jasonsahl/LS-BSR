@@ -244,6 +244,7 @@ def main(directory, genes, blast, processors):
     os.system("cp %s %s/to_extract_xxx/genes.fasta" % (gene_path,ap))
     os.chdir("%s/to_extract_xxx" % ap)
     split_multifasta("genes.fasta")
+    os.system("rm genes.fasta")
     os.chdir("%s/work_xxx" % ap)
     """create combined file"""
     num_genomes, names = combined_seqs(dir_path)
