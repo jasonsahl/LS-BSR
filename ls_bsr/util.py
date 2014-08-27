@@ -185,7 +185,7 @@ def filter_seqs(input_pep):
     outfile.close()
     return outdata
 
-def parse_blast_report():
+def parse_blast_report(test):
     """parse out only the name and bit score from the blast report"""
     curr_dir=os.getcwd()
     outdata = [ ]
@@ -201,7 +201,10 @@ def parse_blast_report():
             except:
                 raise TypeError("malformed blast line found")
         outfile.close()
-    return outdata
+    if "true" in test:
+        return outdata
+    else:
+        pass
     
 def get_unique_lines():
     """only return the top hit for each query"""

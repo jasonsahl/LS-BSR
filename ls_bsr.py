@@ -247,7 +247,7 @@ def main(directory, id, filter, processors, genes, usearch, blast, penalty, rewa
         logging.logPrint("BLAT done")
     else:
         logging.logPrint("BLAST done")
-    parse_blast_report()
+    parse_blast_report("false")
     get_unique_lines()
     curr_dir=os.getcwd()
     table_files = glob.glob(os.path.join(curr_dir, "*.filtered.unique"))

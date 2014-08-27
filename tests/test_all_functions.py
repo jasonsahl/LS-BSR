@@ -149,7 +149,7 @@ class Test5(unittest.TestCase):
         fp = open(fpath, "w")
         fp.write("Cluster0	Cluster0	100.00	15	0	0	1	15	1	15	1e-07	30.2")
         fp.close()
-        self.assertEqual(parse_blast_report(), ['Cluster0', '30.2'])
+        self.assertEqual(parse_blast_report("true"), ['Cluster0', '30.2'])
         os.chdir("%s" % curr_dir)
         shutil.rmtree(tdir)
     def test_parse_blast_report_missing_fields(self):
@@ -161,7 +161,7 @@ class Test5(unittest.TestCase):
         fp = open(fpath, "w")
         fp.write("Cluster0	Cluster0	100.00	15	0	0	1	15	1	15")
         fp.close()
-        self.assertRaises(TypeError, parse_blast_report)
+        self.assertRaises(TypeError, parse_blast_report, "true")
         os.chdir("%s" % curr_dir)
         shutil.rmtree(ndir)
 
