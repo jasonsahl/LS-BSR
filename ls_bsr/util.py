@@ -196,8 +196,11 @@ def parse_blast_report(test):
             try:
                 fields = line.split("\t")
                 print >> outfile, fields[0]+"\t"+fields[11],
-                outdata.append(fields[0])
-                outdata.append(fields[11])
+                if "true" in test:
+                    outdata.append(fields[0])
+                    outdata.append(fields[11])
+                else:
+                    pass
             except:
                 raise TypeError("malformed blast line found")
         outfile.close()
