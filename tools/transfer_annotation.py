@@ -26,8 +26,9 @@ def transfer_annotation(consensus, blast_in):
             print >> outfile,">"+str(blast_dict.get(record.id))
             print >> outfile,record.seq
         else:
-            print >> outfile,">"+record.id
-            print >> outfile,record.seq
+            if int(len(record.seq))>10:
+                print >> outfile,">"+record.id
+                print >> outfile,record.seq
     outfile.close()
     
 def main(peptides,consensus,processors):
