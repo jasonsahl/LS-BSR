@@ -39,7 +39,7 @@ def main(peptides,consensus,processors):
     if consensus_path.endswith(".pep"):
         os.system("blastall -p blastp -i %s -d query.peptides.xyx -m 8 -o xyx.blast.out.xyx -a %s > /dev/null 2>&1" % (consensus_path,processors))
     elif consensus_path.endswith(".fasta"):
-        os.system("blastall -p blastx -i %s -d %s -m 8 -o xyx.blast.out.xyx -a %s > /dev/null 2>&1" % (consensus_path,processors))
+        os.system("blastall -p blastx -i %s -d query.peptides.xyx -m 8 -o xyx.blast.out.xyx -a %s > /dev/null 2>&1" % (consensus_path,processors))
     else:
         print "input genes file is of incorrect format, choose from fasta or pep"
         sys.exit()
