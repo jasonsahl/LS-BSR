@@ -44,9 +44,9 @@ def get_cluster_ids(in_fasta):
         print "Problem with gene list.  Are there duplicate headers in your file?"
         sys.exit()
 
-def divide_values(file, ref_scores):
+def divide_values(input_file, ref_scores):
     """divide each BSR value in a row by that row's maximum value"""
-    infile = open(file, "U")
+    infile = open(input_file, "U")
     firstLine = infile.readline()
     FL_F=firstLine.split()
     outfile = open("BSR_matrix_values.txt", "a")
@@ -60,19 +60,19 @@ def divide_values(file, ref_scores):
         except:
             raise TypeError("abnormal number of fields observed")
         values= [ ]
-	for x in fields:
-            try:
-                values.append(float(x)/float(ref_scores.get(all_fields[0])))
-            except:
-                """somewhat arbitrary, but covers the case where the reference
-                value is missing"""
-                values.append(float(x)/float("1000"))
+    for x in fields:
+        try:
+            values.append(float(x)/float(ref_scores.get(all_fields[0])))
+        except:
+            """somewhat arbitrary, but covers the case where the reference
+            value is missing"""
+            values.append(float(x)/float("1000"))
         sort_values=['%.2f' % elem for elem in values]
         print >> outfile, '\t'.join([str(item) for item in sort_values])
         outdata.append(values)
-    return outdata
     outfile.close()
-        
+    return outdata
+
 def predict_genes(dir_path, processors):
     """simple gene prediction using Prodigal in order
     to find coding regions from a genome sequence"""    
@@ -279,7 +279,7 @@ def autoIncrement():
     global rec 
     pStart = 1  
     pInterval = 1 
-    if (rec == 0):  
+    if rec == 0:
         rec = pStart  
     else:  
         rec += pInterval  
@@ -441,27 +441,26 @@ def get_core_gene_stats(matrix, threshold, lower):
     outfile = open("core_gene_ids.txt", "w")
     singletons = open("unique_gene_ids.txt", "w")
     firstLine = in_matrix.readline()
-    fields = firstLine.split()
     positives = [ ]
     singles = [ ]
     for line in in_matrix:
-	fields = line.split()
-	totals = len(fields[1:])
-	presents = [ ]
-	uniques = [ ]
+        fields = line.split()
+        totals = len(fields[1:])
+        presents = [ ]
+        uniques = [ ]
         try:
             for x in fields[1:]:
                 if float(x)>=float(threshold):
                     presents.append(fields[0])
                 if float(x)>=float(lower):
                     uniques.append(fields[0])
-            if int(len(presents))/int(totals)>=1:
-		positives.append(fields[0])
-            if int(len(uniques))==1:
-		singles.append(fields[0])
         except:
             raise TypeError("problem in input file found")
-            
+        if int(len(presents))/int(totals)>=1:
+            positives.append(fields[0])
+        if int(len(uniques))==1:
+            singles.append(fields[0])
+
     print "# of conserved genes = %s" % len(positives)
     print "# of unique genes = %s" % len(singles)
     ratio = int(len(singles))/int(totals)
@@ -476,32 +475,31 @@ def get_core_gene_stats(matrix, threshold, lower):
 def get_frequencies(matrix, threshold):
     in_matrix=open(matrix, "U")
     firstLine = in_matrix.readline()
-    fields = firstLine.split()
     outfile = open("frequency_data.txt", "w")
     my_dict = {}
     out_data = [ ]
     all = [ ]
     for line in in_matrix:
-	presents = [ ]
-	tempo = [ ]
-	fields = line.split()
+        presents = [ ]
+        tempo = [ ]
+        fields = line.split()
         try:
             for x in fields[1:]:
                 if float(x)>=float(threshold):
                     presents.append(fields[0])
         except:
             raise TypeError("problem found with input file")
-	tempo.append(len(presents))
-	tempo.append("1")
-	all.append(tempo)
+        tempo.append(len(presents))
+        tempo.append("1")
+        all.append(tempo)
     for x, y in all:
-	try:
-	    my_dict[x].append(y)
-	except KeyError:
-	    my_dict[x]=[y]
+        try:
+            my_dict[x].append(y)
+        except KeyError:
+            my_dict[x]=[y]
     print >> outfile, "Frequency distribution:\n",
     for k,v in my_dict.iteritems():
-	print >> outfile, k,"\t",len(v),"\n",
+        print >> outfile, k,"\t",len(v),"\n",
         out_data.append(k)
         out_data.append(len(v))
     in_matrix.close()
@@ -686,9 +684,6 @@ def process_pangenome(matrix, upper, lower, iterations, type):
                         positives_core.append("1")
                     if int(len(positive_lines_unis))==1:
                         positives_unis.append("1")
-                    positive_lines_acc=[]
-                    positive_lines_core=[]
-                    positive_lines_unis=[]
             try:
                 acc_dict[i].append(len(positives_acc))
             except KeyError:
@@ -788,7 +783,6 @@ def reorder_matrix(in_matrix, names):
 def parse_tree(tree):
     names = []
     mytree = Phylo.read(tree, 'newick')
-    tree_names = [ ]
     for clade in mytree.find_clades():
         if clade.name:
             names.append(clade.name)
@@ -815,22 +809,20 @@ def blat_against_each_genome(dir_path,database,processors):
                               files_and_temp_names,
                               num_workers=processors))
 
-def make_table_dev(file, test, clusters):
+def make_table_dev(infile, test, clusters):
     """make the BSR matrix table"""
-    """new code here"""
     values = [ ]
-    """end of new code"""
     names = [ ]
     outdata = [ ]
     name=[ ]
-    out=get_seq_name(file)
+    out=get_seq_name(infile)
     name.append(out)
     reduced=[ ]
     """remove the junk at the end of the file"""
     for x in name:reduced.append(x.replace('.fasta.new_blast.out.filtered.filtered.unique',''))
     names.append(reduced)
     my_dict={}
-    my_file=open(file, "rU")
+    my_file=open(infile, "rU")
     """make a dictionary of all clusters and values"""
     try:
         for line in my_file:

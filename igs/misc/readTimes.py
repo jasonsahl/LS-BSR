@@ -48,7 +48,7 @@ def getMax(td):
 
     (v, f) = max(every)
 
-    return (f, v)
+    return f,v
 
 def getMin(td):
     every = []
@@ -57,7 +57,7 @@ def getMin(td):
 
     (v, f) = min(every)
 
-    return (f, v)
+    return f, v
 
 def getAvg(td):
     every = []

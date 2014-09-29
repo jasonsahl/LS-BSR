@@ -290,7 +290,8 @@ def main(directory, id, filter, processors, genes, usearch, blast, penalty, rewa
         pass
     else:
         os.system("rm -rf joined")
-    
+    os.chdir("%s" % ap)
+
 if __name__ == "__main__":
     usage="usage: %prog [options]"
     parser = optparse.OptionParser(usage=usage)
