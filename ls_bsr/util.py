@@ -44,9 +44,9 @@ def get_cluster_ids(in_fasta):
         print "Problem with gene list.  Are there duplicate headers in your file?"
         sys.exit()
 
-def divide_values(input_file, ref_scores):
+def divide_values(file, ref_scores):
     """divide each BSR value in a row by that row's maximum value"""
-    infile = open(input_file, "U")
+    infile = open(file, "U")
     firstLine = infile.readline()
     FL_F=firstLine.split()
     outfile = open("BSR_matrix_values.txt", "a")
@@ -60,18 +60,19 @@ def divide_values(input_file, ref_scores):
         except:
             raise TypeError("abnormal number of fields observed")
         values= [ ]
-    for x in fields:
-        try:
-            values.append(float(x)/float(ref_scores.get(all_fields[0])))
-        except:
-            """somewhat arbitrary, but covers the case where the reference
-            value is missing"""
-            values.append(float(x)/float("1000"))
+        for x in fields:
+            try:
+                values.append(float(x)/float(ref_scores.get(all_fields[0])))
+            except:
+                """somewhat arbitrary, but covers the case where the reference
+                value is missing"""
+                values.append(float(x)/float("1000"))
         sort_values=['%.2f' % elem for elem in values]
         print >> outfile, '\t'.join([str(item) for item in sort_values])
         outdata.append(values)
-    outfile.close()
     return outdata
+    outfile.close()
+
 
 def predict_genes(dir_path, processors):
     """simple gene prediction using Prodigal in order
