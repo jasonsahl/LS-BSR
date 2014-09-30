@@ -149,7 +149,7 @@ class Test5(unittest.TestCase):
         fp = open(fpath, "w")
         fp.write("Cluster0	Cluster0	100.00	15	0	0	1	15	1	15	1e-07	30.2")
         fp.close()
-        self.assertEqual(parse_blast_report(), ['Cluster0', '30.2'])
+        self.assertEqual(parse_blast_report("true"), ['Cluster0', '30.2'])
         os.chdir("%s" % curr_dir)
         shutil.rmtree(tdir)
     def test_parse_blast_report_missing_fields(self):
@@ -161,7 +161,7 @@ class Test5(unittest.TestCase):
         fp = open(fpath, "w")
         fp.write("Cluster0	Cluster0	100.00	15	0	0	1	15	1	15")
         fp.close()
-        self.assertRaises(TypeError, parse_blast_report)
+        self.assertRaises(TypeError, parse_blast_report, "true")
         os.chdir("%s" % curr_dir)
         shutil.rmtree(ndir)
 
@@ -204,60 +204,6 @@ class Test6(unittest.TestCase):
         os.chdir("%s" % curr_dir)
         shutil.rmtree(tdir)
         
-class Test7(unittest.TestCase):
-    def test_make_table_basic_function(self):
-        """tests to make sure that list is being populated correctly.  The second file
-        is missing a value and the list should be populated with a 0"""
-        tdir = tempfile.mkdtemp(prefix="filetest_",)
-        fpath = os.path.join(tdir,"testfile.fasta.new_blast.out.filtered.filtered.unique")
-        fpath2 = os.path.join(tdir,"testfile2.fasta.new_blast.out.filtered.filtered.unique")
-        os.chdir("%s" % tdir)
-        fp = open(fpath, "w")
-        fp.write("Cluster0	30.2\n")
-        fp.write("Cluster1	40.5\n")
-        fp.write("Cluster2	60.6")
-        fp.close()
-        fp2 = open(fpath2, "w")
-        fp2.write("Cluster0	15.2\n")
-        fp2.write("Cluster2	30.6")
-        fp2.close()
-        self.assertEqual(make_table(2, "T", ["Cluster0","Cluster1","Cluster2"]), ([0,'15.2','30.2','30.6','40.5','60.6']))
-        os.chdir("%s" % curr_dir)
-        shutil.rmtree(tdir)
-    def test_make_table_integer(self):
-        """tests the case where you have a non float or integer in second field"""
-        tdir = tempfile.mkdtemp(prefix="filetest_",)
-        fpath = os.path.join(tdir,"testfile.fasta.new_blast.out.filtered.filtered.unique")
-        fpath2 = os.path.join(tdir,"testfile2.fasta.new_blast.out.filtered.filtered.unique")
-        os.chdir("%s" % tdir)
-        fp = open(fpath, "w")
-        fp.write("Cluster0	30.2\n")
-        fp.write("Cluster1	40.5\n")
-        fp.write("Cluster2	60.6")
-        fp.close()
-        fp2 = open(fpath2, "w")
-        fp2.write("Cluster0	15.2\n")
-        fp2.write("Cluster1     ABCDE")
-        fp2.close()
-        self.assertEqual(make_table(2, "T", ["Cluster0","Cluster1","Cluster2"]), ([0,'15.2','30.2','40.5','60.6','ABCDE']))
-        os.chdir("%s" % curr_dir)
-        shutil.rmtree(tdir)
-    def test_make_table_empty_file(self):
-        """tests the case where you have an empty file"""
-        tdir = tempfile.mkdtemp(prefix="filetest_",)
-        fpath = os.path.join(tdir,"testfile.fasta.new_blast.out.filtered.filtered.unique")
-        fpath2 = os.path.join(tdir,"testfile2.fasta.new_blast.out.filtered.filtered.unique")
-        os.chdir("%s" % tdir)
-        fp = open(fpath, "w")
-        fp.write("Cluster0	30.2\n")
-        fp.write("Cluster1	40.5\n")
-        fp.write("Cluster2	60.6")
-        fp.close()
-        fp2 = open(fpath2, "w")
-        fp2.close()
-        self.assertEqual(make_table(2, "T",  ["Cluster0","Cluster1","Cluster2"]), ([0,0,0,'30.2','40.5','60.6']))
-        os.chdir("%s" % curr_dir)
-        shutil.rmtree(tdir)
         
 class Test8(unittest.TestCase):
     def test_divide_values_basic_function(self):

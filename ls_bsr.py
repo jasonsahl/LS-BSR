@@ -42,7 +42,7 @@ def test_blast(option, opt_str, value, parser):
     elif "blat" in value:
         setattr(parser.values, option.dest, value)
     else:
-        print "Blast option not supported.  Only select from tblastn or blastn"
+        print "Blast option not supported.  Only select from tblastn, blat, or blastn"
         sys.exit()
 
 def test_dir(option, opt_str, value, parser):
@@ -78,7 +78,7 @@ def test_fplog(option, opt_str, value, parser):
         sys.exit()
 
 def main(directory, id, filter, processors, genes, usearch, blast, penalty, reward, length,
-         max_plog, min_hlog, f_plog, keep):
+         max_plog, min_hlog, f_plog, keep, filter_peps, debug):
     start_dir = os.getcwd()
     ap=os.path.abspath("%s" % start_dir)
     dir_path=os.path.abspath("%s" % directory)
@@ -97,13 +97,15 @@ def main(directory, id, filter, processors, genes, usearch, blast, penalty, rewa
         sys.exit()
     for infile in glob.glob(os.path.join(dir_path, '*.fasta')):
         name=get_seq_name(infile)
-        os.system("cp %s %s/joined/%s.new" % (infile,dir_path,name))
+        #os.system("cp %s %s/joined/%s.new" % (infile,dir_path,name))
+        os.link("%s" % infile, "%s/joined/%s.new" % (dir_path,name))
     if "null" in genes:
         rc = subprocess.call(['which', 'prodigal'])
         if rc == 0:
             pass
         else:
             print "prodigal is not in your path, but needs to be!"
+            sys.exit()
         print "citation: Hyatt D, Chen GL, Locascio PF, Land ML, Larimer FW, and Hauser LJ. 2010. Prodigal: prokaryotic gene recognition and translation initiation site identification. BMC Bioinformatics 11:119"
         try:
             if os.path.exists(usearch):
@@ -130,22 +132,31 @@ def main(directory, id, filter, processors, genes, usearch, blast, penalty, rewa
         os.system("rm all_sorted.txt")
         os.chdir("split_files/")
         os.system("split -l 200000 all_sorted.txt")
+        logging.logPrint("clustering with USEARCH at an ID of %s" % id)
         sort_usearch(usearch)
         run_usearch(usearch, id)
         os.system("cat *.usearch.out > all_sorted.txt")
         os.system("mv all_sorted.txt %s/joined" % dir_path)
         os.chdir("%s/joined" % dir_path)
         uclust_cluster(usearch, id)
-        clusters = get_cluster_ids("consensus.fasta")
-        subprocess.check_call("formatdb -i consensus.fasta -p F", shell=True)
+        logging.logPrint("USEARCH clustering finished")
         if "tblastn" == blast:
+            subprocess.check_call("formatdb -i consensus.fasta -p F", shell=True)
             translate_consensus("consensus.fasta")
-            filter_seqs("tmp.pep")
+            if filter_peps == "T":
+                filter_seqs("tmp.pep")
+                os.system("rm tmp.pep")
+            else:
+                os.system("mv tmp.pep consensus.pep")
+            clusters = get_cluster_ids("consensus.pep")
             blast_against_self("consensus.fasta", "consensus.pep", "tmp_blast.out", filter, blast, penalty, reward, processors)
         elif "blastn" == blast:
+            subprocess.check_call("formatdb -i consensus.fasta -p F", shell=True)
             blast_against_self("consensus.fasta", "consensus.fasta", "tmp_blast.out", filter, blast, penalty, reward, processors)
+            clusters = get_cluster_ids("consensus.fasta")
         elif "blat" == blast:
             blat_against_self("consensus.fasta", "consensus.fasta", "tmp_blast.out", processors)
+            clusters = get_cluster_ids("consensus.fasta")
         else:
             pass
         subprocess.check_call("sort -u -k 1,1 tmp_blast.out > self_blast.out", shell=True)
@@ -177,51 +188,91 @@ def main(directory, id, filter, processors, genes, usearch, blast, penalty, rewa
         clusters = get_cluster_ids(gene_path)
         os.system("cp %s %s/joined/" % (gene_path,dir_path))
         os.chdir("%s/joined" % dir_path)
-        if "tblastn" == blast:
-            logging.logPrint("using tblastn")
-            translate_genes(gene_path,)
+        if gene_path.endswith(".pep"):
+            logging.logPrint("using tblastn on peptides")
             try:
-                subprocess.check_call("formatdb -i %s -p F" % gene_path, shell=True)
+                subprocess.check_call("formatdb -i %s" % gene_path, shell=True)
             except:
                 logging.logPrint("problem encountered with BLAST database")
                 sys.exit()
-            blast_against_self(gene_path, "genes.pep", "tmp_blast.out", filter, blast, penalty, reward, processors)
+            blast_against_self(gene_path, gene_path, "tmp_blast.out", filter, "blastp", penalty, reward, processors)
             subprocess.check_call("sort -u -k 1,1 tmp_blast.out > self_blast.out", shell=True)
             ref_scores=parse_self_blast(open("self_blast.out", "U"))
             subprocess.check_call("rm tmp_blast.out self_blast.out", shell=True)
             logging.logPrint("starting BLAST")
-            blast_against_each_genome(dir_path, processors, filter, "genes.pep", blast, penalty, reward)
-        elif "blastn" == blast:
-            logging.logPrint("using blastn")
-            try:
-                subprocess.check_call("formatdb -i %s -p F" % gene_path, shell=True)
-            except:
-                logging.logPrint("BLAST not found")
-                sys.exit()
-            blast_against_self(gene_path, gene_path, "tmp_blast.out", filter, blast, penalty, reward, processors)
-            subprocess.check_call("sort -u -k 1,1 tmp_blast.out > self_blast.out", shell=True)
-            ref_scores=parse_self_blast(open("self_blast.out", "U"))
-            subprocess.check_call("rm tmp_blast.out self_blast.out", shell=True)
-            logging.logPrint("starting BLAST")
-            blast_against_each_genome(dir_path, processors, filter, gene_path, blast, penalty, reward)
-        elif "blat" == blast:
-            logging.logPrint("using blat")
-            blat_against_self(gene_path, gene_path, "tmp_blast.out", processors)
-            subprocess.check_call("sort -u -k 1,1 tmp_blast.out > self_blast.out", shell=True)
-            ref_scores=parse_self_blast(open("self_blast.out", "U"))
-            subprocess.check_call("rm tmp_blast.out self_blast.out", shell=True)
-            logging.logPrint("starting BLAT")
-            blat_against_each_genome(dir_path,gene_path,processors)
+            blast_against_each_genome(dir_path, processors, filter, gene_path, "tblastn", penalty, reward)
+        elif gene_path.endswith(".fasta"):    
+            if "tblastn" == blast:
+                logging.logPrint("using tblastn")
+                translate_genes(gene_path)
+                try:
+                    subprocess.check_call("formatdb -i %s -p F" % gene_path, shell=True)
+                except:
+                    logging.logPrint("problem encountered with BLAST database")
+                    sys.exit()
+                blast_against_self(gene_path, "genes.pep", "tmp_blast.out", filter, blast, penalty, reward, processors)
+                subprocess.check_call("sort -u -k 1,1 tmp_blast.out > self_blast.out", shell=True)
+                ref_scores=parse_self_blast(open("self_blast.out", "U"))
+                subprocess.check_call("rm tmp_blast.out self_blast.out", shell=True)
+                logging.logPrint("starting BLAST")
+                blast_against_each_genome(dir_path, processors, filter, "genes.pep", blast, penalty, reward)
+                os.system("cp genes.pep %s" % start_dir)
+            elif "blastn" == blast:
+                logging.logPrint("using blastn")
+                try:
+                    subprocess.check_call("formatdb -i %s -p F" % gene_path, shell=True)
+                except:
+                    logging.logPrint("BLAST not found")
+                    sys.exit()
+                blast_against_self(gene_path, gene_path, "tmp_blast.out", filter, blast, penalty, reward, processors)
+                subprocess.check_call("sort -u -k 1,1 tmp_blast.out > self_blast.out", shell=True)
+                ref_scores=parse_self_blast(open("self_blast.out", "U"))
+                subprocess.check_call("rm tmp_blast.out self_blast.out", shell=True)
+                logging.logPrint("starting BLAST")
+                blast_against_each_genome(dir_path, processors, filter, gene_path, blast, penalty, reward)
+            elif "blat" == blast:
+                logging.logPrint("using blat")
+                blat_against_self(gene_path, gene_path, "tmp_blast.out", processors)
+                subprocess.check_call("sort -u -k 1,1 tmp_blast.out > self_blast.out", shell=True)
+                ref_scores=parse_self_blast(open("self_blast.out", "U"))
+                subprocess.check_call("rm tmp_blast.out self_blast.out", shell=True)
+                logging.logPrint("starting BLAT")
+                blat_against_each_genome(dir_path,gene_path,processors)
+            else:
+                pass
         else:
-            pass
+            print "input file format not supported"
+            sys.exit()
     if blast=="blat":
         logging.logPrint("BLAT done")
     else:
         logging.logPrint("BLAST done")
-    parse_blast_report()
+    parse_blast_report("false")
     get_unique_lines()
-    make_table(processors, "F", clusters)
-    subprocess.check_call("paste ref.list *.matrix > bsr_matrix", shell=True)
+    curr_dir=os.getcwd()
+    table_files = glob.glob(os.path.join(curr_dir, "*.filtered.unique"))
+    files_and_temp_names = [(str(idx), os.path.join(curr_dir, f))
+                            for idx, f in enumerate(table_files)]
+    names=[]
+    table_list = []
+    nr_sorted=sorted(clusters)
+    centroid_list = []
+    centroid_list.append(" ")
+    for x in nr_sorted:
+        centroid_list.append(x)
+    table_list.append(centroid_list)
+    logging.logPrint("starting matrix building")
+    new_names,new_table = new_loop(files_and_temp_names, processors, clusters, debug)
+    new_table_list = table_list+new_table
+    logging.logPrint("matrix built")
+    open("ref.list", "a").write("\n")
+    for x in nr_sorted:
+        open("ref.list", "a").write("%s\n" % x)
+    names_out = open("names.txt", "w")
+    names_redux = [val for subl in new_names for val in subl]
+    for x in names_redux: print >> names_out, "".join(x)
+    names_out.close()
+    create_bsr_matrix_dev(new_table_list)
     divide_values("bsr_matrix", ref_scores)
     subprocess.check_call("paste ref.list BSR_matrix_values.txt > %s/bsr_matrix_values.txt" % start_dir, shell=True)
     if "T" in f_plog:
@@ -239,7 +290,8 @@ def main(directory, id, filter, processors, genes, usearch, blast, penalty, rewa
         pass
     else:
         os.system("rm -rf joined")
-    
+    os.chdir("%s" % ap)
+
 if __name__ == "__main__":
     usage="usage: %prog [options]"
     parser = optparse.OptionParser(usage=usage)
@@ -256,7 +308,7 @@ if __name__ == "__main__":
                       help="How much work to do in parallel, defaults to 2",
                       default="2", type="int")
     parser.add_option("-g", "--genes", dest="genes", action="callback", callback=test_file,
-                      help="predicted genes (nucleotide) to screen against genomes, will not use prodigal",
+                      help="predicted genes (nucleotide) to screen against genomes, will not use prodigal, must end in fasta (nt) or pep (aa)",
                       type="string",default="null")
     parser.add_option("-u", "--usearch", dest="usearch", action="store",
                       help="path to usearch v6, required for use with Prodigal",
@@ -285,6 +337,12 @@ if __name__ == "__main__":
     parser.add_option("-k", "--keep", dest="keep", action="callback", callback=test_filter,
                       help="keep or remove temp files, choose from T or F, defaults to F",
                       default="F", type="string")
+    parser.add_option("-s", "--filter_short_peps", dest="filter_peps", action="callback",
+                      help="remove short peptides, smaller than 50AA?  Defaults to T",
+                      default="T", callback=test_filter, type="string")
+    parser.add_option("-z", "--debug", dest="debug", action="callback",
+                      help="turn debug on?  Defaults to F",
+                      default="F", callback=test_filter, type="string")
     options, args = parser.parse_args()
     
     mandatories = ["directory"]
@@ -295,5 +353,6 @@ if __name__ == "__main__":
             exit(-1)
 
     main(options.directory, options.id, options.filter, options.processors, options.genes, options.usearch, options.blast,
-         options.penalty, options.reward, options.length, options.max_plog, options.min_hlog, options.f_plog, options.keep)
+         options.penalty, options.reward, options.length, options.max_plog, options.min_hlog, options.f_plog, options.keep,
+         options.filter_peps,options.debug)
 

@@ -6,6 +6,7 @@ import os
 import glob
 import optparse
 import subprocess
+from subprocess import Popen
 import shlex
 from subprocess import call
 import random
@@ -28,7 +29,7 @@ except:
 import errno
 import threading
 import types
-from collections import deque
+from collections import deque,OrderedDict
 import collections
 
 def get_cluster_ids(in_fasta):
@@ -36,72 +37,16 @@ def get_cluster_ids(in_fasta):
     infile = open(in_fasta, "U")
     for record in SeqIO.parse(infile, "fasta"):
         clusters.append(record.id)
-    return clusters
-
-def make_table(processors, test, clusters):
-    """make the BSR matrix table"""
-    curr_dir=os.getcwd()
-    names = [ ]
-    outdata = [ ]
-    files = glob.glob(os.path.join(curr_dir, "*.filtered.unique"))
-    files_and_temp_names = [(str(idx), os.path.join(curr_dir, f))
-                            for idx, f in enumerate(files)]
-    lock = threading.Lock()
-    def _perform_workflow(data):
-        lock.acquire()
-        tn, f = data
-        """get the name of each of the files to be iterated"""
-        name=[ ]
-        out=get_seq_name(f)
-        name.append(out)
-        reduced=[ ]
-        """remove the junk at the end of the file"""
-        for x in name:reduced.append(x.replace('.fasta.new_blast.out.filtered.filtered.unique',''))
-        names.append(reduced)
-        my_dict={}
-        file=open(f, "rU")
-        tmpfile=open("tmp.txt", "w")
-        """make a dictionary of all clusters and values"""
-        try:
-            for line in file:
-                fields=line.split()
-                my_dict.update({fields[0]:fields[1]})
-        except:
-            raise TypeError("abnormal number of fields")
-        """add in values, including any potentially missing ones"""
-        for x in clusters:
-            if x not in my_dict.keys():my_dict.update({x:0})
-        """need to write a blank space"""
-        for x in reduced: open("%s.tmp.matrix" % x, 'a').write('%s\n' % x)
-        """sort keys to get the same order between samples"""
-        od = collections.OrderedDict(sorted(my_dict.items()))
-        newout = open("%s.tmp.matrix" % "".join(reduced), "a")
-        for k,v in od.iteritems():
-            print >> newout,v
-            if "T" in test:
-                outdata.append(v)
-        lock.release()
-    results = set(p_func.pmap(_perform_workflow,
-                              files_and_temp_names,
-                              num_workers=processors))
-    names_out = open("names.txt", "w")
-    for x in names: print >> names_out, "".join(x)
-    """this makes sure that the ref.list file is
-    in the same order as the tmp matrix"""
-    nr_sorted=sorted(clusters)
-    open("ref.list", "a").write("\n")
-    for x in nr_sorted:
-        open("ref.list", "a").write("%s\n" % x)
-    if "T" in test:
-        myout=[x for i, x in enumerate(outdata) if x not in outdata[i+1:]]
-        return sorted(outdata)
+    nr = list(OrderedDict.fromkeys(clusters))
+    if len(clusters) == len(nr):
+        return clusters
     else:
-        pass
-    names_out.close()
-    
-def divide_values(file, ref_scores):
+        print "Problem with gene list.  Are there duplicate headers in your file?"
+        sys.exit()
+
+def divide_values(input_file, ref_scores):
     """divide each BSR value in a row by that row's maximum value"""
-    infile = open(file, "U")
+    infile = open(input_file, "U")
     firstLine = infile.readline()
     FL_F=firstLine.split()
     outfile = open("BSR_matrix_values.txt", "a")
@@ -115,19 +60,19 @@ def divide_values(file, ref_scores):
         except:
             raise TypeError("abnormal number of fields observed")
         values= [ ]
-	for x in fields:
-            try:
-                values.append(float(x)/float(ref_scores.get(all_fields[0])))
-            except:
-                """somewhat arbitrary, but covers the case where the reference
-                value is missing"""
-                values.append(float(x)/float("1000"))
+    for x in fields:
+        try:
+            values.append(float(x)/float(ref_scores.get(all_fields[0])))
+        except:
+            """somewhat arbitrary, but covers the case where the reference
+            value is missing"""
+            values.append(float(x)/float("1000"))
         sort_values=['%.2f' % elem for elem in values]
         print >> outfile, '\t'.join([str(item) for item in sort_values])
         outdata.append(values)
-    return outdata
     outfile.close()
-        
+    return outdata
+
 def predict_genes(dir_path, processors):
     """simple gene prediction using Prodigal in order
     to find coding regions from a genome sequence"""    
@@ -176,13 +121,14 @@ def translate_consensus(consensus):
     output_handle.close()
     
 def uclust_cluster(usearch, id):
+    devnull = open("/dev/null", "w")
     """cluster with Uclust.  Updated to V6"""
     cmd = ["%s" % usearch,
            "-cluster_fast", "all_sorted.txt",
            "-id", str(id),
            "-uc", "results.uc",
            "-centroids", "consensus.fasta"]
-    subprocess.check_call(cmd)
+    subprocess.call(cmd, stderr=devnull, stdout=devnull)
 
 def blast_against_each_genome(dir_path, processors, filter, peptides, blast, penalty, reward):
     """BLAST all peptides against each genome"""
@@ -199,6 +145,7 @@ def blast_against_each_genome(dir_path, processors, filter, peptides, blast, pen
                 print "problem found in formatting genome %s" % f
         if ".fasta.new" in f:
             try:
+                devnull = open('/dev/null', 'w')
                 cmd = ["blastall",
                        "-p", blast,
                        "-i", peptides,
@@ -211,7 +158,7 @@ def blast_against_each_genome(dir_path, processors, filter, peptides, blast, pen
                        "-r", str(reward),
                        "-C", "F",
                        "-o", "%s_blast.out" % f]
-                subprocess.check_call(cmd)
+                subprocess.call(cmd, stdout=devnull, stderr=devnull)
             except:
                 print "genomes %s cannot be used" % f
             
@@ -238,27 +185,30 @@ def filter_seqs(input_pep):
     outfile.close()
     return outdata
 
-def parse_blast_report():
+def parse_blast_report(test):
     """parse out only the name and bit score from the blast report"""
     curr_dir=os.getcwd()
     outdata = [ ]
     for infile in glob.glob(os.path.join(curr_dir, "*_blast.out")):
         names = get_seq_name(infile)
-        ref = open(infile, "rU")
-        data = ref.readlines()
         outfile = open("%s.filtered" % names, "w")
-        for line in data:
+        for line in open(infile, "rU"):
             try:
                 fields = line.split("\t")
                 print >> outfile, fields[0]+"\t"+fields[11],
-                outdata.append(fields[0])
-                outdata.append(fields[11])
+                if "true" in test:
+                    outdata.append(fields[0])
+                    outdata.append(fields[11])
+                else:
+                    pass
             except:
                 raise TypeError("malformed blast line found")
         outfile.close()
-    return outdata
+    if "true" in test:
+        return outdata
+    else:
+        pass
     
-            
 def get_unique_lines():
     """only return the top hit for each query"""
     curr_dir=os.getcwd()
@@ -278,6 +228,7 @@ def get_unique_lines():
     return outdata
 
 def blast_against_self(genes_nt, genes_pep, output, filter, blast, penalty, reward, processors):
+    devnull = open('/dev/null', 'w')
     cmd = ["blastall",
            "-p", blast,
            "-i", genes_pep,
@@ -290,8 +241,8 @@ def blast_against_self(genes_nt, genes_pep, output, filter, blast, penalty, rewa
            "-r", str(reward),
            "-C", "F",
            "-o", output]
-    subprocess.check_call(cmd)
-
+    subprocess.call(cmd, stdout=devnull, stderr=devnull)
+    
 def parse_self_blast(lines):
     my_dict={}
     for line in lines:
@@ -328,7 +279,7 @@ def autoIncrement():
     global rec 
     pStart = 1  
     pInterval = 1 
-    if (rec == 0):  
+    if rec == 0:
         rec = pStart  
     else:  
         rec += pInterval  
@@ -357,12 +308,12 @@ def prune_matrix(matrix, group1, group2):
     for x in fields:
         if x not in group1_ids: group1_idx.append(fields.index(x))  
     deque((list.pop(fields, i) for i in sorted(group1_idx, reverse=True)), maxlen=0)
-    print >> group1_out, "\t","\t","\t".join(fields)
+    print >> group1_out,"\t"+"\t"+"\t".join(fields)
     for line in in_matrix:
         fields = line.split()
         name = fields[0]
         deque((list.pop(fields, i) for i in sorted(group1_idx, reverse=True)), maxlen=0)
-	print >> group1_out,"".join(name),"\t","\t".join(fields)
+	print >> group1_out,"".join(name)+"\t"+"\t".join(fields)
     in_matrix = open(matrix, "U")
     firstLine = in_matrix.readline()
     fields = firstLine.split()
@@ -398,10 +349,10 @@ def compare_values(pruned_1,pruned_2,upper,lower):
 	mean = float(np.mean(ints))
         group1_mean.append(mean)
 	for x in ints:
-		if float(x)>=float(upper): presents.append(x)
-                if float(x)>=float(upper): group1_presents.append(x)
-		if float(x)>=float(lower): homolog.append(x)
-	print >> group1_out,fields[0],"\t",mean,"\t",len(presents),"\t",len(fields[1:]),"\t",len(homolog)
+	    if float(x)>=float(upper): presents.append(x)
+            if float(x)>=float(upper): group1_presents.append(x)
+	    if float(x)>=float(lower): homolog.append(x)
+	print >> group1_out,str(fields[0])+"\t"+str(mean)+"\t"+str(len(presents))+"\t"+str(len(fields[1:]))+"\t"+str(len(homolog))
     next(group2)
     for line in group2:
 	fields = line.split()
@@ -410,10 +361,10 @@ def compare_values(pruned_1,pruned_2,upper,lower):
 	ints=map(float, fields[1:])
 	mean = float(np.mean(ints))
 	for x in ints:
-		if float(x)>=float(upper): presents.append(x)
-                if float(x)>=float(upper): group2_presents.append(x)
-		if float(x)>=float(lower): homolog.append(x)
-	print >> group2_out,mean,"\t",len(presents),"\t",len(fields[1:]),"\t",len(homolog)
+	    if float(x)>=float(upper): presents.append(x)
+            if float(x)>=float(upper): group2_presents.append(x)
+	    if float(x)>=float(lower): homolog.append(x)
+	print >> group2_out,str(mean)+"\t"+str(len(presents))+"\t"+str(len(fields[1:]))+"\t"+str(len(homolog))
     return group1_presents, group2_presents, group1_mean
     group1.close()
     group2.close()
@@ -428,12 +379,12 @@ def find_uniques(combined,fasta):
     for line in infile:
 	fields=line.split()
 	if int(fields[2])/int(fields[3])==1 and int(fields[8])==0:
-		group1_unique_ids.append(fields[0])
+	    group1_unique_ids.append(fields[0])
     for record in SeqIO.parse(fasta, "fasta"):
-	    if record.id in group1_unique_ids:
-		seqrecords.append(record)
-            if record.id in group1_unique_ids:
-                testids.append(record.id)
+	if record.id in group1_unique_ids:
+	    seqrecords.append(record)
+        if record.id in group1_unique_ids:
+            testids.append(record.id)
     output_handle = open("group1_unique_seqs.fasta", "w")
     SeqIO.write(seqrecords, output_handle, "fasta")
     output_handle.close()
@@ -443,10 +394,10 @@ def find_uniques(combined,fasta):
     for line in infile:
 	fields=line.split()
 	if int(fields[6])/int(fields[7])==1 and int(fields[4])==0:
-	       group2_unique_ids.append(fields[0])
+	    group2_unique_ids.append(fields[0])
     for record in SeqIO.parse(fasta, "fasta"):
-	    if record.id in group2_unique_ids:
-		    seqrecords2.append(record)
+	if record.id in group2_unique_ids:
+	    seqrecords2.append(record)
     output_handle2 = open("group2_unique_seqs.fasta", "w")
     SeqIO.write(seqrecords2, output_handle2, "fasta")
     output_handle2.close()
@@ -490,27 +441,26 @@ def get_core_gene_stats(matrix, threshold, lower):
     outfile = open("core_gene_ids.txt", "w")
     singletons = open("unique_gene_ids.txt", "w")
     firstLine = in_matrix.readline()
-    fields = firstLine.split()
     positives = [ ]
     singles = [ ]
     for line in in_matrix:
-	fields = line.split()
-	totals = len(fields[1:])
-	presents = [ ]
-	uniques = [ ]
+        fields = line.split()
+        totals = len(fields[1:])
+        presents = [ ]
+        uniques = [ ]
         try:
             for x in fields[1:]:
                 if float(x)>=float(threshold):
                     presents.append(fields[0])
                 if float(x)>=float(lower):
                     uniques.append(fields[0])
-            if int(len(presents))/int(totals)>=1:
-		positives.append(fields[0])
-            if int(len(uniques))==1:
-		singles.append(fields[0])
         except:
             raise TypeError("problem in input file found")
-            
+        if int(len(presents))/int(totals)>=1:
+            positives.append(fields[0])
+        if int(len(uniques))==1:
+            singles.append(fields[0])
+
     print "# of conserved genes = %s" % len(positives)
     print "# of unique genes = %s" % len(singles)
     ratio = int(len(singles))/int(totals)
@@ -525,32 +475,31 @@ def get_core_gene_stats(matrix, threshold, lower):
 def get_frequencies(matrix, threshold):
     in_matrix=open(matrix, "U")
     firstLine = in_matrix.readline()
-    fields = firstLine.split()
     outfile = open("frequency_data.txt", "w")
     my_dict = {}
     out_data = [ ]
     all = [ ]
     for line in in_matrix:
-	presents = [ ]
-	tempo = [ ]
-	fields = line.split()
+        presents = [ ]
+        tempo = [ ]
+        fields = line.split()
         try:
             for x in fields[1:]:
                 if float(x)>=float(threshold):
                     presents.append(fields[0])
         except:
             raise TypeError("problem found with input file")
-	tempo.append(len(presents))
-	tempo.append("1")
-	all.append(tempo)
+        tempo.append(len(presents))
+        tempo.append("1")
+        all.append(tempo)
     for x, y in all:
-	try:
-	    my_dict[x].append(y)
-	except KeyError:
-	    my_dict[x]=[y]
+        try:
+            my_dict[x].append(y)
+        except KeyError:
+            my_dict[x]=[y]
     print >> outfile, "Frequency distribution:\n",
     for k,v in my_dict.iteritems():
-	print >> outfile, k,"\t",len(v),"\n",
+        print >> outfile, k,"\t",len(v),"\n",
         out_data.append(k)
         out_data.append(len(v))
     in_matrix.close()
@@ -578,7 +527,6 @@ def find_dups(ref_scores, length, max_plog, min_hlog):
                     continue
         except:
             raise TypeError("problem parsing %s" % infile)
-
     for k,v in my_dict_o.iteritems():
         if int(len(v))>=2:
             dup_dict.update({k:v})
@@ -641,14 +589,16 @@ def filter_variome(matrix, threshold, step):
 def run_usearch(usearch, id):
     rec=1
     curr_dir=os.getcwd()
+    devnull = open("/dev/null", "w")
     for infile in glob.glob(os.path.join(curr_dir, "z.*")):
         cmd = ["%s" % usearch,
            "-cluster_fast", "%s" % infile,
            "-id", str(id),
            "-uc", "results.uc",
            "-centroids", "%s.usearch.out" % str(autoIncrement())]
-        subprocess.check_call(cmd)
-
+        subprocess.call(cmd,stdout=devnull,stderr=devnull)
+    devnull.close()
+    
 def filter_scaffolds(in_fasta):
     infile = open(in_fasta, "U")
     outrecords = [ ]
@@ -665,19 +615,23 @@ def filter_scaffolds(in_fasta):
 def sort_usearch(usearch):
     rec=1
     curr_dir=os.getcwd()
+    devnull = open("/dev/null", "w")
     for infile in glob.glob(os.path.join(curr_dir, "x*")):
         cmd = ["%s" % usearch,
                "-sortbylength", "%s" % infile,
                "-output", "z.%s.sorted" % str(autoIncrement())]
-        subprocess.check_call(cmd)
-
+        subprocess.call(cmd,stdout=devnull,stderr=devnull)
+    devnull.close()
+    
 def uclust_sort(usearch):
     """sort with Usearch. Updated to V6"""
+    devnull = open("/dev/null", "w")
     cmd = ["%s" % usearch, 
            "-sortbylength", "all_gene_seqs.out",
            "-output", "tmp_sorted.txt"]
-    subprocess.check_call(cmd)
-
+    subprocess.call(cmd,stdout=devnull,stderr=devnull)
+    devnull.close()
+    
 def process_pangenome(matrix, upper, lower, iterations, type):
     my_matrix = open(matrix, "U")
     if type == "acc":
@@ -730,9 +684,6 @@ def process_pangenome(matrix, upper, lower, iterations, type):
                         positives_core.append("1")
                     if int(len(positive_lines_unis))==1:
                         positives_unis.append("1")
-                    positive_lines_acc=[]
-                    positive_lines_core=[]
-                    positive_lines_unis=[]
             try:
                 acc_dict[i].append(len(positives_acc))
             except KeyError:
@@ -767,7 +718,7 @@ def process_pangenome(matrix, upper, lower, iterations, type):
             test_uniques.append(v)
             print k, (sum(v)/len(v))/int(k)
             for z in v:
-                print >> uni_outfile, str(k)+"\t"+str(z)+"\n",
+                print >> uni_outfile, str(k)+"\t"+str(int(z)/int(k))+"\n",
     if type == "core" or type == "all":
         print "core means"
         for k,v in sorted_core_dict.iteritems():
@@ -804,15 +755,14 @@ def bsr_to_pangp(matrix, lower):
 
 def transpose_matrix(matrix):
     out_matrix = open("tmp.matrix", "w")
-    in_matrix = open(matrix, "U")
     reduced = [ ]
-    for line in in_matrix:
-        fields = line.split("\t")
+    for line in open(matrix, "U"):
+        newline=line.strip("\n")
+        fields = newline.split("\t")
         reduced.append(fields)
     test=map(list, zip(*reduced))
     for x in test:
         print >> out_matrix, "\t".join(x)
-    in_matrix.close()
     out_matrix.close()
 
 def reorder_matrix(in_matrix, names):
@@ -823,7 +773,8 @@ def reorder_matrix(in_matrix, names):
     my_matrix.close()
     for name in names:
          for line in open(in_matrix, "U"):
-            fields = line.split("\t")
+            newline = line.strip("\n")
+            fields = newline.split("\t")
             if name == fields[0]:
                 print >> outfile, line,
     my_matrix.close()
@@ -832,7 +783,6 @@ def reorder_matrix(in_matrix, names):
 def parse_tree(tree):
     names = []
     mytree = Phylo.read(tree, 'newick')
-    tree_names = [ ]
     for clade in mytree.find_clades():
         if clade.name:
             names.append(clade.name)
@@ -858,3 +808,66 @@ def blat_against_each_genome(dir_path,database,processors):
     results = set(p_func.pmap(_perform_workflow,
                               files_and_temp_names,
                               num_workers=processors))
+
+def make_table_dev(infile, test, clusters):
+    """make the BSR matrix table"""
+    values = [ ]
+    names = [ ]
+    outdata = [ ]
+    name=[ ]
+    out=get_seq_name(infile)
+    name.append(out)
+    reduced=[ ]
+    """remove the junk at the end of the file"""
+    for x in name:reduced.append(x.replace('.fasta.new_blast.out.filtered.filtered.unique',''))
+    names.append(reduced)
+    my_dict={}
+    my_file=open(infile, "rU")
+    """make a dictionary of all clusters and values"""
+    try:
+        for line in my_file:
+            fields=line.split()
+            my_dict.update({fields[0]:fields[1]})
+    except:
+        raise TypeError("abnormal number of fields")
+    my_file.close()
+    """add in values, including any potentially missing ones"""
+    for x in clusters:
+        if x not in my_dict.keys():my_dict.update({x:0})
+    for x in reduced:
+        values.append(x)
+    """sort keys to get the same order between samples"""
+    od = collections.OrderedDict(sorted(my_dict.items()))
+    values_2 = od.values()
+    values_3 = values+values_2
+    if "T" in test:
+        myout=[x for i, x in enumerate(outdata) if x not in outdata[i+1:]]
+        return sorted(outdata)
+    else:
+        pass
+    return names, values_3
+    
+def create_bsr_matrix_dev(master_list):
+    new_matrix = open("bsr_matrix", "w")
+    test = map(list, zip(*master_list))
+    for x in test:
+        y = map(str, x)
+        print >> new_matrix, "\t".join(y)
+    new_matrix.close()
+
+def new_loop(to_iterate, processors, clusters, debug):
+    names = []
+    table_list = []
+    def _perform_workflow(data):
+        tn, f = data
+        name,values=make_table_dev(f, "F", clusters)
+        names.append(name)
+        table_list.append(values)
+        if debug == "T":
+            logging.logPrint("sample %s processed" % f)
+        else:
+            pass
+    set(p_func.pmap(_perform_workflow,
+                    to_iterate,
+                    num_workers=processors))
+    return names,table_list

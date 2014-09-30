@@ -143,7 +143,7 @@ def buildConfigN(options, args=None, usage=None, baseConf=None, putInGeneral=Tru
 
     if putInGeneral:
         vals = {'general': vals}
-    return (configFromMap(vals, baseConf), args)
+    return configFromMap(vals, baseConf), args
 
 
 
