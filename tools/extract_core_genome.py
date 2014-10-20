@@ -282,7 +282,7 @@ if __name__ == "__main__":
                       type="string", action="callback", callback=test_dir)
     parser.add_option("-g", "--genes", dest="genes", action="callback", callback=test_file,
                       help="core genome genes to extract and align [REQUIRED]",
-                      type="string",default="null")
+                      type="string")
     parser.add_option("-b", "--blast", dest="blast", action="callback", callback=test_blast,
                       help="blast method to use, blastn or tblastn, defaults to blastn",
                       type="string",default="blastn")
