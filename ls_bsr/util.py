@@ -455,12 +455,12 @@ def get_core_gene_stats(matrix, threshold, lower):
                     presents.append(fields[0])
                 if float(x)>=float(lower):
                     uniques.append(fields[0])
+            if int(len(presents))/int(totals)>=1:
+                positives.append(fields[0])
+            if int(len(uniques))==1:
+                singles.append(fields[0])
         except:
             raise TypeError("problem in input file found")
-        if int(len(presents))/int(totals)>=1:
-            positives.append(fields[0])
-        if int(len(uniques))==1:
-            singles.append(fields[0])
 
     print "# of conserved genes = %s" % len(positives)
     print "# of unique genes = %s" % len(singles)
