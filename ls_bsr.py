@@ -97,7 +97,6 @@ def main(directory, id, filter, processors, genes, usearch, blast, penalty, rewa
         sys.exit()
     for infile in glob.glob(os.path.join(dir_path, '*.fasta')):
         name=get_seq_name(infile)
-        #os.system("cp %s %s/joined/%s.new" % (infile,dir_path,name))
         os.link("%s" % infile, "%s/joined/%s.new" % (dir_path,name))
     if "null" in genes:
         rc = subprocess.call(['which', 'prodigal'])
@@ -107,12 +106,12 @@ def main(directory, id, filter, processors, genes, usearch, blast, penalty, rewa
             print "prodigal is not in your path, but needs to be!"
             sys.exit()
         print "citation: Hyatt D, Chen GL, Locascio PF, Land ML, Larimer FW, and Hauser LJ. 2010. Prodigal: prokaryotic gene recognition and translation initiation site identification. BMC Bioinformatics 11:119"
-        try:
-            if os.path.exists(usearch):
-                print "citation: Edgar RC. 2010. Search and clustering orders of magnitude faster than BLAST. Bioinformatics 26:2460-2461"
-        except:
-            raise TypeError("-u usearch flag must be set for use with prodigal")
-            sys.exc_clear()
+        if os.path.exists(usearch):
+            print "citation: Edgar RC. 2010. Search and clustering orders of magnitude faster than BLAST. Bioinformatics 26:2460-2461"
+        else:
+            print ""
+            print "error: path to USEARCH is invalid"
+            sys.exit()
         if blast=="blat":
             ac = subprocess.call(['which', 'blat'])
             if ac == 0:
@@ -312,7 +311,7 @@ if __name__ == "__main__":
                       type="string",default="null")
     parser.add_option("-u", "--usearch", dest="usearch", action="store",
                       help="path to usearch v6, required for use with Prodigal",
-                      type="string")
+                      type="string", default="NULL")
     parser.add_option("-b", "--blast", dest="blast", action="callback", callback=test_blast,
                       help="use tblastn, blastn, or blat (nucleotide search only), default is tblastn",
                       default="tblastn", type="string")
