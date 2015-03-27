@@ -220,7 +220,7 @@ def remove_gaps(infile):
     filter_alignment("tab_matrix")
     file_to_fasta("tab.filtered")
 
-def main(directory, genes, blast, processors):
+def main(directory, genes, blast, processors, remove_gap, keep):
     dependencies = ['blastall','formatdb','muscle']
     for dependency in dependencies:
         ra = subprocess.call(['which', '%s' % dependency])
@@ -262,18 +262,30 @@ def main(directory, genes, blast, processors):
     set(p_func.pmap(_perform_workflow,
                     files_and_temp_names,
                     num_workers=processors))
-        #os.system("rm *.blast.out *.blast.unique *.extracted.seqs")
+    os.system("rm *.blast.out *.blast.unique *.extracted.seqs")
     pull_seqs(names)
     concatenate()
     os.system("cat *.concat > all.concat")
     os.system('sed "s/ //g" all.concat > tmp.concat')
     os.system("awk 'FNR>1' tmp.concat > all.concat")
-    remove_gaps("all.concat")
-    os.system("cp final_alignment.fasta %s" % ap)
+    if remove_gap == "T":
+        remove_gaps("all.concat")
+        os.system("cp final_alignment.fasta %s" % ap)
+    elif remove_gap == "F":
+        os.system("cp all.concat %s/final_alignment.fasta" % ap)
+    else:
+        print "You have chosen an incorrect option for gap removal, choose from T or F"
+        sys.exit()
     """finish up"""
     os.chdir("%s" % ap)
-    os.system("rm -rf %s/to_extract_xxx %s/work_xxx" % (ap,ap))
-
+    if keep == "T":
+        pass
+    elif keep == "F":
+        os.system("rm -rf %s/to_extract_xxx %s/work_xxx" % (ap,ap))
+    else:
+        print "Illegal keep value selected, not doing anything"
+        pass
+    
 if __name__ == "__main__":
     usage="usage: %prog [options]"
     parser = optparse.OptionParser(usage=usage)
@@ -289,6 +301,12 @@ if __name__ == "__main__":
     parser.add_option("-p", "--parallel_workers", dest="processors",
                       help="How much work to do in parallel, defaults to 2",
                       default="2", type="int")
+    parser.add_option("-r", "--remove_gaps", dest="remove_gap",
+                      help="Should I remove gap columns? Defaults to T",
+                      default="T", type="string", action="store")
+    parser.add_option("-k", "--keep", dest="keep",
+                      help="Keep temp files? Defaults to F",
+                      default="F", type="string", action="store")
     options, args = parser.parse_args()
     mandatories = ["directory","genes"]
     for m in mandatories:
@@ -297,4 +315,5 @@ if __name__ == "__main__":
             parser.print_help()
             exit(-1)
 
-    main(options.directory,options.genes,options.blast,options.processors)
+    main(options.directory,options.genes,options.blast,options.processors,
+         options.remove_gap,options.keep)

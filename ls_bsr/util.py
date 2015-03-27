@@ -872,3 +872,55 @@ def new_loop(to_iterate, processors, clusters, debug):
                     to_iterate,
                     num_workers=processors))
     return names,table_list
+
+#def sort_vsearch(vsearch):
+#    devnull = open("/dev/null", "w")
+#    cmd = ["%s" % vsearch,
+#           "-sortbylength", "all_sorted.txt",
+#           "-output", "vsearch.sorted"]
+#    subprocess.call(cmd,stdout=devnull,stderr=devnull)
+#    devnull.close()
+
+#def sort_vsearch(vsearch):
+#    rec=1
+#    curr_dir=os.getcwd()
+#    devnull = open("/dev/null", "w")
+#    for infile in glob.glob(os.path.join(curr_dir, "x*")):
+#        cmd = ["%s" % vsearch,
+#               "-sortbylength", "%s" % infile,
+#               "-output", "z.%s.sorted" % str(autoIncrement())]
+#        subprocess.call(cmd,stdout=devnull,stderr=devnull)
+#    devnull.close()
+
+def run_vsearch(vsearch, id, processors):
+    devnull = open("/dev/null", "w")
+    cmd = ["%s" % vsearch,
+           "-cluster_fast", "all_sorted.txt",
+           "-id", str(id),
+           "-uc", "results.uc",
+           "-threads", "%s" % processors,
+           "-centroids", "vsearch.out"]
+    subprocess.call(cmd,stdout=devnull,stderr=devnull)
+    devnull.close()
+
+#def run_vsearch(vsearch, id):
+#    rec=1
+#    curr_dir=os.getcwd()
+#    devnull = open("/dev/null", "w")
+#    for infile in glob.glob(os.path.join(curr_dir, "z.*")):
+#        cmd = ["%s" % vsearch,
+#           "-cluster_fast", "%s" % infile,
+#           "-id", str(id),
+#           "-uc", "results.uc",
+#           "-centroids", "%s.vsearch.out" % str(autoIncrement())]
+#        subprocess.call(cmd,stdout=devnull,stderr=devnull)
+#    devnull.close()
+
+#def vclust_cluster(vsearch, id):
+#    devnull = open("/dev/null", "w")
+#    cmd = ["%s" % v#search,
+#           "-cluster_fast", "all_sorted.txt",
+#           "-id", str(id),
+#           "-uc", "results.uc",
+#           "-centroids", "consensus.fasta"]
+#    subprocess.call(cmd, stderr=devnull, stdout=devnull)

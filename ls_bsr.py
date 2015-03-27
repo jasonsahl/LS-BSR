@@ -77,7 +77,7 @@ def test_fplog(option, opt_str, value, parser):
         print "select from T or F for f_plog setting"
         sys.exit()
 
-def main(directory, id, filter, processors, genes, usearch, blast, penalty, reward, length,
+def main(directory, id, filter, processors, genes, usearch, vsearch, blast, penalty, reward, length,
          max_plog, min_hlog, f_plog, keep, filter_peps, debug):
     start_dir = os.getcwd()
     ap=os.path.abspath("%s" % start_dir)
@@ -109,9 +109,7 @@ def main(directory, id, filter, processors, genes, usearch, blast, penalty, rewa
         if os.path.exists(usearch):
             print "citation: Edgar RC. 2010. Search and clustering orders of magnitude faster than BLAST. Bioinformatics 26:2460-2461"
         else:
-            print ""
-            print "error: path to USEARCH is invalid"
-            sys.exit()
+            pass
         if blast=="blat":
             ac = subprocess.call(['which', 'blat'])
             if ac == 0:
@@ -126,19 +124,31 @@ def main(directory, id, filter, processors, genes, usearch, blast, penalty, rewa
         filter_scaffolds("all_gene_seqs.out")
         os.system("mv tmp.out all_gene_seqs.out")
         rename_fasta_header("all_gene_seqs.out", "all_sorted.txt")
-        os.system("mkdir split_files")
-        os.system("cp all_sorted.txt split_files/")
-        os.system("rm all_sorted.txt")
-        os.chdir("split_files/")
-        os.system("split -l 200000 all_sorted.txt")
-        logging.logPrint("clustering with USEARCH at an ID of %s" % id)
-        sort_usearch(usearch)
-        run_usearch(usearch, id)
-        os.system("cat *.usearch.out > all_sorted.txt")
-        os.system("mv all_sorted.txt %s/joined" % dir_path)
-        os.chdir("%s/joined" % dir_path)
-        uclust_cluster(usearch, id)
-        logging.logPrint("USEARCH clustering finished")
+        if os.path.exists(usearch) and os.path.exists(vsearch):
+            print "usearch and vsearch both selected, only vsearch will be used"
+            vsearch_value = "1"
+        if os.path.exists(usearch) and vsearch_value != "1":
+            os.system("mkdir split_files")
+            os.system("cp all_sorted.txt split_files/")
+            os.system("rm all_sorted.txt")
+            os.chdir("split_files/")
+            os.system("split -l 200000 all_sorted.txt")
+            logging.logPrint("clustering with USEARCH at an ID of %s" % id)
+            sort_usearch(usearch)
+            run_usearch(usearch, id)
+            os.system("cat *.usearch.out > all_sorted.txt")
+            os.system("mv all_sorted.txt %s/joined" % dir_path)
+            os.chdir("%s/joined" % dir_path)
+            uclust_cluster(usearch, id)
+            logging.logPrint("USEARCH clustering finished")
+        elif os.path.exists(vsearch) or vsearch_value == "1":
+            logging.logPrint("clustering with VSEARCH at an ID of %s" % id)
+            run_vsearch(vsearch, id, processors)
+            os.system("mv vsearch.out consensus.fasta")
+            logging.logPrint("VSEARCH clustering finished")
+        else:
+            print "neither usearch or vsearch selected for use with Prodigal!, exiting."
+            sys.exit()
         if "tblastn" == blast:
             subprocess.check_call("formatdb -i consensus.fasta -p F", shell=True)
             translate_consensus("consensus.fasta")
@@ -310,7 +320,10 @@ if __name__ == "__main__":
                       help="predicted genes (nucleotide) to screen against genomes, will not use prodigal, must end in fasta (nt) or pep (aa)",
                       type="string",default="null")
     parser.add_option("-u", "--usearch", dest="usearch", action="store",
-                      help="path to usearch v6, required for use with Prodigal",
+                      help="path to usearch v6, either this or vsearch needs to be used with Prodigal",
+                      type="string", default="NULL")
+    parser.add_option("-v", "--vsearch", dest="vsearch", action="store",
+                      help="path to vsearch, either this or usearch needs to be used with prodigal",
                       type="string", default="NULL")
     parser.add_option("-b", "--blast", dest="blast", action="callback", callback=test_blast,
                       help="use tblastn, blastn, or blat (nucleotide search only), default is tblastn",
@@ -351,7 +364,7 @@ if __name__ == "__main__":
             parser.print_help()
             exit(-1)
 
-    main(options.directory, options.id, options.filter, options.processors, options.genes, options.usearch, options.blast,
+    main(options.directory, options.id, options.filter, options.processors, options.genes, options.usearch, options.vsearch, options.blast,
          options.penalty, options.reward, options.length, options.max_plog, options.min_hlog, options.f_plog, options.keep,
          options.filter_peps,options.debug)
 
