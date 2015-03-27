@@ -127,7 +127,7 @@ def main(directory, id, filter, processors, genes, usearch, vsearch, blast, pena
         if os.path.exists(usearch) and os.path.exists(vsearch):
             print "usearch and vsearch both selected, only vsearch will be used"
             vsearch_value = "1"
-        if os.path.exists(usearch) and vsearch_value != "1":
+        if os.path.exists(usearch) or vsearch_value != "1":
             os.system("mkdir split_files")
             os.system("cp all_sorted.txt split_files/")
             os.system("rm all_sorted.txt")
