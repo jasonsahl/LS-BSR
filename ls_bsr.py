@@ -126,8 +126,7 @@ def main(directory, id, filter, processors, genes, usearch, vsearch, blast, pena
         rename_fasta_header("all_gene_seqs.out", "all_sorted.txt")
         if os.path.exists(usearch) and os.path.exists(vsearch):
             print "usearch and vsearch both selected, only vsearch will be used"
-            vsearch_value = "1"
-        if os.path.exists(usearch) or vsearch_value != "1":
+        if os.path.exists(usearch):
             os.system("mkdir split_files")
             os.system("cp all_sorted.txt split_files/")
             os.system("rm all_sorted.txt")
@@ -141,7 +140,12 @@ def main(directory, id, filter, processors, genes, usearch, vsearch, blast, pena
             os.chdir("%s/joined" % dir_path)
             uclust_cluster(usearch, id)
             logging.logPrint("USEARCH clustering finished")
-        elif os.path.exists(vsearch) or vsearch_value == "1":
+        elif os.path.exists(vsearch):
+            logging.logPrint("clustering with VSEARCH at an ID of %s" % id)
+            run_vsearch(vsearch, id, processors)
+            os.system("mv vsearch.out consensus.fasta")
+            logging.logPrint("VSEARCH clustering finished")
+        elif os.path.exists(vsearch) and os.path.exists(usearch):
             logging.logPrint("clustering with VSEARCH at an ID of %s" % id)
             run_vsearch(vsearch, id, processors)
             os.system("mv vsearch.out consensus.fasta")
