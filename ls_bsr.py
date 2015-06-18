@@ -41,6 +41,8 @@ def test_blast(option, opt_str, value, parser):
         setattr(parser.values, option.dest, value)
     elif "blat" in value:
         setattr(parser.values, option.dest, value)
+    elif "blastall" in value:
+        setattr(parser.values, option.dest, value)
     else:
         print "Blast option not supported.  Only select from tblastn, blat, or blastn"
         sys.exit()
@@ -84,11 +86,11 @@ def main(directory, id, filter, processors, genes, usearch, vsearch, blast, pena
     dir_path=os.path.abspath("%s" % directory)
     logging.logPrint("Testing paths of dependencies")
     if blast=="blastn" or blast=="tblastn":
-        ab = subprocess.call(['which', 'blastall'])
+        ab = subprocess.call(['which', 'blastn'])
         if ab == 0:
             print "citation: Altschul SF, Madden TL, Schaffer AA, Zhang J, Zhang Z, Miller W, and Lipman DJ. 1997. Gapped BLAST and PSI-BLAST: a new generation of protein database search programs. Nucleic Acids Res 25:3389-3402"
         else:
-            print "blastall isn't in your path, but needs to be!"
+            print "blastn isn't in your path, but needs to be!"
             sys.exit()
     try:
         os.makedirs('%s/joined' % dir_path)
@@ -149,7 +151,8 @@ def main(directory, id, filter, processors, genes, usearch, vsearch, blast, pena
             print "neither usearch or vsearch selected for use with Prodigal!, exiting."
             sys.exit()
         if "tblastn" == blast:
-            subprocess.check_call("formatdb -i consensus.fasta -p F", shell=True)
+            #subprocess.check_call("formatdb -i consensus.fasta -p F", shell=True)
+            subprocess.check_call("makeblastdb -in consensus.fasta -dbtype nucl", shell=True)
             translate_consensus("consensus.fasta")
             if filter_peps == "T":
                 filter_seqs("tmp.pep")
@@ -157,10 +160,13 @@ def main(directory, id, filter, processors, genes, usearch, vsearch, blast, pena
             else:
                 os.system("mv tmp.pep consensus.pep")
             clusters = get_cluster_ids("consensus.pep")
-            blast_against_self("consensus.fasta", "consensus.pep", "tmp_blast.out", filter, blast, penalty, reward, processors)
+            #blast_against_self("consensus.fasta", "consensus.pep", "tmp_blast.out", filter, blast, penalty, reward, processors)
+            blast_against_self_tblastn("tblastn", "consensus.fasta", "consensus.pep", "tmp_blast.out", processors)
         elif "blastn" == blast:
-            subprocess.check_call("formatdb -i consensus.fasta -p F", shell=True)
-            blast_against_self("consensus.fasta", "consensus.fasta", "tmp_blast.out", filter, blast, penalty, reward, processors)
+            #subprocess.check_call("formatdb -i consensus.fasta -p F", shell=True)
+            subprocess.check_call("makeblastdb -in consensus.fasta -dbtype nucl", shell=True)
+            #blast_against_self("consensus.fasta", "consensus.fasta", "tmp_blast.out", filter, blast, penalty, reward, processors)
+            blast_against_self_blastn("blastn", "consensus.fasta", "consensus.fasta", "tmp_blast.out", filter, penalty, reward, processors)
             clusters = get_cluster_ids("consensus.fasta")
         elif "blat" == blast:
             blat_against_self("consensus.fasta", "consensus.fasta", "tmp_blast.out", processors)
@@ -176,9 +182,11 @@ def main(directory, id, filter, processors, genes, usearch, vsearch, blast, pena
         else:
             logging.logPrint("starting BLAT")
         if "tblastn" == blast:
-            blast_against_each_genome(dir_path, processors, filter, "consensus.pep", blast, penalty, reward)
+            #blast_against_each_genome(dir_path, processors, filter, "consensus.pep", blast, penalty, reward)
+            blast_against_each_genome_tblastn(dir_path, processors, "consensus.pep")
         elif "blastn" == blast:
-            blast_against_each_genome(dir_path, processors, filter, "consensus.fasta", blast, penalty, reward)
+            #blast_against_each_genome(dir_path, processors, filter, "consensus.fasta", blast, penalty, reward)
+            blast_against_each_genome_blastn(dir_path, processors, filter, "consensus.fasta", penalty, reward)
         elif "blat" == blast:
             blat_against_each_genome(dir_path, "consensus.fasta",processors)
         else:
@@ -329,10 +337,10 @@ if __name__ == "__main__":
                       default="tblastn", type="string")
     parser.add_option("-q", "--penalty", dest="penalty", action="store",
                       help="mismatch penalty, only to be used with blastn and -g option, default is -4",
-                      default="-4", type="int")
+                      default="-5", type="int")
     parser.add_option("-r", "--reward", dest="reward", action="store",
                       help="match reward, only to be used with blastn and -g option, default is 5",
-                      default="5", type="int")
+                      default="1", type="int")
     parser.add_option("-l", "--length", dest="length", action="store",
                       help="minimum BSR value to be called a duplicate, defaults to 0.7",
                       default="0.7", type="float")

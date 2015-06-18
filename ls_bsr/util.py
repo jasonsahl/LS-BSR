@@ -166,7 +166,77 @@ def blast_against_each_genome(dir_path, processors, filter, peptides, blast, pen
     results = set(p_func.pmap(_perform_workflow,
                               files_and_temp_names,
                               num_workers=processors))
-def get_seq_name(in_fasta):
+
+def blast_against_each_genome_tblastn(dir_path, processors, peptides):
+    """BLAST all peptides against each genome"""
+    curr_dir=os.getcwd()
+    files = os.listdir(curr_dir)
+    files_and_temp_names = [(str(idx), os.path.join(curr_dir, f))
+                            for idx, f in enumerate(files)]
+    def _perform_workflow(data):
+	tn, f = data
+        if ".fasta.new" in f:
+            try:
+                subprocess.check_call("makeblastdb -in %s -dbtype nucl > /dev/null 2>&1" % f, shell=True)
+            except:
+                print "problem found in formatting genome %s" % f
+        if ".fasta.new" in f:
+            try:
+                devnull = open('/dev/null', 'w')
+                cmd = ["tblastn",
+                       "-query", peptides,
+                       "-db", f,
+                       "-num_threads", str(processors),
+                       "-evalue", "0.1",
+                       "-outfmt", "6",
+                       "-out", "%s_blast.out" % f]
+                subprocess.call(cmd, stdout=devnull, stderr=devnull)
+            except:
+                print "genomes %s cannot be used" % f
+            
+    results = set(p_func.pmap(_perform_workflow,
+                              files_and_temp_names,
+                              num_workers=processors))
+
+def blast_against_each_genome_blastn(dir_path, processors, filter, peptides, penalty, reward):
+    """BLAST all peptides against each genome"""
+    if "F" in filter:
+        my_seg = "yes"
+    else:
+        my_seg = "no"
+    curr_dir=os.getcwd()
+    files = os.listdir(curr_dir)
+    files_and_temp_names = [(str(idx), os.path.join(curr_dir, f))
+                            for idx, f in enumerate(files)]
+    def _perform_workflow(data):
+	tn, f = data
+        if ".fasta.new" in f:
+            try:
+                subprocess.check_call("makeblastdb -in %s -dbtype nucl > /dev/null 2>&1" % f, shell=True)
+            except:
+                print "problem found in formatting genome %s" % f
+        if ".fasta.new" in f:
+            try:
+                devnull = open('/dev/null', 'w')
+                cmd = ["blastn",
+                       "-query", peptides,
+                       "-db", f,
+                       "-dust", str(my_seg),
+                       "-num_threads", str(processors),
+                       "-evalue", "0.1",
+                       "-outfmt", "6",
+                       "-penalty", penalty,
+                       "-reward", reward,
+                       "-out", "%s_blast.out" % f]
+                subprocess.call(cmd, stdout=devnull, stderr=devnull)
+            except:
+                print "genomes %s cannot be used" % f
+            
+    results = set(p_func.pmap(_perform_workflow,
+                              files_and_temp_names,
+                              num_workers=processors))
+
+ def get_seq_name(in_fasta):
     """used for renaming the sequences"""
     return os.path.basename(in_fasta)
 
@@ -242,6 +312,35 @@ def blast_against_self(genes_nt, genes_pep, output, filter, blast, penalty, rewa
            "-r", str(reward),
            "-C", "F",
            "-o", output]
+    subprocess.call(cmd, stdout=devnull, stderr=devnull)
+
+def blast_against_self_blastn(blast_type, genes_pep, genes_nt, output, filter, penalty, reward, processors):
+    devnull = open('/dev/null', 'w')
+    if "F" in filter:
+        my_seg = "yes"
+    else:
+        my_seg = "no"
+    cmd = ["%s" % blast_type,
+           "-query", genes_pep,
+           "-db", genes_nt,
+           "-num_threads", str(processors),
+           "-evalue", "0.1",
+           "-outfmt", "6",
+           "-dust", str(my_seg),
+           "-penalty", str(penalty),
+           "-reward", str(reward),
+           "-out", output]
+    subprocess.call(cmd, stdout=devnull, stderr=devnull)
+
+def blast_against_self_dev(blast_type, genes_nt, genes_pep, output,processors):
+    devnull = open('/dev/null', 'w')
+    cmd = ["%s" % blast_type,
+           "-query", genes_pep,
+           "-db", genes_nt,
+           "-num_threads", str(processors),
+           "-evalue", "0.1",
+           "-outfmt", "6",
+           "-out", output]
     subprocess.call(cmd, stdout=devnull, stderr=devnull)
     
 def parse_self_blast(lines):
