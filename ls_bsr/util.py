@@ -236,7 +236,7 @@ def blast_against_each_genome_blastn(dir_path, processors, filter, peptides, pen
                               files_and_temp_names,
                               num_workers=processors))
 
- def get_seq_name(in_fasta):
+def get_seq_name(in_fasta):
     """used for renaming the sequences"""
     return os.path.basename(in_fasta)
 
