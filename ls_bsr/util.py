@@ -171,6 +171,7 @@ def blast_against_each_genome_tblastn(dir_path, processors, peptides):
     """BLAST all peptides against each genome"""
     curr_dir=os.getcwd()
     files = os.listdir(curr_dir)
+    devnull = open("/scratch/jsahl/LS-BSR/run/blast_error.txt", "w")
     files_and_temp_names = [(str(idx), os.path.join(curr_dir, f))
                             for idx, f in enumerate(files)]
     def _perform_workflow(data):
@@ -183,7 +184,6 @@ def blast_against_each_genome_tblastn(dir_path, processors, peptides):
         if ".fasta.new" in f:
             try:
                 #devnull = open('/dev/null', 'w')
-                devnull = open("/scratch/jsahl/LS-BSR/run/blast_error.txt", "w")
                 cmd = ["tblastn",
                        "-query", peptides,
                        "-db", f,
