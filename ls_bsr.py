@@ -256,7 +256,7 @@ def main(directory, id, filter, processors, genes, usearch, vsearch, blast, pena
                 subprocess.check_call("rm tmp_blast.out self_blast.out", shell=True)
                 logging.logPrint("starting BLAST")
                 #blast_against_each_genome(dir_path, processors, filter, gene_path, blast, penalty, reward)
-                blast_against_each_genome_blastn(dir_path, processors, filter, "consensus.fasta", penalty, reward)
+                blast_against_each_genome_blastn(dir_path, processors, filter, gene_path, penalty, reward)
             elif "blat" == blast:
                 logging.logPrint("using blat")
                 blat_against_self(gene_path, gene_path, "tmp_blast.out", processors)
