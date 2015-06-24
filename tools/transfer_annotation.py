@@ -15,7 +15,7 @@ def test_file(option, opt_str, value, parser):
         print '%s file cannot be opened' % option
         sys.exit()
 
-def blast_against_self_tblastn(blast_type, query, database, output, processors):
+def blast_against_self(blast_type, query, database, output, processors):
     devnull = open('/dev/null', 'w')
     cmd = ["%s" % blast_type,
            "-query", genes_pep,
