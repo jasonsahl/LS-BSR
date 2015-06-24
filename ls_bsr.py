@@ -151,7 +151,6 @@ def main(directory, id, filter, processors, genes, usearch, vsearch, blast, pena
             print "neither usearch or vsearch selected for use with Prodigal!, exiting."
             sys.exit()
         if "tblastn" == blast:
-            #subprocess.check_call("formatdb -i consensus.fasta -p F", shell=True)
             subprocess.check_call("makeblastdb -in consensus.fasta -dbtype nucl > /dev/null 2>&1", shell=True)
             translate_consensus("consensus.fasta")
             if filter_peps == "T":
@@ -225,11 +224,13 @@ def main(directory, id, filter, processors, genes, usearch, vsearch, blast, pena
                 logging.logPrint("using tblastn")
                 translate_genes(gene_path)
                 try:
-                    subprocess.check_call("formatdb -i %s -p F" % gene_path, shell=True)
+                    #subprocess.check_call("formatdb -i %s -p F" % gene_path, shell=True)
+                    subprocess.check_call("makeblastdb -in %s -dbtype nucl" % gene_path, shell=True)
                 except:
                     logging.logPrint("problem encountered with BLAST database")
                     sys.exit()
-                blast_against_self(gene_path, "genes.pep", "tmp_blast.out", filter, blast, penalty, reward, processors)
+                    #blast_against_self(gene_path, "genes.pep", "tmp_blast.out", filter, blast, penalty, reward, processors)
+                blast_against_self_tblastn("tblastn", gene_path, "genes.pep", "tmp_blast.out", processors)
                 subprocess.check_call("sort -u -k 1,1 tmp_blast.out > self_blast.out", shell=True)
                 ref_scores=parse_self_blast(open("self_blast.out", "U"))
                 subprocess.check_call("rm tmp_blast.out self_blast.out", shell=True)
@@ -239,16 +240,19 @@ def main(directory, id, filter, processors, genes, usearch, vsearch, blast, pena
             elif "blastn" == blast:
                 logging.logPrint("using blastn")
                 try:
-                    subprocess.check_call("formatdb -i %s -p F" % gene_path, shell=True)
+                    #subprocess.check_call("formatdb -i %s -p F" % gene_path, shell=True)
+                    subprocess.check_call("makeblastdb -in %s -dbtype nucl > /dev/null 2>&1" % gene_path, shell=True)
                 except:
                     logging.logPrint("BLAST not found")
                     sys.exit()
-                blast_against_self(gene_path, gene_path, "tmp_blast.out", filter, blast, penalty, reward, processors)
+                    #blast_against_self(gene_path, gene_path, "tmp_blast.out", filter, blast, penalty, reward, processors)
+                blast_against_self_blastn("blastn", gene_path, gene_path, "tmp_blast.out", filter, penalty, reward, processors)
                 subprocess.check_call("sort -u -k 1,1 tmp_blast.out > self_blast.out", shell=True)
                 ref_scores=parse_self_blast(open("self_blast.out", "U"))
                 subprocess.check_call("rm tmp_blast.out self_blast.out", shell=True)
                 logging.logPrint("starting BLAST")
-                blast_against_each_genome(dir_path, processors, filter, gene_path, blast, penalty, reward)
+                #blast_against_each_genome(dir_path, processors, filter, gene_path, blast, penalty, reward)
+                blast_against_each_genome_blastn(dir_path, processors, filter, "consensus.fasta", penalty, reward)
             elif "blat" == blast:
                 logging.logPrint("using blat")
                 blat_against_self(gene_path, gene_path, "tmp_blast.out", processors)
