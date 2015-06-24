@@ -183,7 +183,7 @@ def blast_against_each_genome_tblastn(dir_path, processors, peptides):
         if ".fasta.new" in f:
             try:
                 #devnull = open('/dev/null', 'w')
-                devnull = open("blast_error.txt", "w")
+                devnull = open("/scratch/jsahl/LS-BSR/run/blast_error.txt", "w")
                 cmd = ["tblastn",
                        "-query", peptides,
                        "-db", f,
