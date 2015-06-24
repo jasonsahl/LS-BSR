@@ -207,7 +207,7 @@ def main(directory, id, filter, processors, genes, usearch, vsearch, blast, pena
             logging.logPrint("using tblastn on peptides")
             try:
                 #subprocess.check_call("formatdb -i %s" % gene_path, shell=True)
-                subprocess.check_call("makeblastdb -in %s -dbtype prot" % gene_path, shell=True)
+                subprocess.check_call("makeblastdb -in %s -dbtype prot > /dev/null 2>&1" % gene_path, shell=True)
             except:
                 logging.logPrint("problem encountered with BLAST database")
                 sys.exit()
@@ -225,7 +225,7 @@ def main(directory, id, filter, processors, genes, usearch, vsearch, blast, pena
                 translate_genes(gene_path)
                 try:
                     #subprocess.check_call("formatdb -i %s -p F" % gene_path, shell=True)
-                    subprocess.check_call("makeblastdb -in %s -dbtype nucl" % gene_path, shell=True)
+                    subprocess.check_call("makeblastdb -in %s -dbtype nucl > /dev/null 2>&1" % gene_path, shell=True)
                 except:
                     logging.logPrint("problem encountered with BLAST database")
                     sys.exit()
