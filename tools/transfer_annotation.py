@@ -87,14 +87,14 @@ def main(peptides,consensus,processors,threshold):
         ab = subprocess.call(['which', 'blastp'])
         if ab == 0:
             pass
-        except:
+        else:
             print "blastp must be in your path to use peptides"
             sys.exit()
     elif consensus_path.endswith(".fasta"):
         ab = subprocess.call(['which', 'blastx'])
         if ab == 0:
             pass
-        except:
+        else:
             print "blastx must be in your path to use nucleotides"
             sys.exit()
     """"removes empty white space from your input file"""
