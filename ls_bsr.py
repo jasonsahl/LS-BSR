@@ -152,7 +152,7 @@ def main(directory, id, filter, processors, genes, usearch, vsearch, blast, pena
             sys.exit()
         if "tblastn" == blast:
             #subprocess.check_call("formatdb -i consensus.fasta -p F", shell=True)
-            subprocess.check_call("makeblastdb -in consensus.fasta -dbtype nucl", shell=True)
+            subprocess.check_call("makeblastdb -in consensus.fasta -dbtype nucl > /dev/null 2>&1", shell=True)
             translate_consensus("consensus.fasta")
             if filter_peps == "T":
                 filter_seqs("tmp.pep")
@@ -164,7 +164,7 @@ def main(directory, id, filter, processors, genes, usearch, vsearch, blast, pena
             blast_against_self_tblastn("tblastn", "consensus.fasta", "consensus.pep", "tmp_blast.out", processors)
         elif "blastn" == blast:
             #subprocess.check_call("formatdb -i consensus.fasta -p F", shell=True)
-            subprocess.check_call("makeblastdb -in consensus.fasta -dbtype nucl", shell=True)
+            subprocess.check_call("makeblastdb -in consensus.fasta -dbtype nucl > /dev/null 2>&1", shell=True)
             #blast_against_self("consensus.fasta", "consensus.fasta", "tmp_blast.out", filter, blast, penalty, reward, processors)
             blast_against_self_blastn("blastn", "consensus.fasta", "consensus.fasta", "tmp_blast.out", filter, penalty, reward, processors)
             clusters = get_cluster_ids("consensus.fasta")

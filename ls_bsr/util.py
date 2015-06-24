@@ -332,7 +332,7 @@ def blast_against_self_blastn(blast_type, genes_pep, genes_nt, output, filter, p
            "-out", output]
     subprocess.call(cmd, stdout=devnull, stderr=devnull)
 
-def blast_against_self_dev(blast_type, genes_nt, genes_pep, output,processors):
+def blast_against_self_tblastn(blast_type, genes_nt, genes_pep, output,processors):
     devnull = open('/dev/null', 'w')
     cmd = ["%s" % blast_type,
            "-query", genes_pep,
