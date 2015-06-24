@@ -227,8 +227,8 @@ def blast_against_each_genome_blastn(dir_path, processors, filter, peptides, pen
                        "-num_threads", str(processors),
                        "-evalue", "0.1",
                        "-outfmt", "6",
-                       "-penalty", penalty,
-                       "-reward", reward,
+                       "-penalty", str(penalty),
+                       "-reward", str(reward),
                        "-out", "%s_blast.out" % f]
                 print cmd
                 subprocess.call(cmd, stdout=devnull, stderr=devnull)
