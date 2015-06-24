@@ -207,16 +207,19 @@ def main(directory, id, filter, processors, genes, usearch, vsearch, blast, pena
         if gene_path.endswith(".pep"):
             logging.logPrint("using tblastn on peptides")
             try:
-                subprocess.check_call("formatdb -i %s" % gene_path, shell=True)
+                #subprocess.check_call("formatdb -i %s" % gene_path, shell=True)
+                subprocess.check_call("makeblastdb -in %s -dbtype prot" % gene_path, shell=True)
             except:
                 logging.logPrint("problem encountered with BLAST database")
                 sys.exit()
-            blast_against_self(gene_path, gene_path, "tmp_blast.out", filter, "blastp", penalty, reward, processors)
+                #blast_against_self(gene_path, gene_path, "tmp_blast.out", filter, "blastp", penalty, reward, processors)
+            blast_against_self_tblastn("tblastn", gene_path, gene_path, "tmp_blast.out", processors)
             subprocess.check_call("sort -u -k 1,1 tmp_blast.out > self_blast.out", shell=True)
             ref_scores=parse_self_blast(open("self_blast.out", "U"))
             subprocess.check_call("rm tmp_blast.out self_blast.out", shell=True)
             logging.logPrint("starting BLAST")
-            blast_against_each_genome(dir_path, processors, filter, gene_path, "tblastn", penalty, reward)
+            #blast_against_each_genome(dir_path, processors, filter, gene_path, "tblastn", penalty, reward)
+            blast_against_each_genome_tblastn(dir_path, processors, gene_path)
         elif gene_path.endswith(".fasta"):    
             if "tblastn" == blast:
                 logging.logPrint("using tblastn")
