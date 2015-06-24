@@ -207,6 +207,7 @@ def blast_against_each_genome_blastn(dir_path, processors, filter, peptides, pen
         my_seg = "no"
     curr_dir=os.getcwd()
     files = os.listdir(curr_dir)
+    devnull = open("/scratch/jsahl/LS-BSR/run/blast_error.txt", "w")
     files_and_temp_names = [(str(idx), os.path.join(curr_dir, f))
                             for idx, f in enumerate(files)]
     def _perform_workflow(data):
@@ -217,7 +218,7 @@ def blast_against_each_genome_blastn(dir_path, processors, filter, peptides, pen
             except:
                 print "problem found in formatting genome %s" % f
         if ".fasta.new" in f:
-            devnull = open('/dev/null', 'w')
+            #devnull = open('/dev/null', 'w')
             try:
                 cmd = ["blastn",
                        "-query", peptides,
