@@ -136,7 +136,7 @@ if __name__ == "__main__":
                       type="int", default="2")
     parser.add_option("-t", "--threshold", dest="threshold",
                       help="[integer] lower BSR threshold for assigning annotation, defaults to 80[%]",
-                      type="int", action="store", default="80"
+                      type="int", action="store", default="80")
     options, args = parser.parse_args()
     
     mandatories = ["peptides", "consensus"]
