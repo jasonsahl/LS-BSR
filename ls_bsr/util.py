@@ -182,7 +182,8 @@ def blast_against_each_genome_tblastn(dir_path, processors, peptides):
                 print "problem found in formatting genome %s" % f
         if ".fasta.new" in f:
             try:
-                devnull = open('/dev/null', 'w')
+                #devnull = open('/dev/null', 'w')
+                devnull = open("blast_error.txt", "w")
                 cmd = ["tblastn",
                        "-query", peptides,
                        "-db", f,
