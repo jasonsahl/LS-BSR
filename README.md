@@ -11,6 +11,11 @@ have not been observed.
 
 contact: jasonsahl at gmail dot com
 
+#Significant changes made on 6/24/2015#
+
+1. The use of blastall is deprecated. LS-BSR now uses blast+ instead.
+2. VSEARCH can now be used instead of USEARCH. Notice that VSEARCH will likely be slower than USEARCH. 
+
 ###See manual for run directions###
 
   
