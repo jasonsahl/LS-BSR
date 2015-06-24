@@ -243,10 +243,14 @@ def main(directory, id, filter, processors, genes, usearch, vsearch, blast, pena
                     #subprocess.check_call("formatdb -i %s -p F" % gene_path, shell=True)
                     subprocess.check_call("makeblastdb -in %s -dbtype nucl > /dev/null 2>&1" % gene_path, shell=True)
                 except:
-                    logging.logPrint("BLAST not found")
+                    logging.logPrint("Database not formatted correctly...exiting")
                     sys.exit()
                     #blast_against_self(gene_path, gene_path, "tmp_blast.out", filter, blast, penalty, reward, processors)
-                blast_against_self_blastn("blastn", gene_path, gene_path, "tmp_blast.out", filter, penalty, reward, processors)
+                try:
+                    blast_against_self_blastn("blastn", gene_path, gene_path, "tmp_blast.out", filter, penalty, reward, processors)
+                except:
+                    print "problem with blastn, exiting"
+                    sys.exit()
                 subprocess.check_call("sort -u -k 1,1 tmp_blast.out > self_blast.out", shell=True)
                 ref_scores=parse_self_blast(open("self_blast.out", "U"))
                 subprocess.check_call("rm tmp_blast.out self_blast.out", shell=True)
