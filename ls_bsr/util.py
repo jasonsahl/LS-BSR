@@ -299,22 +299,6 @@ def get_unique_lines():
         outfile.close()
     return outdata
 
-def blast_against_self(genes_nt, genes_pep, output, filter, blast, penalty, reward, processors):
-    devnull = open('/dev/null', 'w')
-    cmd = ["blastall",
-           "-p", blast,
-           "-i", genes_pep,
-           "-d", genes_nt,
-           "-a", str(processors),
-           "-e", "0.1",
-           "-m", "8",
-           "-F", str(filter),
-           "-q", str(penalty),
-           "-r", str(reward),
-           "-C", "F",
-           "-o", output]
-    subprocess.call(cmd, stdout=devnull, stderr=devnull)
-
 def blast_against_self_blastn(blast_type, genes_pep, genes_nt, output, filter, penalty, reward, processors):
     devnull = open('/dev/null', 'w')
     if "F" in filter:
@@ -713,17 +697,6 @@ def filter_scaffolds(in_fasta):
     SeqIO.write(outrecords, output_handle, "fasta")
     output_handle.close()
 
-def sort_usearch(usearch):
-    rec=1
-    curr_dir=os.getcwd()
-    devnull = open("/dev/null", "w")
-    for infile in glob.glob(os.path.join(curr_dir, "x*")):
-        cmd = ["%s" % usearch,
-               "-sortbylength", "%s" % infile,
-               "-output", "z.%s.sorted" % str(autoIncrement())]
-        subprocess.call(cmd,stdout=devnull,stderr=devnull)
-    devnull.close()
-    
 def uclust_sort(usearch):
     """sort with Usearch. Updated to V6"""
     devnull = open("/dev/null", "w")

@@ -135,7 +135,6 @@ def main(directory, id, filter, processors, genes, usearch, vsearch, blast, pena
             os.chdir("split_files/")
             os.system("split -l 200000 all_sorted.txt")
             logging.logPrint("clustering with USEARCH at an ID of %s" % id)
-            #sort_usearch(usearch)
             run_usearch(usearch, id)
             os.system("cat *.usearch.out > all_sorted.txt")
             os.system("mv all_sorted.txt %s/joined" % dir_path)
@@ -159,12 +158,9 @@ def main(directory, id, filter, processors, genes, usearch, vsearch, blast, pena
             else:
                 os.system("mv tmp.pep consensus.pep")
             clusters = get_cluster_ids("consensus.pep")
-            #blast_against_self("consensus.fasta", "consensus.pep", "tmp_blast.out", filter, blast, penalty, reward, processors)
             blast_against_self_tblastn("tblastn", "consensus.fasta", "consensus.pep", "tmp_blast.out", processors)
         elif "blastn" == blast:
-            #subprocess.check_call("formatdb -i consensus.fasta -p F", shell=True)
             subprocess.check_call("makeblastdb -in consensus.fasta -dbtype nucl > /dev/null 2>&1", shell=True)
-            #blast_against_self("consensus.fasta", "consensus.fasta", "tmp_blast.out", filter, blast, penalty, reward, processors)
             blast_against_self_blastn("blastn", "consensus.fasta", "consensus.fasta", "tmp_blast.out", filter, penalty, reward, processors)
             clusters = get_cluster_ids("consensus.fasta")
         elif "blat" == blast:
