@@ -183,7 +183,7 @@ def blast_against_each_genome_tblastn(dir_path, processors, peptides):
                 print "problem found in formatting genome %s" % f
         if ".fasta.new" in f:
             try:
-                #devnull = open('/dev/null', 'w')
+                devnull = open('/dev/null', 'w')
                 cmd = ["tblastn",
                        "-query", peptides,
                        "-db", f,
@@ -207,7 +207,6 @@ def blast_against_each_genome_blastn(dir_path, processors, filter, peptides, pen
         my_seg = "no"
     curr_dir=os.getcwd()
     files = os.listdir(curr_dir)
-    devnull = open("/scratch/jsahl/LS-BSR/run/blast_error.txt", "w")
     files_and_temp_names = [(str(idx), os.path.join(curr_dir, f))
                             for idx, f in enumerate(files)]
     def _perform_workflow(data):
@@ -218,7 +217,7 @@ def blast_against_each_genome_blastn(dir_path, processors, filter, peptides, pen
             except:
                 print "problem found in formatting genome %s" % f
         if ".fasta.new" in f:
-            #devnull = open('/dev/null', 'w')
+            devnull = open('/dev/null', 'w')
             try:
                 cmd = ["blastn",
                        "-query", peptides,
@@ -230,7 +229,6 @@ def blast_against_each_genome_blastn(dir_path, processors, filter, peptides, pen
                        "-penalty", str(penalty),
                        "-reward", str(reward),
                        "-out", "%s_blast.out" % f]
-                print cmd
                 subprocess.call(cmd, stdout=devnull, stderr=devnull)
             except:
                 print "The genome file %s was not processed" % f
