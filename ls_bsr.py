@@ -177,10 +177,8 @@ def main(directory, id, filter, processors, genes, usearch, vsearch, blast, pena
         else:
             logging.logPrint("starting BLAT")
         if "tblastn" == blast:
-            #blast_against_each_genome(dir_path, processors, filter, "consensus.pep", blast, penalty, reward)
             blast_against_each_genome_tblastn(dir_path, processors, "consensus.pep")
         elif "blastn" == blast:
-            #blast_against_each_genome(dir_path, processors, filter, "consensus.fasta", blast, penalty, reward)
             blast_against_each_genome_blastn(dir_path, processors, filter, "consensus.fasta", penalty, reward)
         elif "blat" == blast:
             blat_against_each_genome(dir_path, "consensus.fasta",processors)
@@ -211,7 +209,6 @@ def main(directory, id, filter, processors, genes, usearch, vsearch, blast, pena
             ref_scores=parse_self_blast(open("self_blast.out", "U"))
             subprocess.check_call("rm tmp_blast.out self_blast.out", shell=True)
             logging.logPrint("starting BLAST")
-            #blast_against_each_genome(dir_path, processors, filter, gene_path, "tblastn", penalty, reward)
             blast_against_each_genome_tblastn(dir_path, processors, gene_path)
         elif gene_path.endswith(".fasta"):    
             if "tblastn" == blast:
@@ -227,18 +224,15 @@ def main(directory, id, filter, processors, genes, usearch, vsearch, blast, pena
                 ref_scores=parse_self_blast(open("self_blast.out", "U"))
                 subprocess.check_call("rm tmp_blast.out self_blast.out", shell=True)
                 logging.logPrint("starting BLAST")
-                #blast_against_each_genome(dir_path, processors, filter, "genes.pep", blast, penalty, reward)
-                blast_against_each_genome_tblastn(dir_path, processors, gene_path)
+                blast_against_each_genome_tblastn(dir_path, processors, "genes.pep")
                 os.system("cp genes.pep %s" % start_dir)
             elif "blastn" == blast:
                 logging.logPrint("using blastn")
                 try:
-                    #subprocess.check_call("formatdb -i %s -p F" % gene_path, shell=True)
                     subprocess.check_call("makeblastdb -in %s -dbtype nucl > /dev/null 2>&1" % gene_path, shell=True)
                 except:
                     logging.logPrint("Database not formatted correctly...exiting")
                     sys.exit()
-                    #blast_against_self(gene_path, gene_path, "tmp_blast.out", filter, blast, penalty, reward, processors)
                 try:
                     blast_against_self_blastn("blastn", gene_path, gene_path, "tmp_blast.out", filter, penalty, reward, processors)
                 except:
@@ -248,7 +242,6 @@ def main(directory, id, filter, processors, genes, usearch, vsearch, blast, pena
                 ref_scores=parse_self_blast(open("self_blast.out", "U"))
                 subprocess.check_call("rm tmp_blast.out self_blast.out", shell=True)
                 logging.logPrint("starting BLAST")
-                #blast_against_each_genome(dir_path, processors, filter, gene_path, blast, penalty, reward)
                 blast_against_each_genome_blastn(dir_path, processors, filter, gene_path, penalty, reward)
             elif "blat" == blast:
                 logging.logPrint("using blat")
