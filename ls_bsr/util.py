@@ -216,8 +216,8 @@ def blast_against_each_genome_blastn(dir_path, processors, filter, peptides, pen
             except:
                 print "problem found in formatting genome %s" % f
         if ".fasta.new" in f:
+            devnull = open('/dev/null', 'w')
             try:
-                devnull = open('/dev/null', 'w')
                 cmd = ["blastn",
                        "-query", peptides,
                        "-db", f,
@@ -231,7 +231,7 @@ def blast_against_each_genome_blastn(dir_path, processors, filter, peptides, pen
                 print cmd
                 subprocess.call(cmd, stdout=devnull, stderr=devnull)
             except:
-                print "genomes %s cannot be used" % f
+                print "The genome file %s was not processed" % f
             
     results = set(p_func.pmap(_perform_workflow,
                               files_and_temp_names,
