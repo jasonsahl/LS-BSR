@@ -147,7 +147,6 @@ def main(bsr_matrix, consensus, locus_tags, threshold):
     process_consensus(consensus,new_dict)
     os.system("rm tmp_blast.out self_blast.out query_blast.out query_blast.filtered query.filtered.unique")
 
-
 if __name__ == "__main__":
     usage="usage: %prog [options]"
     parser = optparse.OptionParser(usage=usage)
