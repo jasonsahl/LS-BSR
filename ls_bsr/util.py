@@ -228,6 +228,7 @@ def blast_against_each_genome_blastn(dir_path, processors, filter, peptides, pen
                        "-penalty", penalty,
                        "-reward", reward,
                        "-out", "%s_blast.out" % f]
+                print cmd
                 subprocess.call(cmd, stdout=devnull, stderr=devnull)
             except:
                 print "genomes %s cannot be used" % f
