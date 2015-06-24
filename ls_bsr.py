@@ -135,7 +135,7 @@ def main(directory, id, filter, processors, genes, usearch, vsearch, blast, pena
             os.chdir("split_files/")
             os.system("split -l 200000 all_sorted.txt")
             logging.logPrint("clustering with USEARCH at an ID of %s" % id)
-            sort_usearch(usearch)
+            #sort_usearch(usearch)
             run_usearch(usearch, id)
             os.system("cat *.usearch.out > all_sorted.txt")
             os.system("mv all_sorted.txt %s/joined" % dir_path)

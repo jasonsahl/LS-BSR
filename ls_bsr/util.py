@@ -690,7 +690,7 @@ def run_usearch(usearch, id):
     rec=1
     curr_dir=os.getcwd()
     devnull = open("/dev/null", "w")
-    for infile in glob.glob(os.path.join(curr_dir, "z.*")):
+    for infile in glob.glob(os.path.join(curr_dir, "x*")):
         cmd = ["%s" % usearch,
            "-cluster_fast", "%s" % infile,
            "-id", str(id),
