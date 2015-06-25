@@ -18,7 +18,7 @@ def test_file(option, opt_str, value, parser):
 def blast_against_self(blast_type, query, database, output, processors):
     devnull = open('/dev/null', 'w')
     cmd = ["%s" % blast_type,
-           "-query", genes,
+           "-query", query,
            "-db", database,
            "-num_threads", str(processors),
            "-evalue", "0.1",
