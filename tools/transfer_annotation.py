@@ -117,7 +117,7 @@ def main(peptides,consensus,processors,threshold):
     else:
         print "input genes file is of incorrect format, choose from fasta or pep"
         sys.exit()
-    os.system("sort -u -k 1,1 xyx.blast.out.xyx > xyx.blast.unique.xyx")
+    os.system("sort -u -k 1,1 xyx.blast.out > xyx.blast.unique.xyx")
     ref_scores=parse_self_blast(open("xyx.blast.unique.xyx", "U"))
     os.system("rm xyx.blast.out xyx.blast.unique.xyx")
     if consensus_path.endswith(".pep"):
