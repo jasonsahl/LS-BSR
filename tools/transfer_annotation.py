@@ -26,7 +26,6 @@ def blast_against_self(blast_type, query, database, output, processors):
            "-out", output]
     subprocess.call(cmd, stdout=devnull, stderr=devnull)
 
-
 def transfer_annotation(consensus, blast_in):
     blast_dict = {}
     outfile = open("genes.associated.fasta", "w")
@@ -78,7 +77,18 @@ def get_cluster_ids(in_fasta):
         print "Problem with gene list.  Are there duplicate headers in your file?"
         sys.exit()
 
-    
+def parse_self_blast(lines):
+    my_dict={}
+    for line in lines:
+        try:
+            fields=line.split()
+            str1=fields[0]
+            str2=fields[11]
+            my_dict.update({str1:str2})
+        except:
+            raise TypeError("blast file is malformed")
+    return my_dict
+
 def main(peptides,consensus,processors,threshold):
     devnull = open("/dev/null", "w")
     pep_path=os.path.abspath("%s" % peptides)
@@ -138,7 +148,7 @@ if __name__ == "__main__":
                       help="[integer] lower BSR threshold for assigning annotation, defaults to 80[%]",
                       type="int", action="store", default="80")
     options, args = parser.parse_args()
-    
+
     mandatories = ["peptides", "consensus"]
     for m in mandatories:
         if not getattr(options, m, None):
@@ -147,4 +157,3 @@ if __name__ == "__main__":
             exit(-1)
 
     main(options.peptides,options.consensus,options.processors,options.threshold)
-    
