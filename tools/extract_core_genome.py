@@ -79,11 +79,10 @@ def combined_seqs(dir_path):
 def run_blast(infile, blast):
     names = get_seq_name(infile)
     reduced = names.replace('.fasta','')
-    cmd = ["blastall",
-            "-p", "%s" % blast,
-            "-i", infile,
-            "-d", "combined.seqs",
-            "-o", "%s.blast.out" % reduced,
+    cmd = ["%s" % blast,
+            "-query", infile,
+            "-db", "combined.seqs",
+            "-out", "%s.blast.out" % reduced,
             "-m", "7",
             "-q", "-4",
             "-r", "5",
@@ -101,8 +100,8 @@ def parse_blast_xml_report(infile):
     reduced = names.replace('.blast.out','')
     result_handle = open(infile, "U")
     blast_records = NCBIXML.parse(result_handle)
-    blast_record = blast_records.next()    
-    handle = open("%s.blast.parsed" % reduced, "w") 
+    blast_record = blast_records.next()
+    handle = open("%s.blast.parsed" % reduced, "w")
     for alignment in blast_record.alignments:
         for hsp in alignment.hsps:
             test = Seq(hsp.sbjct)
@@ -137,7 +136,7 @@ def check_and_align_seqs(infile, num_genomes):
             pass
     except:
         pass
-    
+
 def pull_seqs(names):
     curr_dir = os.getcwd()
     for infile in glob.glob(os.path.join(curr_dir, '*_aln.seqs')):
@@ -213,7 +212,7 @@ def file_to_fasta(matrix):
         print >> out_matrix, ">"+str(x[0])
         print >> out_matrix, "".join(x[1:])
     out_matrix.close()
-    
+
 def remove_gaps(infile):
     fasta_to_tab(infile)
     tab_to_matrix("out.tab")
@@ -221,7 +220,7 @@ def remove_gaps(infile):
     file_to_fasta("tab.filtered")
 
 def main(directory, genes, blast, processors, remove_gap, keep):
-    dependencies = ['blastall','formatdb','muscle']
+    dependencies = ['blastn','makeblastdb','muscle']
     for dependency in dependencies:
         ra = subprocess.call(['which', '%s' % dependency])
         if ra == 0:
@@ -248,14 +247,14 @@ def main(directory, genes, blast, processors, remove_gap, keep):
     os.chdir("%s/work_xxx" % ap)
     """create combined file"""
     num_genomes, names = combined_seqs(dir_path)
-    os.system("formatdb -i combined.seqs -p F")
+    os.system("makeblastdb -in combined.seqs -dbtype nucl")
     table_files = glob.glob(os.path.join("%s/to_extract_xxx" % ap, "*.fasta"))
     files_and_temp_names = [(str(idx), os.path.join("%s/to_extract_xxx" % ap, f))
                             for idx, f in enumerate(table_files)]
     def _perform_workflow(data):
         tn, f = data
         name = run_blast(f, blast)
-        parse_blast_xml_report("%s.blast.out" % name)
+        #parse_blast_xml_report("%s.blast.out" % name)
         parsed_blast_to_seqs("%s.blast.unique" % name)
         check_and_align_seqs("%s.extracted.seqs" % name, num_genomes)
         os.system("rm %s.blast.out %s.blast.unique %s.extracted.seqs" % (name,name,name))
@@ -285,7 +284,7 @@ def main(directory, genes, blast, processors, remove_gap, keep):
     else:
         print "Illegal keep value selected, not doing anything"
         pass
-    
+
 if __name__ == "__main__":
     usage="usage: %prog [options]"
     parser = optparse.OptionParser(usage=usage)
