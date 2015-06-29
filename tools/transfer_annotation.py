@@ -2,6 +2,7 @@
 
 """transfer annotation onto centroids"""
 
+from __future__ import division
 import optparse
 import sys
 import os
@@ -89,6 +90,26 @@ def parse_self_blast(lines):
         except:
             raise TypeError("blast file is malformed")
     return my_dict
+
+def update_dict(ref_scores, query_file, all_clusters, threshold):
+    new_dict = {}
+    for line in open(query_file, "U"):
+        newline = line.strip()
+        fields = newline.split()
+        hits = []
+        for cluster in all_clusters:
+            if cluster == fields[1]:
+                if (float(fields[2])/float(ref_scores.get(fields[0]))*100)>int(threshold):
+                    new_dict.update({fields[1]:fields[0]})
+                    hits.append("1")
+        if len(hits) == 0:
+            new_dict.update({fields[0]:fields[0]})
+    for cluster in all_clusters:
+        if cluster in new_dict:
+            pass
+        else:
+            new_dict.update({cluster:cluster})
+    return new_dict
 
 def main(peptides,consensus,processors,threshold):
     devnull = open("/dev/null", "w")
