@@ -6,6 +6,7 @@ import optparse
 import sys
 import os
 import subprocess
+from collections import OrderedDict
 from Bio import SeqIO
 
 def test_file(option, opt_str, value, parser):
