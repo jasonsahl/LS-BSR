@@ -204,7 +204,7 @@ def main(directory, id, filter, processors, genes, usearch, vsearch, blast, pena
             except:
                 logging.logPrint("problem encountered with BLAST database")
                 sys.exit()
-            blast_against_self_tblastn("tblastn", gene_path, gene_path, "tmp_blast.out", processors)
+            blast_against_self_tblastn("blastp", gene_path, gene_path, "tmp_blast.out", processors)
             subprocess.check_call("sort -u -k 1,1 tmp_blast.out > self_blast.out", shell=True)
             ref_scores=parse_self_blast(open("self_blast.out", "U"))
             subprocess.check_call("rm tmp_blast.out self_blast.out", shell=True)
