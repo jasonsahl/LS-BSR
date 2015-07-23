@@ -25,6 +25,7 @@ def blast_against_self(blast_type, query, database, output, processors):
            "-num_threads", str(processors),
            "-evalue", "0.1",
            "-outfmt", "6",
+           "-seg", "no",
            "-out", output]
     subprocess.call(cmd, stdout=devnull, stderr=devnull)
 
@@ -91,24 +92,31 @@ def parse_self_blast(lines):
             raise TypeError("blast file is malformed")
     return my_dict
 
+def process_consensus(in_fasta, new_dict):
+    my_lists = []
+    outfile = open("in_fasta_annotated.fasta", "w")
+    no_hit_records = []
+    for record in SeqIO.parse(open(in_fasta, "U"), "fasta"):
+        if record.id not in new_dict:
+            no_hit_records.append(record)
+        else:
+            new_id = record.id.replace(record.id, new_dict.get(record.id))
+            print >> outfile, ">"+str(new_id)+"::"+record.id
+            print >> outfile, record.seq
+
 def update_dict(ref_scores, query_file, all_clusters, threshold):
     new_dict = {}
     for line in open(query_file, "U"):
         newline = line.strip()
         fields = newline.split()
-        hits = []
         for cluster in all_clusters:
             if cluster == fields[1]:
-                if (float(fields[2])/float(ref_scores.get(fields[0]))*100)>int(threshold):
-                    new_dict.update({fields[1]:fields[0]})
-                    hits.append("1")
-        if len(hits) == 0:
-            new_dict.update({fields[0]:fields[0]})
-    for cluster in all_clusters:
-        if cluster in new_dict:
-            pass
-        else:
-            new_dict.update({cluster:cluster})
+                try:
+                    if (float(fields[2])/float(ref_scores.get(fields[1]))*100)>int(threshold):
+                        new_dict.update({fields[0]:fields[1]})
+                except:
+                    print "couldn't process", fields[2], ref_scores.get(fields[0]), fields[1], fields[0]
+    """Returns centroid:associated_gene"""
     return new_dict
 
 def main(peptides,consensus,processors,threshold):
@@ -132,13 +140,8 @@ def main(peptides,consensus,processors,threshold):
     """"removes empty white space from your input file"""
     os.system("sed 's/ /_/g' %s > query.peptides.xyx" % pep_path)
     subprocess.check_call("makeblastdb -in query.peptides.xyx -dbtype prot", shell=True)
-    if consensus_path.endswith(".pep"):
-        blast_against_self("blastp", "query.peptides.xyx", "query.peptides.xyx", "xyx.blast.out", processors)
-    elif consensus_path.endswith(".fasta"):
-        blast_against_self("blastx", "query.peptides.xyx", "query.peptides.xyx", "xyx.blast.out", processors)
-    else:
-        print "input genes file is of incorrect format, choose from fasta or pep"
-        sys.exit()
+    #only supports transfer of annotation against peptides, currently
+    blast_against_self("blastp", "query.peptides.xyx", "query.peptides.xyx", "xyx.blast.out", processors)
     os.system("sort -u -k 1,1 xyx.blast.out > xyx.blast.unique.xyx")
     ref_scores=parse_self_blast(open("xyx.blast.unique.xyx", "U"))
     os.system("rm xyx.blast.out xyx.blast.unique.xyx")
@@ -150,9 +153,8 @@ def main(peptides,consensus,processors,threshold):
     get_unique_lines("query_blast.filtered")
     clusters = get_cluster_ids(pep_path)
     new_dict = update_dict(ref_scores, "query.filtered.unique", clusters, threshold)
-    process_consensus(consensus,new_dict)
-    #transfer_annotation(consensus, "xyx.blast.unique.xyx")
-    #os.system("rm query.peptides.xyx")
+    process_consensus(consensus_path, new_dict)
+    os.system("rm query.peptides.xyx* xyx.blast.out query_blast.filtered query.filtered.unique")
 
 if __name__ == "__main__":
     usage="usage: %prog [options]"
