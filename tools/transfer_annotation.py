@@ -103,6 +103,9 @@ def process_consensus(in_fasta, new_dict):
             new_id = record.id.replace(record.id, new_dict.get(record.id))
             print >> outfile, ">"+str(new_id)+"::"+record.id
             print >> outfile, record.seq
+    for record in no_hit_records:
+        print >> outfile, ">"+record.id
+        print >> outfile, record.seq
 
 def update_dict(ref_scores, query_file, all_clusters, threshold):
     new_dict = {}
