@@ -76,50 +76,26 @@ def combined_seqs(dir_path):
         num_genomes.append(record.id)
     return len(num_genomes), num_genomes
 
-def run_blast(infile, blast):
+def run_blast(infile):
     names = get_seq_name(infile)
     reduced = names.replace('.fasta','')
-    cmd = ["%s" % blast,
-            "-query", infile,
-            "-db", "combined.seqs",
-            "-out", "%s.blast.out" % reduced,
-            "-m", "7",
-            "-q", "-4",
-            "-r", "5",
-            "-a", "2",
-            "-b", "2000",
-            "-v", "2000",
-            "-F", "F"]
-    subprocess.check_call(cmd)
+    try:
+        os.system('blastn -query %s -db combined.seqs -out %s.blast.out -dust no -num_alignments 2000 -outfmt "7 std sseq"' % (infile,reduced))
+    except:
+        print "blast failed on %s" % infile
     return reduced
-
-def parse_blast_xml_report(infile):
-    """uses biopython to split the output
-    from a blast file with xml output"""
-    names = get_seq_name(infile)
-    reduced = names.replace('.blast.out','')
-    result_handle = open(infile, "U")
-    blast_records = NCBIXML.parse(result_handle)
-    blast_record = blast_records.next()
-    handle = open("%s.blast.parsed" % reduced, "w")
-    for alignment in blast_record.alignments:
-        for hsp in alignment.hsps:
-            test = Seq(hsp.sbjct)
-            if int(hsp.query_start)<int(hsp.query_end):
-                print >> handle, ">", alignment.title, test
-            if int(hsp.query_start)>int(hsp.query_end):
-                print >> handle, ">", alignment.title, test.reverse_complement()
-    handle.close()
-    result_handle.close()
-    os.system("sort -u -k 3,3 %s.blast.parsed > %s.blast.unique" % (reduced, reduced))
 
 def parsed_blast_to_seqs(infile):
     names = get_seq_name(infile)
     reduced = names.replace('.blast.unique','')
     outfile = open("%s.extracted.seqs" % reduced, "w")
     for line in open(infile, "U"):
-        fields = line.split(" ")
-        print >> outfile, fields[0] + fields[2], "\n", fields[3],
+        if line.startswith("#"):
+            pass
+        else:
+            fields = line.split()
+            print >> outfile, ">"+str(fields[1])
+            print >> outfile, fields[12]
     outfile.close()
 
 def check_and_align_seqs(infile, num_genomes):
@@ -247,21 +223,20 @@ def main(directory, genes, blast, processors, remove_gap, keep):
     os.chdir("%s/work_xxx" % ap)
     """create combined file"""
     num_genomes, names = combined_seqs(dir_path)
-    os.system("makeblastdb -in combined.seqs -dbtype nucl")
+    os.system("makeblastdb -in combined.seqs -dbtype nucl > /dev/null 2>&1")
     table_files = glob.glob(os.path.join("%s/to_extract_xxx" % ap, "*.fasta"))
     files_and_temp_names = [(str(idx), os.path.join("%s/to_extract_xxx" % ap, f))
                             for idx, f in enumerate(table_files)]
     def _perform_workflow(data):
         tn, f = data
-        name = run_blast(f, blast)
-        #parse_blast_xml_report("%s.blast.out" % name)
-        parsed_blast_to_seqs("%s.blast.unique" % name)
-        check_and_align_seqs("%s.extracted.seqs" % name, num_genomes)
-        os.system("rm %s.blast.out %s.blast.unique %s.extracted.seqs" % (name,name,name))
+        name = run_blast(f)
+        parsed_blast_to_seqs("%s.blast.out" % name)
+        check_and_align_seqs("%s.blast.out.extracted.seqs" % name, num_genomes)
+        os.system("rm %s.blast.out %s.blast.out.extracted.seqs" % (name,name))
     set(p_func.pmap(_perform_workflow,
                     files_and_temp_names,
                     num_workers=processors))
-    os.system("rm *.blast.out *.blast.unique *.extracted.seqs")
+    #os.system("rm *.blast.out*")
     pull_seqs(names)
     concatenate()
     os.system("cat *.concat > all.concat")
