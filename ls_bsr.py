@@ -158,7 +158,7 @@ def main(directory, id, filter, processors, genes, usearch, vsearch, blast, pena
             else:
                 os.system("mv tmp.pep consensus.pep")
             clusters = get_cluster_ids("consensus.pep")
-            blast_against_self_tblastn("tblastn", "consensus.fasta", "consensus.pep", "tmp_blast.out", processors)
+            blast_against_self_tblastn("tblastn", "consensus.fasta", "consensus.pep", "tmp_blast.out", processors, filter)
         elif "blastn" == blast:
             subprocess.check_call("makeblastdb -in consensus.fasta -dbtype nucl > /dev/null 2>&1", shell=True)
             blast_against_self_blastn("blastn", "consensus.fasta", "consensus.fasta", "tmp_blast.out", filter, penalty, reward, processors)
@@ -177,7 +177,7 @@ def main(directory, id, filter, processors, genes, usearch, vsearch, blast, pena
         else:
             logging.logPrint("starting BLAT")
         if "tblastn" == blast:
-            blast_against_each_genome_tblastn(dir_path, processors, "consensus.pep")
+            blast_against_each_genome_tblastn(dir_path, processors, "consensus.pep", filter)
         elif "blastn" == blast:
             blast_against_each_genome_blastn(dir_path, processors, filter, "consensus.fasta", penalty, reward)
         elif "blat" == blast:
@@ -204,13 +204,13 @@ def main(directory, id, filter, processors, genes, usearch, vsearch, blast, pena
             except:
                 logging.logPrint("problem encountered with BLAST database")
                 sys.exit()
-            blast_against_self_tblastn("blastp", gene_path, gene_path, "tmp_blast.out", processors)
+            blast_against_self_tblastn("blastp", gene_path, gene_path, "tmp_blast.out", processors, filter)
             subprocess.check_call("sort -u -k 1,1 tmp_blast.out > self_blast.out", shell=True)
             ref_scores=parse_self_blast(open("self_blast.out", "U"))
             subprocess.check_call("rm tmp_blast.out self_blast.out", shell=True)
             logging.logPrint("starting BLAST")
-            blast_against_each_genome_tblastn(dir_path, processors, gene_path)
-        elif gene_path.endswith(".fasta"):    
+            blast_against_each_genome_tblastn(dir_path, processors, gene_path, filter)
+        elif gene_path.endswith(".fasta"):
             if "tblastn" == blast:
                 logging.logPrint("using tblastn")
                 translate_genes(gene_path)
@@ -219,12 +219,12 @@ def main(directory, id, filter, processors, genes, usearch, vsearch, blast, pena
                 except:
                     logging.logPrint("problem encountered with BLAST database")
                     sys.exit()
-                blast_against_self_tblastn("tblastn", gene_path, "genes.pep", "tmp_blast.out", processors)
+                blast_against_self_tblastn("tblastn", gene_path, "genes.pep", "tmp_blast.out", processors, filter)
                 subprocess.check_call("sort -u -k 1,1 tmp_blast.out > self_blast.out", shell=True)
                 ref_scores=parse_self_blast(open("self_blast.out", "U"))
                 subprocess.check_call("rm tmp_blast.out self_blast.out", shell=True)
                 logging.logPrint("starting BLAST")
-                blast_against_each_genome_tblastn(dir_path, processors, "genes.pep")
+                blast_against_each_genome_tblastn(dir_path, processors, "genes.pep", filter)
                 os.system("cp genes.pep %s" % start_dir)
             elif "blastn" == blast:
                 logging.logPrint("using blastn")
@@ -360,7 +360,7 @@ if __name__ == "__main__":
                       help="turn debug on?  Defaults to F",
                       default="F", callback=test_filter, type="string")
     options, args = parser.parse_args()
-    
+
     mandatories = ["directory"]
     for m in mandatories:
         if not getattr(options, m, None):
@@ -371,4 +371,3 @@ if __name__ == "__main__":
     main(options.directory, options.id, options.filter, options.processors, options.genes, options.usearch, options.vsearch, options.blast,
          options.penalty, options.reward, options.length, options.max_plog, options.min_hlog, options.f_plog, options.keep,
          options.filter_peps,options.debug)
-

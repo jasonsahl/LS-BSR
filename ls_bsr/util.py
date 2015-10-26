@@ -76,7 +76,7 @@ def divide_values(file, ref_scores):
 
 def predict_genes(dir_path, processors):
     """simple gene prediction using Prodigal in order
-    to find coding regions from a genome sequence"""    
+    to find coding regions from a genome sequence"""
     os.chdir("%s/joined" % dir_path)
     curr_dir=os.getcwd()
     files = os.listdir(curr_dir)
@@ -105,7 +105,7 @@ def rename_fasta_header(fasta_in, fasta_out):
             raise TypeError("problem with input sequence encountered")
     handle.close()
     return outdata
-    
+
 def translate_consensus(consensus):
     """translate nucleotide into peptide with BioPython"""
     infile = open(consensus, "rU")
@@ -120,7 +120,7 @@ def translate_consensus(consensus):
             raise TypeError("invalid character observed in sequence %s" % record.id)
     for record in outdata: return str(record)
     output_handle.close()
-    
+
 def uclust_cluster(usearch, id):
     devnull = open("/dev/null", "w")
     """cluster with Uclust.  Updated to V6"""
@@ -162,16 +162,20 @@ def blast_against_each_genome(dir_path, processors, filter, peptides, blast, pen
                 subprocess.call(cmd, stdout=devnull, stderr=devnull)
             except:
                 print "genomes %s cannot be used" % f
-            
+
     results = set(p_func.pmap(_perform_workflow,
                               files_and_temp_names,
                               num_workers=processors))
 
-def blast_against_each_genome_tblastn(dir_path, processors, peptides):
+def blast_against_each_genome_tblastn(dir_path, processors, peptides, filter):
     """BLAST all peptides against each genome"""
     curr_dir=os.getcwd()
     files = os.listdir(curr_dir)
     devnull = open("/dev/null", "w")
+    if "T" in filter:
+        my_seg = "yes"
+    else:
+        my_seg = "no"
     files_and_temp_names = [(str(idx), os.path.join(curr_dir, f))
                             for idx, f in enumerate(files)]
     def _perform_workflow(data):
@@ -187,6 +191,8 @@ def blast_against_each_genome_tblastn(dir_path, processors, peptides):
                 cmd = ["tblastn",
                        "-query", peptides,
                        "-db", f,
+                       "-seg", my_seg,
+                       "-comp_based_stats", "F",
                        "-num_threads", str(processors),
                        "-evalue", "0.1",
                        "-outfmt", "6",
@@ -194,7 +200,7 @@ def blast_against_each_genome_tblastn(dir_path, processors, peptides):
                 subprocess.call(cmd, stdout=devnull, stderr=devnull)
             except:
                 print "genomes %s cannot be used" % f
-            
+
     results = set(p_func.pmap(_perform_workflow,
                               files_and_temp_names,
                               num_workers=processors))
@@ -232,7 +238,7 @@ def blast_against_each_genome_blastn(dir_path, processors, filter, peptides, pen
                 subprocess.call(cmd, stdout=devnull, stderr=devnull)
             except:
                 print "The genome file %s was not processed" % f
-            
+
     results = set(p_func.pmap(_perform_workflow,
                               files_and_temp_names,
                               num_workers=processors))
@@ -280,7 +286,7 @@ def parse_blast_report(test):
         return outdata
     else:
         pass
-    
+
 def get_unique_lines():
     """only return the top hit for each query"""
     curr_dir=os.getcwd()
@@ -317,17 +323,26 @@ def blast_against_self_blastn(blast_type, genes_pep, genes_nt, output, filter, p
            "-out", output]
     subprocess.call(cmd, stdout=devnull, stderr=devnull)
 
-def blast_against_self_tblastn(blast_type, genes_nt, genes_pep, output,processors):
+def blast_against_self_tblastn(blast_type, genes_nt, genes_pep, output,processors, filter):
     devnull = open('/dev/null', 'w')
+    if "F" in filter:
+        my_seg = "no"
+    else:
+        my_seg = "yes"
     cmd = ["%s" % blast_type,
            "-query", genes_pep,
            "-db", genes_nt,
            "-num_threads", str(processors),
+           "-seg", my_seg,
+           "-comp_based_stats", "F",
            "-evalue", "0.1",
            "-outfmt", "6",
            "-out", output]
-    subprocess.call(cmd, stdout=devnull, stderr=devnull)
-    
+    try:
+        subprocess.call(cmd, stdout=devnull, stderr=devnull)
+    except:
+        print "error!"
+
 def parse_self_blast(lines):
     my_dict={}
     for line in lines:
@@ -360,14 +375,14 @@ def translate_genes(genes):
 
 rec=1
 
-def autoIncrement(): 
-    global rec 
-    pStart = 1  
-    pInterval = 1 
+def autoIncrement():
+    global rec
+    pStart = 1
+    pInterval = 1
     if rec == 0:
-        rec = pStart  
-    else:  
-        rec += pInterval  
+        rec = pStart
+    else:
+        rec += pInterval
         return rec
 
 def prune_matrix(matrix, group1, group2):
@@ -391,7 +406,7 @@ def prune_matrix(matrix, group1, group2):
     group2_ids = map(lambda s: s.strip(), group2_ids)
     group1_idx = [ ]
     for x in fields:
-        if x not in group1_ids: group1_idx.append(fields.index(x))  
+        if x not in group1_ids: group1_idx.append(fields.index(x))
     deque((list.pop(fields, i) for i in sorted(group1_idx, reverse=True)), maxlen=0)
     print >> group1_out,"\t"+"\t"+"\t".join(fields)
     for line in in_matrix:
@@ -415,7 +430,7 @@ def prune_matrix(matrix, group1, group2):
         print >> group2_out,"".join(name),"\t","\t".join(fields)
     return group1_ids, group2_ids, group1_idx, group2_idx
     in_matrix.close()
-    
+
 def compare_values(pruned_1,pruned_2,upper,lower):
     import numpy as np
     group1 = open(pruned_1, "U")
@@ -556,7 +571,7 @@ def get_core_gene_stats(matrix, threshold, lower):
     outfile.close()
     singletons.close()
     return len(positives), len(singles)
-    
+
 def get_frequencies(matrix, threshold):
     in_matrix=open(matrix, "U")
     firstLine = in_matrix.readline()
@@ -647,7 +662,7 @@ def filter_paralogs(matrix, ids):
     return outdata
     in_matrix.close()
     outfile.close()
-            
+
 def filter_variome(matrix, threshold, step):
     in_matrix = open(matrix, "U")
     outfile = open("variome_BSR_matrix", "w")
@@ -683,7 +698,7 @@ def run_usearch(usearch, id):
            "-centroids", "%s.usearch.out" % str(autoIncrement())]
         subprocess.call(cmd,stdout=devnull,stderr=devnull)
     devnull.close()
-    
+
 def filter_scaffolds(in_fasta):
     infile = open(in_fasta, "U")
     outrecords = [ ]
@@ -700,12 +715,12 @@ def filter_scaffolds(in_fasta):
 def uclust_sort(usearch):
     """sort with Usearch. Updated to V6"""
     devnull = open("/dev/null", "w")
-    cmd = ["%s" % usearch, 
+    cmd = ["%s" % usearch,
            "-sortbylength", "all_gene_seqs.out",
            "-output", "tmp_sorted.txt"]
     subprocess.call(cmd,stdout=devnull,stderr=devnull)
     devnull.close()
-    
+
 def process_pangenome(matrix, upper, lower, iterations, type):
     my_matrix = open(matrix, "U")
     if type == "acc":
@@ -878,7 +893,7 @@ def blat_against_each_genome(dir_path,database,processors):
                 subprocess.check_call("blat -out=blast8 -minIdentity=75 %s %s %s_blast.out > /dev/null 2>&1" % (f,database,f), shell=True)
             except:
                 print "genomes %s cannot be used" % f
-            
+
     results = set(p_func.pmap(_perform_workflow,
                               files_and_temp_names,
                               num_workers=processors))
@@ -920,7 +935,7 @@ def make_table_dev(infile, test, clusters):
     else:
         pass
     return names, values_3
-    
+
 def create_bsr_matrix_dev(master_list):
     new_matrix = open("bsr_matrix", "w")
     test = map(list, zip(*master_list))
