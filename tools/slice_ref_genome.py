@@ -28,9 +28,9 @@ class Increments:
 
     def reset(self):
         self.state = self.p_start
-        
+
 record_count_1 = Increments(1, 1)
-        
+
 def get_seq_name(in_fasta):
     """used for renaming the sequences"""
     return os.path.basename(in_fasta)
@@ -45,7 +45,7 @@ def write_sequences(reads,name):
     """write shredded fasta sequences to disk"""
     handle = open("%s_seqs_shredded.txt" % name, "w")
     for read in reads:
-        print >> handle, ">%d\n%s" % (record_count_1.next(), read)
+        print >> handle, ">%s_%d\n%s" % (name, record_count_1.next(), read)
     handle.close()
 
 def sliding_window(sequence, frag_length, step_size=5):
@@ -59,7 +59,7 @@ def main(reference,frag_length,step_size):
     redux_name = name.replace(".fasta","")
     reads = split_sequence_by_window(reference, step_size, frag_length)
     write_sequences(reads, redux_name)
-    
+
 if __name__ == "__main__":
     usage="usage: %prog [options]"
     parser = optparse.OptionParser(usage=usage)
@@ -82,4 +82,3 @@ if __name__ == "__main__":
             exit(-1)
 
     main(options.reference,options.frag_length,options.step_size)
-
