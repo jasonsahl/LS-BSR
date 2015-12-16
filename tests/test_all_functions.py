@@ -22,7 +22,7 @@ class Test1(unittest.TestCase):
     """tests the case where something weird is passed"""
     def test_get_seq_name_wrong_slash(self):
         self.assertEqual(get_seq_name("\wrong\way"), "\\wrong\\way")
-        
+
 class Test2(unittest.TestCase):
     def test_translate_consensus_basic_function(self):
         """tests standard functionality of the translate_consensus function"""
@@ -70,7 +70,7 @@ class Test2(unittest.TestCase):
         self.assertEqual(translate_consensus(fpath), '')
         shutil.rmtree(tdir)
         os.system("rm tmp.pep")
-        
+
 class Test3(unittest.TestCase):
     def test_filter_seqs_length_filter(self):
         """Tests several conditions in one shot"""
@@ -103,7 +103,7 @@ class Test3(unittest.TestCase):
         self.assertEqual(filter_seqs(fpath),[])
         os.system("rm consensus.pep")
         shutil.rmtree(tdir)
-        
+
 class Test4(unittest.TestCase):
     def test_parse_self_blast_basic_function(self):
         """Tests the basic functionality of the parse_self_blast
@@ -138,7 +138,7 @@ class Test4(unittest.TestCase):
         fp.close()
         self.assertEqual(parse_self_blast(open(fpath,"U")),{})
         shutil.rmtree(tdir)
-        
+
 class Test5(unittest.TestCase):
     def test_parse_blast_report_basic_function(self):
         """"tests the basic functionality of the parse_blast_report
@@ -203,8 +203,8 @@ class Test6(unittest.TestCase):
         self.assertEqual(get_unique_lines(), ['Cluster0\t30.2\t15.4\n'])
         os.chdir("%s" % curr_dir)
         shutil.rmtree(tdir)
-        
-        
+
+
 class Test8(unittest.TestCase):
     def test_divide_values_basic_function(self):
         """tests basic functionality of the divide_values function"""
@@ -244,7 +244,7 @@ class Test8(unittest.TestCase):
         fp.close()
         self.assertRaises(TypeError, divide_values, {'Cluster2': '60.6', 'Cluster0': '30.2', 'Cluster1': '40.5'})
         shutil.rmtree(tdir)
-        
+
 class Test9(unittest.TestCase):
     def test_translate_genes_basic_function(self):
         """tests to see if the translation is correct, and if shorter sequences
@@ -292,7 +292,7 @@ class Test9(unittest.TestCase):
         self.assertEqual(translate_genes(fpath), [])
         os.system("rm genes.pep")
         shutil.rmtree(tdir)
-        
+
 class Test10(unittest.TestCase):
     def test_rename_fasta_basic_function(self):
         """tests standard functionality of rename_fasta_header function"""
@@ -332,7 +332,7 @@ class Test10(unittest.TestCase):
 class Test11(unittest.TestCase):
     def test_auto_increment_function(self):
         self.assertEqual(autoIncrement(), 5)
-        
+
 class Test12(unittest.TestCase):
     def test_prune_matrix_basic_function(self):
         """tests the basic functionaly of the prune_matrix function"""
@@ -454,7 +454,7 @@ class Test13(unittest.TestCase):
         self.assertEqual(compare_values(fpath, npath, "0.8", "0.4"), ([0.81], [0.80, 1.00], [0.03, 0.0, 0.0, 0.81, 0.07]))
         shutil.rmtree(tdir)
         os.system("rm group*_out.txt")
-        
+
 class Test14(unittest.TestCase):
     def test_find_uniques_basic_function(self):
         """tests the basic functionality of the find_uniques function"""
@@ -503,7 +503,7 @@ class Test14(unittest.TestCase):
         self.assertEqual(find_uniques(fpath, npath), (['bfpB'], ['LT', 'ST2'], []))
         shutil.rmtree(tdir)
         os.system("rm group*_unique_seqs.fasta")
-        
+
 class Test15(unittest.TestCase):
     def test_filter_genomes_basic_function(self):
         """test the basic functionality of the filter_genomes function"""
@@ -546,7 +546,7 @@ class Test15(unittest.TestCase):
         np.close()
         self.assertEqual(filter_genomes(npath, fpath), [])
         shutil.rmtree(tdir)
-        
+
 class Test16(unittest.TestCase):
     def test_filter_matrix_basic_function(self):
         """test the basic functionality of the filter_matrix function"""
@@ -655,7 +655,8 @@ class Test19(unittest.TestCase):
         fp.write("Cluster1	Cluster1	100.00	15	0	0	1	15	1	15	1e-07	40.5\n")
         fp.write("Cluster2	Cluster2	100.00	15	0	0	1	15	1	15	1e-07	60.6")
         fp.close()
-        self.assertEqual(find_dups({'Cluster0': '500', 'Cluster1': '40.5', 'Cluster2': '60.6'}, 0.7, 0.85, 75), (['Cluster0'], {'Cluster0': ['500', '420'], 'Cluster1': ['40.5', '40.5']}))
+        #self.assertEqual(find_dups({'Cluster0': '500', 'Cluster1': '40.5', 'Cluster2': '60.6'}, 0.7, 0.85, 75), (['Cluster0'], {'Cluster0': ['500', '420'], 'Cluster1': ['40.5', '40.5']}))
+        self.assertEqual(find_dups({'Cluster0': '500', 'Cluster1': '40.5', 'Cluster2': '60.6'}, 0.7, 0.85, 75, ('Cluster1','Cluster0','Cluster2')), (['Cluster0'], {'Cluster0': ['500', '420'], 'Cluster1': ['40.5', '40.5']}))
         os.chdir("%s" % curr_dir)
         shutil.rmtree(tdir)
     def test_find_dups_multiple_dups(self):
@@ -671,7 +672,7 @@ class Test19(unittest.TestCase):
         fp.write("Cluster1	Cluster1	100.00	15	0	0	1	15	1	15	1e-07	40.5\n")
         fp.write("Cluster2	Cluster2	100.00	15	0	0	1	15	1	15	1e-07	60.6")
         fp.close()
-        self.assertEqual(find_dups({'Cluster0': '500', 'Cluster1': '40.5', 'Cluster2': '60.6'}, 0.7, 0.85, 75), (['Cluster0'], {'Cluster0': ['500', '420', '430'], 'Cluster1': ['40.5', '40.5']}))
+        self.assertEqual(find_dups({'Cluster0': '500', 'Cluster1': '40.5', 'Cluster2': '60.6'}, 0.7, 0.85, 75, ('Cluster1','Cluster0','Cluster2')), (['Cluster0'], {'Cluster0': ['500', '420', '430'], 'Cluster1': ['40.5', '40.5']}))
         os.chdir("%s" % curr_dir)
         shutil.rmtree(tdir)
     def test_find_dups_bad_input(self):
@@ -730,7 +731,7 @@ class Test20(unittest.TestCase):
         self.assertEqual(filter_paralogs(fpath, npath), ['IpaH3', 'LT', 'ST1', 'bfpB', 'stx2a'])
         shutil.rmtree(tdir)
         os.system("rm bsr_matrix_values_filtered.txt")
-        
+
 class Test21(unittest.TestCase):
     def test_filter_variome_basic_function(self):
         """tests the basic functionality of the filter_variome function"""
@@ -762,7 +763,7 @@ class Test21(unittest.TestCase):
         self.assertEqual(filter_variome(fpath, "0.8", "1"), ['LT', 'ST1', 'bfpB'])
         shutil.rmtree(tdir)
         os.system("rm variome_BSR_matrix")
-        
+
 class Test22(unittest.TestCase):
     def test_process_pangenome_basic_function(self):
         """tests basic functionality of the process_pangenome function"""

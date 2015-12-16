@@ -184,7 +184,8 @@ def main(directory, id, filter, processors, genes, usearch, vsearch, blast, pena
             blat_against_each_genome(dir_path, "consensus.fasta",processors)
         else:
             pass
-        find_dups(ref_scores, length, max_plog, min_hlog)
+        """Dups are only identified with de novo options, change?"""
+        find_dups(ref_scores, length, max_plog, min_hlog, clusters)
     else:
         logging.logPrint("Using pre-compiled set of predicted genes")
         files = glob.glob(os.path.join(dir_path, "*.fasta"))
@@ -195,6 +196,7 @@ def main(directory, id, filter, processors, genes, usearch, vsearch, blast, pena
             pass
         gene_path=os.path.abspath("%s" % genes)
         clusters = get_cluster_ids(gene_path)
+        #print clusters
         os.system("cp %s %s/joined/" % (gene_path,dir_path))
         os.chdir("%s/joined" % dir_path)
         if gene_path.endswith(".pep"):
@@ -256,6 +258,7 @@ def main(directory, id, filter, processors, genes, usearch, vsearch, blast, pena
         else:
             print "input file format not supported"
             sys.exit()
+    find_dups(ref_scores, length, max_plog, min_hlog, clusters)
     if blast=="blat":
         logging.logPrint("BLAT done")
     else:
@@ -294,7 +297,7 @@ def main(directory, id, filter, processors, genes, usearch, vsearch, blast, pena
     else:
         pass
     try:
-        subprocess.check_call("cp names.txt consensus.pep consensus.fasta duplicate_ids.txt paralog_ids.txt %s" % start_dir, shell=True, stderr=open(os.devnull, 'w'))
+        subprocess.check_call("cp dup_matrix.txt names.txt consensus.pep consensus.fasta duplicate_ids.txt paralog_ids.txt %s" % start_dir, shell=True, stderr=open(os.devnull, 'w'))
     except:
         sys.exc_clear()
     logging.logPrint("all Done")

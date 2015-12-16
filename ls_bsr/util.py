@@ -606,14 +606,22 @@ def get_frequencies(matrix, threshold):
     outfile.close()
     return out_data
 
-def find_dups(ref_scores, length, max_plog, min_hlog):
+def find_dups(ref_scores, length, max_plog, min_hlog, clusters):
     curr_dir=os.getcwd()
     my_dict_o = {}
     dup_dict = {}
     paralogs = [ ]
     duplicate_file = open("duplicate_ids.txt", "w")
     paralog_file = open("paralog_ids.txt", "w")
+    ref_file = open("dup_refs.txt", "w")
+    genome_specific_list_of_lists = []
+    target_list = []
     for infile in glob.glob(os.path.join(curr_dir, "*_blast.out")):
+        genome_specific_dict = {}
+        name = get_seq_name(infile)
+        reduced_name = name.replace(".fasta.new_blast.out","")
+        genome_specific_dict.update({"ID":reduced_name})
+        outfile = open("%s.counts.txt" % reduced_name, "w")
         try:
             for line in open(infile, "U"):
                 fields = line.split()
@@ -621,12 +629,39 @@ def find_dups(ref_scores, length, max_plog, min_hlog):
                 elif float(fields[2])>=int(min_hlog) and (float(fields[11])/float(ref_scores.get(fields[0])))>=float(length):
                     try:
                         my_dict_o[fields[0]].append(fields[11])
+                        genome_specific_dict[fields[0]].append(fields[11])
                     except KeyError:
                         my_dict_o[fields[0]] = [fields[11]]
+                        genome_specific_dict[fields[0]] = [fields[11]]
                 else:
                     continue
         except:
             raise TypeError("problem parsing %s" % infile)
+        for k,v in genome_specific_dict.iteritems():
+            for cluster in clusters:
+                if k == "ID":
+                    pass
+                elif k == cluster:
+                    genome_specific_dict.update({k:len(v)})
+        for cluster in clusters:
+            if cluster not in genome_specific_dict:
+                genome_specific_dict.update({cluster:"0"})
+        od = collections.OrderedDict(sorted(genome_specific_dict.items()))
+        for k,v in od.iteritems():
+            print >> outfile, str(v)+"\t"
+            if k in target_list:
+                pass
+            else:
+                target_list.append(k)
+        outfile.close()
+    print >> ref_file, "\n".join(target_list)
+    ref_file.close()
+    """known issue - if gene id is Capital and before "I", there can be a shuffling of IDs
+    I need to sort the dictionary and keep the first item constant as ID"""
+    try:
+        os.system("paste dup_refs.txt *.counts.txt > dup_matrix.txt")
+    except:
+        print "too many genomes to paste, need new function"
     for k,v in my_dict_o.iteritems():
         if int(len(v))>=2:
             dup_dict.update({k:v})
