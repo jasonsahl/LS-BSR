@@ -648,7 +648,7 @@ def find_dups(ref_scores, length, max_plog, min_hlog, clusters):
                 genome_specific_dict.update({cluster:"0"})
         od = collections.OrderedDict(sorted(genome_specific_dict.items()))
         for k,v in od.iteritems():
-            print >> outfile, str(v)+"\t"
+            print >> outfile, str(v)
             if k in target_list:
                 pass
             else:
