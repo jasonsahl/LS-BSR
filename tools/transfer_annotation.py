@@ -142,7 +142,7 @@ def main(peptides,consensus,processors,threshold):
             sys.exit()
     """"removes empty white space from your input file"""
     os.system("sed 's/ /_/g' %s > query.peptides.xyx" % pep_path)
-    subprocess.check_call("makeblastdb -in query.peptides.xyx -dbtype prot", shell=True)
+    subprocess.check_call("makeblastdb -in query.peptides.xyx -dbtype prot > /dev/null 2>&1", shell=True)
     #only supports transfer of annotation against peptides, currently
     blast_against_self("blastp", "query.peptides.xyx", "query.peptides.xyx", "xyx.blast.out", processors)
     os.system("sort -u -k 1,1 xyx.blast.out > xyx.blast.unique.xyx")

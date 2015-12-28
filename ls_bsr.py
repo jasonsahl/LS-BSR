@@ -22,7 +22,7 @@ def test_file(option, opt_str, value, parser):
     try:
         with open(value): setattr(parser.values, option.dest, value)
     except IOError:
-        print 'genes file cannot be opened'
+        print '%s file cannot be opened' % option
         sys.exit()
 
 def test_filter(option, opt_str, value, parser):
@@ -32,6 +32,17 @@ def test_filter(option, opt_str, value, parser):
         setattr(parser.values, option.dest, value)
     else:
         print "option not supported.  Only select from T and F"
+        sys.exit()
+
+def test_cluster(option, opt_str, value, parser):
+    if "usearch" in value:
+        setattr(parser.values, option.dest, value)
+    elif "vsearch" in value:
+        setattr(parser.values, option.dest, value)
+    elif "cd-hit" in value:
+        setattr(parser.values, option.dest, value)
+    else:
+        print "option not supported. Choose from vsearch, usearch, cd-hit"
         sys.exit()
 
 def test_blast(option, opt_str, value, parser):
@@ -63,13 +74,6 @@ def test_id(option, opt_str, value, parser):
         print "id value needs to be a float"
         sys.exit()
 
-def test_usearch(option, opt_str, value, parser):
-    if os.path.exists(value):
-        setattr(parser.values, option.dest, value)
-    else:
-        print "usearch can't be found"
-        sys.exit()
-
 def test_fplog(option, opt_str, value, parser):
     if "F" in value:
         setattr(parser.values, option.dest, value)
@@ -79,7 +83,7 @@ def test_fplog(option, opt_str, value, parser):
         print "select from T or F for f_plog setting"
         sys.exit()
 
-def main(directory, id, filter, processors, genes, usearch, vsearch, blast, penalty, reward, length,
+def main(directory, id, filter, processors, genes, cluster_method, blast, penalty, reward, length,
          max_plog, min_hlog, f_plog, keep, filter_peps, debug):
     start_dir = os.getcwd()
     ap=os.path.abspath("%s" % start_dir)
@@ -108,8 +112,10 @@ def main(directory, id, filter, processors, genes, usearch, vsearch, blast, pena
             print "prodigal is not in your path, but needs to be!"
             sys.exit()
         print "citation: Hyatt D, Chen GL, Locascio PF, Land ML, Larimer FW, and Hauser LJ. 2010. Prodigal: prokaryotic gene recognition and translation initiation site identification. BMC Bioinformatics 11:119"
-        if os.path.exists(usearch):
+        if "usearch" in cluster_method:
             print "citation: Edgar RC. 2010. Search and clustering orders of magnitude faster than BLAST. Bioinformatics 26:2460-2461"
+        elif "cd-hit" in cluster_method:
+            print "citation: Li, W., Godzik, A. 2006. Cd-hit: a fast program for clustering and comparing large sets of protein or nuceltodie sequences. Bioinformatics 22(13):1658-1659"
         else:
             pass
         if blast=="blat":
@@ -122,33 +128,79 @@ def main(directory, id, filter, processors, genes, usearch, vsearch, blast, pena
         logging.logPrint("predicting genes with Prodigal")
         predict_genes(dir_path, processors)
         logging.logPrint("Prodigal done")
-        os.system("cat *genes.seqs > all_gene_seqs.out")
-        filter_scaffolds("all_gene_seqs.out")
-        os.system("mv tmp.out all_gene_seqs.out")
-        rename_fasta_header("all_gene_seqs.out", "all_sorted.txt")
-        if os.path.exists(usearch) and os.path.exists(vsearch):
-            print "usearch and vsearch both selected, only usearch will be used"
-        if os.path.exists(usearch):
-            os.system("mkdir split_files")
-            os.system("cp all_sorted.txt split_files/")
-            os.system("rm all_sorted.txt")
-            os.chdir("split_files/")
-            os.system("split -l 200000 all_sorted.txt")
-            logging.logPrint("clustering with USEARCH at an ID of %s" % id)
-            run_usearch(usearch, id)
-            os.system("cat *.usearch.out > all_sorted.txt")
-            os.system("mv all_sorted.txt %s/joined" % dir_path)
-            os.chdir("%s/joined" % dir_path)
-            uclust_cluster(usearch, id)
-            logging.logPrint("USEARCH clustering finished")
-        elif os.path.exists(vsearch):
-            logging.logPrint("clustering with VSEARCH at an ID of %s" % id)
-            run_vsearch(vsearch, id, processors)
-            os.system("mv vsearch.out consensus.fasta")
-            logging.logPrint("VSEARCH clustering finished")
+        genbank_hits = process_genbank_files(dir_path)
+        if genbank_hits == None:
+            os.system("cat *genes.seqs > all_gene_seqs.out")
+            filter_scaffolds("all_gene_seqs.out")
+            os.system("mv tmp.out all_gene_seqs.out")
+            dup_ids = test_duplicate_header_ids("all_gene_seqs.out")
+            if dup_ids == "T":
+                os.system("cp all_gene_seqs.out all_sorted.txt")
+            elif dup_ids == "F":
+                rename_fasta_header("all_gene_seqs.out", "all_sorted.txt")
+            else:
+                pass
         else:
-            print "neither usearch or vsearch selected for use with Prodigal!, exiting."
+            logging.logPrint("Converting genbank files")
+            os.system("cat *genes.seqs > all_gene_seqs.out")
+            filter_scaffolds("all_gene_seqs.out")
+            os.system("mv tmp.out all_gene_seqs.out")
+            dup_ids = test_duplicate_header_ids("all_gene_seqs.out")
+            if dup_ids == "True":
+                os.system("cp all_gene_seqs.out tmp_sorted.txt")
+            elif dup_ids == "False":
+                rename_fasta_header("all_gene_seqs.out", "tmp_sorted.txt")
+            os.system("cat *locus_tags.fasta tmp_sorted.txt > all_sorted.txt")
+            dup_ids = test_duplicate_header_ids("all_sorted.txt")
+            if dup_ids == "True":
+                pass
+            else:
+                print "duplicate IDs present in genbank locus tags, renaming all!"
+                rename_fasta_header("all_sorted.txt", "tmp_sorted.txt")
+                os.system("mv tmp_sorted.txt all_sorted.txt")
+            """I also need to convert the GenBank file to a FASTA file"""
+            for hit in genbank_hits:
+                reduced_hit = hit.replace(".gbk","")
+                SeqIO.convert("%s/%s" % (dir_path, hit), "genbank", "%s.fasta.new" % reduced_hit, "fasta")
+        if "NULL" in cluster_method:
+            print "Clustering chosen, but no method selected...exiting"
             sys.exit()
+        elif "usearch" in cluster_method:
+            ac = subprocess.call(['which', 'usearch'])
+            if ac == 0:
+                os.system("mkdir split_files")
+                os.system("cp all_sorted.txt split_files/")
+                os.system("rm all_sorted.txt")
+                os.chdir("split_files/")
+                os.system("split -l 200000 all_sorted.txt")
+                logging.logPrint("clustering with USEARCH at an ID of %s" % id)
+                run_usearch(id)
+                os.system("cat *.usearch.out > all_sorted.txt")
+                os.system("mv all_sorted.txt %s/joined" % dir_path)
+                os.chdir("%s/joined" % dir_path)
+                uclust_cluster(id)
+                logging.logPrint("USEARCH clustering finished")
+            else:
+                print "usearch must be in your path as usearch...exiting"
+                sys.exit()
+        elif "vsearch" in cluster_method:
+            ac = subprocess.call(['which', 'vsearch'])
+            if ac == 0:
+                logging.logPrint("clustering with VSEARCH at an ID of %s, using %s processors" % (id,processors))
+                run_vsearch(id, processors)
+                os.system("mv vsearch.out consensus.fasta")
+                logging.logPrint("VSEARCH clustering finished")
+            else:
+                print "vsearch must be in your path as vsearch...exiting"
+                sys.exit()
+        elif "cd-hit" in cluster_method:
+            ac = subprocess.call(['which', 'cd-hit-est'])
+            if ac == 0:
+                logging.logPrint("clustering with cd-hit at an ID of %s, using %s processors" % (id,processors))
+                subprocess.check_call("cd-hit-est -i all_sorted.txt -o consensus.fasta -M 0 -T %s -c %s > /dev/null 2>&1" % (processors, id), shell=True)
+            else:
+                print "cd-hit must be in your path as cd-hit-est...exiting"
+                sys.exit()
         if "tblastn" == blast:
             subprocess.check_call("makeblastdb -in consensus.fasta -dbtype nucl > /dev/null 2>&1", shell=True)
             translate_consensus("consensus.fasta")
@@ -315,7 +367,7 @@ if __name__ == "__main__":
                       help="/path/to/fasta_directory [REQUIRED]",
                       type="string", action="callback", callback=test_dir)
     parser.add_option("-i", "--identity", dest="id", action="callback", callback=test_id,
-                      help="clustering id for USEARCH (0.0-1.0), defaults to 0.9",
+                      help="clustering id threshold (0.0-1.0), defaults to 0.9",
                       type="float", default="0.9")
     parser.add_option("-f", "--filter", dest="filter", action="callback", callback=test_filter,
                       help="to use blast filtering or not, default is F or filter, change to T to turn off filtering",
@@ -326,11 +378,8 @@ if __name__ == "__main__":
     parser.add_option("-g", "--genes", dest="genes", action="callback", callback=test_file,
                       help="predicted genes (nucleotide) to screen against genomes, will not use prodigal, must end in fasta (nt) or pep (aa)",
                       type="string",default="null")
-    parser.add_option("-u", "--usearch", dest="usearch", action="store",
-                      help="path to usearch v6, either this or vsearch needs to be used with Prodigal",
-                      type="string", default="NULL")
-    parser.add_option("-v", "--vsearch", dest="vsearch", action="store",
-                      help="path to vsearch, either this or usearch needs to be used with prodigal",
+    parser.add_option("-c", "--cluster_method", dest="cluster_method", action="callback", callback=test_cluster,
+                      help="Clustering method to use: choose from usearch, vsearch, cd-hit",
                       type="string", default="NULL")
     parser.add_option("-b", "--blast", dest="blast", action="callback", callback=test_blast,
                       help="use tblastn, blastn, or blat (nucleotide search only), default is tblastn",
@@ -371,6 +420,6 @@ if __name__ == "__main__":
             parser.print_help()
             exit(-1)
 
-    main(options.directory, options.id, options.filter, options.processors, options.genes, options.usearch, options.vsearch, options.blast,
-         options.penalty, options.reward, options.length, options.max_plog, options.min_hlog, options.f_plog, options.keep,
+    main(options.directory,options.id,options.filter,options.processors,options.genes,options.cluster_method,options.blast,
+         options.penalty,options.reward,options.length,options.max_plog,options.min_hlog,options.f_plog,options.keep,
          options.filter_peps,options.debug)

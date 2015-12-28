@@ -11,11 +11,19 @@ have not been observed.
 
 contact: jasonsahl at gmail dot com
 
+###Significatn changes made on 12/28/2015###
+1. Genbank files now accepted as input, must end in ".gbk"
+2. Your CDSs are only renamed if there is a conflicting sequence header. Otherwise,
+   the original ID is used. If Prodigal prediction is selected, this will be the CDS ID that Prodigal assigns
+3. CD-hit is now a supported clustering method
+4. The "-u" and "-v" flags have been removed. The "-c" flag now is used to select the clustering method
+   Choose from "usearch", "vsearch", or "cd-hit". These must now be in your $PATH variable as "usearch", "vsearch",
+   or "cd-hit-est", respectively
+
+
 ###Significant changes made on 6/24/2015###
 
 1. The use of blastall is deprecated. LS-BSR now uses blast+ instead.
-2. VSEARCH can now be used instead of USEARCH. Notice that VSEARCH will likely be slower than USEARCH. 
+2. VSEARCH can now be used instead of USEARCH. Notice that VSEARCH will likely be slower than USEARCH.
 
 ###See manual for run directions###
-
-  

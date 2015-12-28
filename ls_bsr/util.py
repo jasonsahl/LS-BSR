@@ -121,10 +121,10 @@ def translate_consensus(consensus):
     for record in outdata: return str(record)
     output_handle.close()
 
-def uclust_cluster(usearch, id):
+def uclust_cluster(id):
     devnull = open("/dev/null", "w")
     """cluster with Uclust.  Updated to V6"""
-    cmd = ["%s" % usearch,
+    cmd = ["usearch",
            "-cluster_fast", "all_sorted.txt",
            "-id", str(id),
            "-uc", "results.uc",
@@ -721,12 +721,12 @@ def filter_variome(matrix, threshold, step):
     outfile.close()
     return outdata
 
-def run_usearch(usearch, id):
+def run_usearch(id):
     rec=1
     curr_dir=os.getcwd()
     devnull = open("/dev/null", "w")
     for infile in glob.glob(os.path.join(curr_dir, "x*")):
-        cmd = ["%s" % usearch,
+        cmd = ["usearch",
            "-cluster_fast", "%s" % infile,
            "-id", str(id),
            "-uc", "results.uc",
@@ -996,9 +996,9 @@ def new_loop(to_iterate, processors, clusters, debug):
                     num_workers=processors))
     return names,table_list
 
-def run_vsearch(vsearch, id, processors):
+def run_vsearch(id, processors):
     devnull = open("/dev/null", "w")
-    cmd = ["%s" % vsearch,
+    cmd = ["vsearch",
            "-cluster_fast", "all_sorted.txt",
            "-id", str(id),
            "-uc", "results.uc",
@@ -1006,3 +1006,31 @@ def run_vsearch(vsearch, id, processors):
            "-centroids", "vsearch.out"]
     subprocess.call(cmd,stdout=devnull,stderr=devnull)
     devnull.close()
+
+def process_genbank_files(directory):
+    genbank_hits = []
+    for infile in glob.glob(os.path.join(directory, "*.gbk")):
+        name = get_seq_name(infile)
+        reduced = name.replace(".gbk","")
+        genbank_hits.append(name)
+        record = SeqIO.read(infile, "genbank")
+        output_handle = open("%s.locus_tags.fasta" % reduced, "w")
+        count = 0
+        for feature in record.features:
+            if feature.type == "gene":
+                count = count + 1
+                feature_name = feature.qualifiers["locus_tag"]
+                feature_seq = feature.extract(record.seq)
+                output_handle.write(">" + "".join(feature_name) + "\n" + str(feature_seq) + "\n")
+        output_handle.close()
+    return genbank_hits
+
+def test_duplicate_header_ids(fasta_file):
+    IDs = []
+    for record in SeqIO.parse(open(fasta_file), "fasta"):
+        IDs.append(record.id)
+    nr=[x for i, x in enumerate(IDs) if x not in IDs[i+1:]]
+    if len(IDs) == len(nr):
+        return "True"
+    else:
+        return "False"
