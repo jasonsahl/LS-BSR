@@ -11,7 +11,7 @@ have not been observed.
 
 contact: jasonsahl at gmail dot com
 
-###Significatn changes made on 12/28/2015###
+###Significant changes made on 12/28/2015###
 1. Genbank files now accepted as input, must end in ".gbk"
 2. Your CDSs are only renamed if there is a conflicting sequence header. Otherwise,
    the original ID is used. If Prodigal prediction is selected, this will be the CDS ID that Prodigal assigns
