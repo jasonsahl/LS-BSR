@@ -1029,8 +1029,13 @@ def process_genbank_files(directory):
 
 def test_duplicate_header_ids(fasta_file):
     IDs = []
-    for record in SeqIO.parse(open(fasta_file), "fasta"):
-        IDs.append(record.id)
+    #for record in SeqIO.parse(open(fasta_file), "fasta"):
+    #    IDs.append(record.id)
+    for line in open(fasta_file):
+        if line.startswith(">"):
+            fields = line.split()
+            clean = fields[0].replace(">","")
+            IDs.append(clean)
     nr=[x for i, x in enumerate(IDs) if x not in IDs[i+1:]]
     if len(IDs) == len(nr):
         return "True"

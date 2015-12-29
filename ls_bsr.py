@@ -150,9 +150,11 @@ def main(directory, id, filter, processors, genes, cluster_method, blast, penalt
             if filter_scaffolds == "T":
                 filter_scaffolds("all_gene_seqs.out")
                 os.system("mv tmp.out all_gene_seqs.out")
+            """This step still iterates through the entire file,
+            I wonder if I could do this more efficiently?"""
             dup_ids = test_duplicate_header_ids("all_gene_seqs.out")
             if dup_ids == "True":
-                os.system("cp all_gene_seqs.out tmp_sorted.txt")
+                os.system("mv all_gene_seqs.out tmp_sorted.txt")
             elif dup_ids == "False":
                 rename_fasta_header("all_gene_seqs.out", "tmp_sorted.txt")
             os.system("cat *locus_tags.fasta tmp_sorted.txt > all_sorted.txt")
