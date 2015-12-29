@@ -129,7 +129,7 @@ def main(directory, id, filter, processors, genes, cluster_method, blast, penalt
         predict_genes(dir_path, processors)
         logging.logPrint("Prodigal done")
         genbank_hits = process_genbank_files(dir_path)
-        if genbank_hits == None:
+        if genbank_hits == None or len(genbank_hits) == 0:
             os.system("cat *genes.seqs > all_gene_seqs.out")
             filter_scaffolds("all_gene_seqs.out")
             os.system("mv tmp.out all_gene_seqs.out")
@@ -248,7 +248,6 @@ def main(directory, id, filter, processors, genes, cluster_method, blast, penalt
             pass
         gene_path=os.path.abspath("%s" % genes)
         clusters = get_cluster_ids(gene_path)
-        #print clusters
         os.system("cp %s %s/joined/" % (gene_path,dir_path))
         os.chdir("%s/joined" % dir_path)
         if gene_path.endswith(".pep"):
