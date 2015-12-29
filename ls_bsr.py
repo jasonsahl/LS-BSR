@@ -134,9 +134,9 @@ def main(directory, id, filter, processors, genes, cluster_method, blast, penalt
             filter_scaffolds("all_gene_seqs.out")
             os.system("mv tmp.out all_gene_seqs.out")
             dup_ids = test_duplicate_header_ids("all_gene_seqs.out")
-            if dup_ids == "T":
+            if dup_ids == "True":
                 os.system("cp all_gene_seqs.out all_sorted.txt")
-            elif dup_ids == "F":
+            elif dup_ids == "False":
                 print "duplicate headers identified, renaming.."
                 rename_fasta_header("all_gene_seqs.out", "all_sorted.txt")
             else:
