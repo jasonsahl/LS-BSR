@@ -84,7 +84,7 @@ def test_fplog(option, opt_str, value, parser):
         sys.exit()
 
 def main(directory, id, filter, processors, genes, cluster_method, blast, penalty, reward, length,
-         max_plog, min_hlog, f_plog, keep, filter_peps, debug):
+         max_plog, min_hlog, f_plog, keep, filter_peps, filter_scaffolds, debug):
     start_dir = os.getcwd()
     ap=os.path.abspath("%s" % start_dir)
     dir_path=os.path.abspath("%s" % directory)
@@ -131,8 +131,11 @@ def main(directory, id, filter, processors, genes, cluster_method, blast, penalt
         genbank_hits = process_genbank_files(dir_path)
         if genbank_hits == None or len(genbank_hits) == 0:
             os.system("cat *genes.seqs > all_gene_seqs.out")
-            filter_scaffolds("all_gene_seqs.out")
-            os.system("mv tmp.out all_gene_seqs.out")
+            if filter_scaffolds == "T":
+                filter_scaffolds("all_gene_seqs.out")
+                os.system("mv tmp.out all_gene_seqs.out")
+            else:
+                pass
             dup_ids = test_duplicate_header_ids("all_gene_seqs.out")
             if dup_ids == "True":
                 os.system("cp all_gene_seqs.out all_sorted.txt")
@@ -144,8 +147,9 @@ def main(directory, id, filter, processors, genes, cluster_method, blast, penalt
         else:
             logging.logPrint("Converting genbank files")
             os.system("cat *genes.seqs > all_gene_seqs.out")
-            filter_scaffolds("all_gene_seqs.out")
-            os.system("mv tmp.out all_gene_seqs.out")
+            if filter_scaffolds == "T":
+                filter_scaffolds("all_gene_seqs.out")
+                os.system("mv tmp.out all_gene_seqs.out")
             dup_ids = test_duplicate_header_ids("all_gene_seqs.out")
             if dup_ids == "True":
                 os.system("cp all_gene_seqs.out tmp_sorted.txt")
@@ -408,6 +412,9 @@ if __name__ == "__main__":
     parser.add_option("-s", "--filter_short_peps", dest="filter_peps", action="callback",
                       help="remove short peptides, smaller than 50AA?  Defaults to T",
                       default="T", callback=test_filter, type="string")
+    parser.add_option("-e", "--filter_scaffolds", dest="filter_scaffolds", action="callback",
+                      help="Filter any contig that contains an N? Defaults to F",
+                      default="F", callback=test_filter, type="string")
     parser.add_option("-z", "--debug", dest="debug", action="callback",
                       help="turn debug on?  Defaults to F",
                       default="F", callback=test_filter, type="string")
@@ -422,4 +429,4 @@ if __name__ == "__main__":
 
     main(options.directory,options.id,options.filter,options.processors,options.genes,options.cluster_method,options.blast,
          options.penalty,options.reward,options.length,options.max_plog,options.min_hlog,options.f_plog,options.keep,
-         options.filter_peps,options.debug)
+         options.filter_peps,options.filter_scaffolds,options.debug)

@@ -735,6 +735,8 @@ def run_usearch(id):
     devnull.close()
 
 def filter_scaffolds(in_fasta):
+    """If an N is present in any scaffold, the entire contig will
+    be entire filtered, probably too harsh"""
     infile = open(in_fasta, "U")
     outrecords = [ ]
     for record in SeqIO.parse(infile, "fasta"):
@@ -742,7 +744,7 @@ def filter_scaffolds(in_fasta):
             outrecords.append(record)
     output_handle = open("tmp.out", "w")
     if int(len(outrecords))==0:
-        print "no usable fasta records were found"
+        print "no usable fasta records were found or all contain scaffolds"
         sys.exit()
     SeqIO.write(outrecords, output_handle, "fasta")
     output_handle.close()
