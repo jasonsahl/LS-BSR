@@ -1036,6 +1036,8 @@ def test_duplicate_header_ids(fasta_file):
             fields = line.split()
             clean = fields[0].replace(">","")
             IDs.append(clean)
+        else:
+            pass
     nr=[x for i, x in enumerate(IDs) if x not in IDs[i+1:]]
     if len(IDs) == len(nr):
         return "True"
