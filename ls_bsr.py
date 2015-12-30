@@ -136,35 +136,22 @@ def main(directory, id, filter, processors, genes, cluster_method, blast, penalt
                 os.system("mv tmp.out all_gene_seqs.out")
             else:
                 pass
-            dup_ids = test_duplicate_header_ids("all_gene_seqs.out")
-            if dup_ids == "True":
-                os.system("cp all_gene_seqs.out all_sorted.txt")
-            elif dup_ids == "False":
-                print "duplicate headers identified, renaming.."
-                rename_fasta_header("all_gene_seqs.out", "all_sorted.txt")
-            else:
-                pass
+            #dup_ids = test_duplicate_header_ids("all_gene_seqs.out")
+            #if dup_ids == "True":
+            #    os.system("cp all_gene_seqs.out all_sorted.txt")
+            #elif dup_ids == "False":
+            #    print "duplicate headers identified, renaming.."
+            #    rename_fasta_header("all_gene_seqs.out", "all_sorted.txt")
+            #else:
+            #    pass
         else:
             logging.logPrint("Converting genbank files")
             os.system("cat *genes.seqs > all_gene_seqs.out")
             if filter_scaffolds == "T":
                 filter_scaffolds("all_gene_seqs.out")
                 os.system("mv tmp.out all_gene_seqs.out")
-            """This step still iterates through the entire file,
-            I wonder if I could do this more efficiently?"""
-            dup_ids = test_duplicate_header_ids("all_gene_seqs.out")
-            if dup_ids == "True":
-                os.system("mv all_gene_seqs.out tmp_sorted.txt")
-            elif dup_ids == "False":
-                rename_fasta_header("all_gene_seqs.out", "tmp_sorted.txt")
-            os.system("cat *locus_tags.fasta tmp_sorted.txt > all_sorted.txt")
-            dup_ids = test_duplicate_header_ids("all_sorted.txt")
-            if dup_ids == "True":
-                pass
             else:
-                print "duplicate IDs present in genbank locus tags, renaming all!"
-                rename_fasta_header("all_sorted.txt", "tmp_sorted.txt")
-                os.system("mv tmp_sorted.txt all_sorted.txt")
+                pass
             """I also need to convert the GenBank file to a FASTA file"""
             for hit in genbank_hits:
                 reduced_hit = hit.replace(".gbk","")
@@ -176,8 +163,9 @@ def main(directory, id, filter, processors, genes, cluster_method, blast, penalt
             ac = subprocess.call(['which', 'usearch'])
             if ac == 0:
                 os.system("mkdir split_files")
-                os.system("cp all_sorted.txt split_files/")
-                os.system("rm all_sorted.txt")
+                #os.system("cp all_sorted.txt split_files/")
+                os.system("cp all_gene_seqs.out split_files/all_sorted.txt")
+                os.system("rm all_gene_seqs.out")
                 os.chdir("split_files/")
                 os.system("split -l 200000 all_sorted.txt")
                 logging.logPrint("clustering with USEARCH at an ID of %s" % id)
@@ -208,6 +196,16 @@ def main(directory, id, filter, processors, genes, cluster_method, blast, penalt
             else:
                 print "cd-hit must be in your path as cd-hit-est...exiting"
                 sys.exit()
+        """need to check for dups here"""
+        dup_ids = test_duplicate_header_ids("consensus.fasta")
+        if dup_ids == "True":
+            pass
+        elif dup_ids == "False":
+            print "duplicate headers identified, renaming.."
+            rename_fasta_header("consensus.fasta", "tmp.txt")
+            os.system("mv tmp.txt consensus.fasta")
+        else:
+            pass
         if "tblastn" == blast:
             subprocess.check_call("makeblastdb -in consensus.fasta -dbtype nucl > /dev/null 2>&1", shell=True)
             translate_consensus("consensus.fasta")
@@ -247,6 +245,7 @@ def main(directory, id, filter, processors, genes, cluster_method, blast, penalt
         find_dups(ref_scores, length, max_plog, min_hlog, clusters)
     else:
         logging.logPrint("Using pre-compiled set of predicted genes")
+        """Need to check here for duplicated names and exit if found!"""
         files = glob.glob(os.path.join(dir_path, "*.fasta"))
         if len(files)==0:
             print "no usable reference genomes found!"
@@ -254,6 +253,12 @@ def main(directory, id, filter, processors, genes, cluster_method, blast, penalt
         else:
             pass
         gene_path=os.path.abspath("%s" % genes)
+        dup_ids = test_duplicate_header_ids(gene_path)
+        if dup_ids == "True":
+            pass
+        elif dup_ids == "False":
+            print "duplicate headers identified, exiting.."
+            sys.exit()
         clusters = get_cluster_ids(gene_path)
         os.system("cp %s %s/joined/" % (gene_path,dir_path))
         os.chdir("%s/joined" % dir_path)
