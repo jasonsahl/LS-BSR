@@ -11,6 +11,12 @@ have not been observed.
 
 contact: jasonsahl at gmail dot com
 
+###Changes made on 1/5/2016###
+1. A potential problem was observed when using USEARCH with the way the LS-BSR was clustering groups of clusters.
+   This may have affected the overall composition of the pan-genome, but would not affect the associated BSR values
+2. A bug was fixed in the way that VSEARCH and CD-HIT were receiving the input file for clustering. This should
+   not have an effect on any results
+
 ###Significant changes made on 12/28/2015###
 1. Genbank files now accepted as input, must end in ".gbk"
 2. Your CDSs are only renamed if there is a conflicting sequence header. Otherwise,
