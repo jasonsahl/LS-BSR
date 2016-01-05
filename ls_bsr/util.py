@@ -1051,7 +1051,7 @@ def split_files(fasta_file):
             IDs.append(clean)
         else:
             pass
-    for i in range(1,len(IDs),100000):
+    for i in range(0,len(IDs),100000):
         outfile = open("subset.reads.%s" % 1, "w")
         ids_to_write = IDs[i:i+100000]
         for record in SeqIO.parse(fasta_file, "fasta"):
