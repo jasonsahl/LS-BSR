@@ -725,7 +725,7 @@ def run_usearch(id):
     rec=1
     curr_dir=os.getcwd()
     devnull = open("/dev/null", "w")
-    for infile in glob.glob(os.path.join(curr_dir, "x*")):
+    for infile in glob.glob(os.path.join(curr_dir, "subset*")):
         cmd = ["usearch",
            "-cluster_fast", "%s" % infile,
            "-id", str(id),
@@ -1001,7 +1001,7 @@ def new_loop(to_iterate, processors, clusters, debug):
 def run_vsearch(id, processors):
     devnull = open("/dev/null", "w")
     cmd = ["vsearch",
-           "-cluster_fast", "all_sorted.txt",
+           "-cluster_fast", "all_gene_seqs.out",
            "-id", str(id),
            "-uc", "results.uc",
            "-threads", "%s" % processors,
@@ -1041,3 +1041,21 @@ def test_duplicate_header_ids(fasta_file):
         return "True"
     else:
         return "False"
+
+def split_files(fasta_file):
+    IDs = []
+    for line in open(fasta_file):
+        if line.startswith(">"):
+            fields = line.split()
+            clean = fields[0].replace(">","")
+            IDs.append(clean)
+        else:
+            pass
+    for i in range(1,len(IDs),100000):
+        outfile = open("subset.reads.%s" % 1, "w")
+        ids_to_write = IDs[i:i+100000]
+        for record in SeqIO.parse(fasta_file, "fasta"):
+            if record.id in ids_to_write:
+                print >> outfile,">"+str(record.id)
+                print >> outfile,record.seq
+        outfile.close()

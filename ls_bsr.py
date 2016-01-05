@@ -128,6 +128,7 @@ def main(directory, id, filter, processors, genes, cluster_method, blast, penalt
         logging.logPrint("predicting genes with Prodigal")
         predict_genes(dir_path, processors)
         logging.logPrint("Prodigal done")
+        """This function produces locus tags"""
         genbank_hits = process_genbank_files(dir_path)
         if genbank_hits == None or len(genbank_hits) == 0:
             os.system("cat *genes.seqs > all_gene_seqs.out")
@@ -136,22 +137,18 @@ def main(directory, id, filter, processors, genes, cluster_method, blast, penalt
                 os.system("mv tmp.out all_gene_seqs.out")
             else:
                 pass
-            #dup_ids = test_duplicate_header_ids("all_gene_seqs.out")
-            #if dup_ids == "True":
-            #    os.system("cp all_gene_seqs.out all_sorted.txt")
-            #elif dup_ids == "False":
-            #    print "duplicate headers identified, renaming.."
-            #    rename_fasta_header("all_gene_seqs.out", "all_sorted.txt")
-            #else:
-            #    pass
         else:
             logging.logPrint("Converting genbank files")
+            """First combine all of the prodigal files into one file"""
             os.system("cat *genes.seqs > all_gene_seqs.out")
             if filter_scaffolds == "T":
                 filter_scaffolds("all_gene_seqs.out")
                 os.system("mv tmp.out all_gene_seqs.out")
             else:
                 pass
+            """This combines the locus tags with the Prodigal prediction"""
+            os.system("cat *locus_tags.fasta all_gene_seqs.out > tmp.out")
+            os.system("mv tmp.out all_gene_seqs.out")
             """I also need to convert the GenBank file to a FASTA file"""
             for hit in genbank_hits:
                 reduced_hit = hit.replace(".gbk","")
@@ -163,11 +160,10 @@ def main(directory, id, filter, processors, genes, cluster_method, blast, penalt
             ac = subprocess.call(['which', 'usearch'])
             if ac == 0:
                 os.system("mkdir split_files")
-                #os.system("cp all_sorted.txt split_files/")
-                os.system("cp all_gene_seqs.out split_files/all_sorted.txt")
-                os.system("rm all_gene_seqs.out")
+                os.system("mv all_gene_seqs.out split_files/all_sorted.txt")
                 os.chdir("split_files/")
-                os.system("split -l 200000 all_sorted.txt")
+                logging.logPrint("Splitting FASTA file for use with USEARCH")
+                split_files("all_sorted.txt")
                 logging.logPrint("clustering with USEARCH at an ID of %s" % id)
                 run_usearch(id)
                 os.system("cat *.usearch.out > all_sorted.txt")
@@ -192,7 +188,7 @@ def main(directory, id, filter, processors, genes, cluster_method, blast, penalt
             ac = subprocess.call(['which', 'cd-hit-est'])
             if ac == 0:
                 logging.logPrint("clustering with cd-hit at an ID of %s, using %s processors" % (id,processors))
-                subprocess.check_call("cd-hit-est -i all_sorted.txt -o consensus.fasta -M 0 -T %s -c %s > /dev/null 2>&1" % (processors, id), shell=True)
+                subprocess.check_call("cd-hit-est -i all_gene_seqs.out -o consensus.fasta -M 0 -T %s -c %s > /dev/null 2>&1" % (processors, id), shell=True)
             else:
                 print "cd-hit must be in your path as cd-hit-est...exiting"
                 sys.exit()
@@ -241,11 +237,9 @@ def main(directory, id, filter, processors, genes, cluster_method, blast, penalt
             blat_against_each_genome(dir_path, "consensus.fasta",processors)
         else:
             pass
-        """Dups are only identified with de novo options, change?"""
         find_dups(ref_scores, length, max_plog, min_hlog, clusters)
     else:
         logging.logPrint("Using pre-compiled set of predicted genes")
-        """Need to check here for duplicated names and exit if found!"""
         files = glob.glob(os.path.join(dir_path, "*.fasta"))
         if len(files)==0:
             print "no usable reference genomes found!"
