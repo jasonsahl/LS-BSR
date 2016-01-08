@@ -80,7 +80,7 @@ def run_blast(infile):
     names = get_seq_name(infile)
     reduced = names.replace('.fasta','')
     try:
-        os.system('blastn -query %s -db combined.seqs -out %s.blast.out -dust no -num_alignments 2000 -outfmt "7 std sseq"' % (infile,reduced))
+        os.system('blastn -query "%s" -db combined.seqs -out "%s".blast.out -dust no -num_alignments 2000 -outfmt "7 std sseq"' % (infile,reduced))
     except:
         print "blast failed on %s" % infile
     return reduced
@@ -102,12 +102,17 @@ def check_and_align_seqs(infile, num_genomes):
     lengths = [ ]
     names = get_seq_name(infile)
     reduced = names.replace('.extracted.seqs','')
-    for record in SeqIO.parse(infile, "fasta"):
+    list_names = []
+    for record in SeqIO.parse(open(infile), "fasta"):
         lengths.append(len(record.seq))
+        list_names.append(record.id)
     lengths.sort(key=int)
     try:
-        if (lengths[0]/lengths[-1]) > 0.75 and len(lengths) == num_genomes:
-            os.system("muscle -in %s -out %s_aln.seqs > /dev/null 2>&1" % (infile,reduced))
+        if (lengths[0]/float(lengths[-1])) > 0.75 and len(lengths) == num_genomes and len(set(list_names)) == num_genomes:
+            try:
+                os.system("muscle -in '%s' -out '%s_aln.seqs' > /dev/null 2>&1" % (infile,reduced))
+            except:
+                print "problem with %s" % infile
         else:
             pass
     except:
@@ -230,13 +235,14 @@ def main(directory, genes, blast, processors, remove_gap, keep):
     def _perform_workflow(data):
         tn, f = data
         name = run_blast(f)
-        parsed_blast_to_seqs("%s.blast.out" % name)
-        check_and_align_seqs("%s.blast.out.extracted.seqs" % name, num_genomes)
-        os.system("rm %s.blast.out %s.blast.out.extracted.seqs" % (name,name))
+        """This makes sure that there is only one sequence per genome"""
+        os.system("sort -u -k 2,2 '%s.blast.out' > '%s.blast.unique'" % (name,name))
+        parsed_blast_to_seqs("%s.blast.unique" % name)
+        check_and_align_seqs("%s.extracted.seqs" % name, num_genomes)
+        os.system("rm '%s.blast.out' '%s.extracted.seqs'" % (name,name))
     set(p_func.pmap(_perform_workflow,
                     files_and_temp_names,
                     num_workers=processors))
-    #os.system("rm *.blast.out*")
     pull_seqs(names)
     concatenate()
     os.system("cat *.concat > all.concat")
