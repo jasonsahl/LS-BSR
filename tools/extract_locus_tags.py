@@ -22,9 +22,13 @@ count = 0
 for feature in record.features:
     if feature.type == "gene":
         count = count + 1
-        feature_name = feature.qualifiers["locus_tag"]
-        feature_seq = feature.extract(record.seq)
-        # Simple FASTA output without line wrapping:
-        output_handle.write(">" + "".join(feature_name) + "\n" + str(feature_seq) + "\n")
+        try:
+            feature_name = feature.qualifiers["locus_tag"]
+            feature_seq = feature.extract(record.seq)
+            # Simple FASTA output without line wrapping:
+            output_handle.write(">" + "".join(feature_name) + "\n" + str(feature_seq) + "\n")
+        except:
+            print "problem encounterd with feature: %s" %feature
+            pass
 output_handle.close()
 print(str(count) + " CDS sequences extracted")
