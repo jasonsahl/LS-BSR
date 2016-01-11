@@ -25,10 +25,10 @@ for feature in record.features:
         try:
             feature_name = feature.qualifiers["locus_tag"]
             feature_seq = feature.extract(record.seq)
+            print str(record.id)+"\t"+"".join(feature_name)+"\t"+str(feature.location)
             # Simple FASTA output without line wrapping:
             output_handle.write(">" + "".join(feature_name) + "\n" + str(feature_seq) + "\n")
         except:
-            print "problem encounterd with feature: %s" %feature
-            pass
+            print "problem encountered extracting: %s, skipping.." % "".join(feature_name)
 output_handle.close()
 print(str(count) + " CDS sequences extracted")
