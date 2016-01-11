@@ -1021,9 +1021,12 @@ def process_genbank_files(directory):
         for feature in record.features:
             if feature.type == "gene":
                 count = count + 1
-                feature_name = feature.qualifiers["locus_tag"]
-                feature_seq = feature.extract(record.seq)
-                output_handle.write(">" + "".join(feature_name) + "\n" + str(feature_seq) + "\n")
+                try:
+                    feature_name = feature.qualifiers["locus_tag"]
+                    feature_seq = feature.extract(record.seq)
+                    output_handle.write(">" + "".join(feature_name) + "\n" + str(feature_seq) + "\n")
+                except:
+                    print "problem extracting locus tag: %s" % "".join(feature_name)
         output_handle.close()
     return genbank_hits
 
