@@ -725,7 +725,7 @@ def run_usearch(id):
     rec=1
     curr_dir=os.getcwd()
     devnull = open("/dev/null", "w")
-    for infile in glob.glob(os.path.join(curr_dir, "subset*")):
+    for infile in glob.glob(os.path.join(curr_dir, "x*")):
         cmd = ["usearch",
            "-cluster_fast", "%s" % infile,
            "-id", str(id),
@@ -1046,19 +1046,15 @@ def test_duplicate_header_ids(fasta_file):
         return "False"
 
 def split_files(fasta_file):
-    IDs = []
-    for line in open(fasta_file):
-        if line.startswith(">"):
-            fields = line.split()
-            clean = fields[0].replace(">","")
-            IDs.append(clean)
-        else:
-            pass
-    for i in range(0,len(IDs),100000):
-        outfile = open("subset.reads.%s" % 1, "w")
-        ids_to_write = IDs[i:i+100000]
-        for record in SeqIO.parse(fasta_file, "fasta"):
-            if record.id in ids_to_write:
-                print >> outfile,">"+str(record.id)
-                print >> outfile,record.seq
-        outfile.close()
+    """This next section removes line wraps, so I can
+    split the file without interrupting a gene"""
+    from Bio.SeqIO.FastaIO import FastaWriter
+    output_handle = open("nowrap.fasta", "w")
+    seqrecords=[ ]
+    writer = FastaWriter(output_handle, wrap=0)
+    for record in SeqIO.parse(open(fasta_file), "fasta"):
+        seqrecords.append(record)
+    writer.write_file(seqrecords)
+    output_handle.close()
+    """I can always make the number of lines an alterable field"""
+    subprocess.check_call("split -l 200000 nowrap.fasta", shell=True)
