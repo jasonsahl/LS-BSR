@@ -11,6 +11,17 @@ have not been observed.
 
 contact: jasonsahl at gmail dot com
 
+##Minimum requirements, see manual for version information##
+1. Python >2.7 and <3
+2. BioPython
+3. Prodigal - Required for de novo gene prediction only
+4. VSEARCH - Optional
+5. USEARCH - Optional
+6. CD-HIT - Optional
+7. Blast+ - Optional
+8. Blat - Optional
+9. NumPy - Optional
+
 ###Changes made on 1/5/2016###
 1. A potential problem was observed when using USEARCH with the way the LS-BSR was clustering groups of clusters.
    This may have affected the overall composition of the pan-genome, but would not affect the associated BSR values
