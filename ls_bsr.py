@@ -237,7 +237,6 @@ def main(directory, id, filter, processors, genes, cluster_method, blast, penalt
             blat_against_each_genome(dir_path, "consensus.fasta",processors)
         else:
             pass
-        find_dups(ref_scores, length, max_plog, min_hlog, clusters)
     else:
         logging.logPrint("Using pre-compiled set of predicted genes")
         files = glob.glob(os.path.join(dir_path, "*.fasta"))
