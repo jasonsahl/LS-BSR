@@ -642,7 +642,10 @@ def find_dups(ref_scores, length, max_plog, min_hlog, clusters):
                 if k == "ID":
                     pass
                 elif k == cluster:
-                    genome_specific_dict.update({k:len(v)})
+                    try:
+                        genome_specific_dict.update({k:len(v)})
+                    except:
+                        genome_specific_dict.update({k:"0"})
         for cluster in clusters:
             if cluster not in genome_specific_dict:
                 genome_specific_dict.update({cluster:"0"})
