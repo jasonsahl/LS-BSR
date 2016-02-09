@@ -22,6 +22,11 @@ contact: jasonsahl at gmail dot com
 8. Blat - Optional
 9. NumPy - Optional
 
+###Changes made on 2/9/2016
+1. BLASTN was changed to use BLASTN as the "task", instead of megablast. Using megablast can result in no alignments for more distant alignments, which would result in a BSR value of 0, even though significant alignments likely exist. This problem would only affect runs using BLASTN as the alignment method.
+2. Because of the changes to BLASTN, the "penalty" and "reward" arguments have been removed and replaced with the defaults.
+
+
 ###Changes made on 1/5/2016###
 1. A potential problem was observed when using USEARCH with the way the LS-BSR was clustering groups of clusters.
    This may have affected the overall composition of the pan-genome, but would not affect the associated BSR values
