@@ -83,7 +83,7 @@ def test_fplog(option, opt_str, value, parser):
         print "select from T or F for f_plog setting"
         sys.exit()
 
-def main(directory, id, filter, processors, genes, cluster_method, blast, penalty, reward, length,
+def main(directory, id, filter, processors, genes, cluster_method, blast, length,
          max_plog, min_hlog, f_plog, keep, filter_peps, filter_scaffolds, debug):
     start_dir = os.getcwd()
     ap=os.path.abspath("%s" % start_dir)
@@ -214,7 +214,7 @@ def main(directory, id, filter, processors, genes, cluster_method, blast, penalt
             blast_against_self_tblastn("tblastn", "consensus.fasta", "consensus.pep", "tmp_blast.out", processors, filter)
         elif "blastn" == blast:
             subprocess.check_call("makeblastdb -in consensus.fasta -dbtype nucl > /dev/null 2>&1", shell=True)
-            blast_against_self_blastn("blastn", "consensus.fasta", "consensus.fasta", "tmp_blast.out", filter, penalty, reward, processors)
+            blast_against_self_blastn("blastn", "consensus.fasta", "consensus.fasta", "tmp_blast.out", filter, processors)
             clusters = get_cluster_ids("consensus.fasta")
         elif "blat" == blast:
             blat_against_self("consensus.fasta", "consensus.fasta", "tmp_blast.out", processors)
@@ -232,7 +232,7 @@ def main(directory, id, filter, processors, genes, cluster_method, blast, penalt
         if "tblastn" == blast:
             blast_against_each_genome_tblastn(dir_path, processors, "consensus.pep", filter)
         elif "blastn" == blast:
-            blast_against_each_genome_blastn(dir_path, processors, filter, "consensus.fasta", penalty, reward)
+            blast_against_each_genome_blastn(dir_path, processors, filter, "consensus.fasta")
         elif "blat" == blast:
             blat_against_each_genome(dir_path, "consensus.fasta",processors)
         else:
@@ -292,7 +292,7 @@ def main(directory, id, filter, processors, genes, cluster_method, blast, penalt
                     logging.logPrint("Database not formatted correctly...exiting")
                     sys.exit()
                 try:
-                    blast_against_self_blastn("blastn", gene_path, gene_path, "tmp_blast.out", filter, penalty, reward, processors)
+                    blast_against_self_blastn("blastn", gene_path, gene_path, "tmp_blast.out", filter, processors)
                 except:
                     print "problem with blastn, exiting"
                     sys.exit()
@@ -300,7 +300,11 @@ def main(directory, id, filter, processors, genes, cluster_method, blast, penalt
                 ref_scores=parse_self_blast(open("self_blast.out", "U"))
                 subprocess.check_call("rm tmp_blast.out self_blast.out", shell=True)
                 logging.logPrint("starting BLAST")
-                blast_against_each_genome_blastn(dir_path, processors, filter, gene_path, penalty, reward)
+                try:
+                    blast_against_each_genome_blastn(dir_path, processors, filter, gene_path)
+                except:
+                    print "problem with blastn, exiting"
+                    sys.exit()
             elif "blat" == blast:
                 logging.logPrint("using blat")
                 blat_against_self(gene_path, gene_path, "tmp_blast.out", processors)
@@ -388,12 +392,6 @@ if __name__ == "__main__":
     parser.add_option("-b", "--blast", dest="blast", action="callback", callback=test_blast,
                       help="use tblastn, blastn, or blat (nucleotide search only), default is tblastn",
                       default="tblastn", type="string")
-    parser.add_option("-q", "--penalty", dest="penalty", action="store",
-                      help="mismatch penalty, only to be used with blastn and -g option, default is -4",
-                      default="-5", type="int")
-    parser.add_option("-r", "--reward", dest="reward", action="store",
-                      help="match reward, only to be used with blastn and -g option, default is 5",
-                      default="1", type="int")
     parser.add_option("-l", "--length", dest="length", action="store",
                       help="minimum BSR value to be called a duplicate, defaults to 0.7",
                       default="0.7", type="float")
@@ -428,5 +426,4 @@ if __name__ == "__main__":
             exit(-1)
 
     main(options.directory,options.id,options.filter,options.processors,options.genes,options.cluster_method,options.blast,
-         options.penalty,options.reward,options.length,options.max_plog,options.min_hlog,options.f_plog,options.keep,
-         options.filter_peps,options.filter_scaffolds,options.debug)
+         options.length,options.max_plog,options.min_hlog,options.f_plog,options.keep,options.filter_peps,options.filter_scaffolds,options.debug)

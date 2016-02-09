@@ -131,42 +131,6 @@ def uclust_cluster(id):
            "-centroids", "consensus.fasta"]
     subprocess.call(cmd, stderr=devnull, stdout=devnull)
 
-def blast_against_each_genome(dir_path, processors, filter, peptides, blast, penalty, reward):
-    """BLAST all peptides against each genome"""
-    curr_dir=os.getcwd()
-    files = os.listdir(curr_dir)
-    files_and_temp_names = [(str(idx), os.path.join(curr_dir, f))
-                            for idx, f in enumerate(files)]
-    def _perform_workflow(data):
-	tn, f = data
-        if ".fasta.new" in f:
-            try:
-                subprocess.check_call("formatdb -i %s -p F > /dev/null 2>&1" % f, shell=True)
-            except:
-                print "problem found in formatting genome %s" % f
-        if ".fasta.new" in f:
-            try:
-                devnull = open('/dev/null', 'w')
-                cmd = ["blastall",
-                       "-p", blast,
-                       "-i", peptides,
-                       "-d", f,
-                       "-a", str(processors),
-                       "-e", "0.1",
-                       "-m", "8",
-                       "-F", str(filter),
-                       "-q", str(penalty),
-                       "-r", str(reward),
-                       "-C", "F",
-                       "-o", "%s_blast.out" % f]
-                subprocess.call(cmd, stdout=devnull, stderr=devnull)
-            except:
-                print "genomes %s cannot be used" % f
-
-    results = set(p_func.pmap(_perform_workflow,
-                              files_and_temp_names,
-                              num_workers=processors))
-
 def blast_against_each_genome_tblastn(dir_path, processors, peptides, filter):
     """BLAST all peptides against each genome"""
     curr_dir=os.getcwd()
@@ -205,7 +169,7 @@ def blast_against_each_genome_tblastn(dir_path, processors, peptides, filter):
                               files_and_temp_names,
                               num_workers=processors))
 
-def blast_against_each_genome_blastn(dir_path, processors, filter, peptides, penalty, reward):
+def blast_against_each_genome_blastn(dir_path, processors, filter, peptides):
     """BLAST all peptides against each genome"""
     if "F" in filter:
         my_seg = "yes"
@@ -226,14 +190,15 @@ def blast_against_each_genome_blastn(dir_path, processors, filter, peptides, pen
             devnull = open('/dev/null', 'w')
             try:
                 cmd = ["blastn",
+                       "-task", "blastn",
                        "-query", peptides,
                        "-db", f,
                        "-dust", str(my_seg),
                        "-num_threads", str(processors),
                        "-evalue", "0.1",
                        "-outfmt", "6",
-                       "-penalty", str(penalty),
-                       "-reward", str(reward),
+                       #"-penalty", str(penalty),
+                       #"-reward", str(reward),
                        "-out", "%s_blast.out" % f]
                 subprocess.call(cmd, stdout=devnull, stderr=devnull)
             except:
@@ -305,22 +270,24 @@ def get_unique_lines():
         outfile.close()
     return outdata
 
-def blast_against_self_blastn(blast_type, genes_pep, genes_nt, output, filter, penalty, reward, processors):
+def blast_against_self_blastn(blast_type, genes_pep, genes_nt, output, filter, processors):
     devnull = open('/dev/null', 'w')
     if "F" in filter:
         my_seg = "yes"
     else:
         my_seg = "no"
     cmd = ["%s" % blast_type,
+           "-task", blast_type,
            "-query", genes_pep,
            "-db", genes_nt,
            "-num_threads", str(processors),
            "-evalue", "0.1",
            "-outfmt", "6",
            "-dust", str(my_seg),
-           "-penalty", str(penalty),
-           "-reward", str(reward),
+           #"-penalty", str(penalty),
+           #"-reward", str(reward),
            "-out", output]
+    #print " ".join(cmd)
     subprocess.call(cmd, stdout=devnull, stderr=devnull)
 
 def blast_against_self_tblastn(blast_type, genes_nt, genes_pep, output,processors, filter):
