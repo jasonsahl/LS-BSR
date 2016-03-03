@@ -86,7 +86,7 @@ def run_blast(infile, blast):
             print "blast failed on %s" % infile
     else:
         try:
-            os.system('tblastn -query "%s" -db combined.seqs -out "%s".blast.out -seg F -comp_based_stats F -num_alignments 2000 -outfmt "7 std sseq"' % (infile,reduced))
+            os.system('tblastn -query "%s" -db combined.seqs -out "%s".blast.out -seg no -comp_based_stats F -num_alignments 2000 -outfmt "7 std sseq"' % (infile,reduced))
         except:
             print "blast failed on %s" % infile
     return reduced
