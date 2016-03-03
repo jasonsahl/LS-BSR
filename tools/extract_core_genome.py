@@ -80,7 +80,7 @@ def run_blast(infile):
     names = get_seq_name(infile)
     reduced = names.replace('.fasta','')
     try:
-        os.system('blastn -query "%s" -db combined.seqs -out "%s".blast.out -dust no -num_alignments 2000 -outfmt "7 std sseq"' % (infile,reduced))
+        os.system('blastn -task blastn -query "%s" -db combined.seqs -out "%s".blast.out -dust no -num_alignments 2000 -outfmt "7 std sseq"' % (infile,reduced))
     except:
         print "blast failed on %s" % infile
     return reduced
