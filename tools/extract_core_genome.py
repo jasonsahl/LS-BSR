@@ -76,13 +76,19 @@ def combined_seqs(dir_path):
         num_genomes.append(record.id)
     return len(num_genomes), num_genomes
 
-def run_blast(infile):
+def run_blast(infile, blast):
     names = get_seq_name(infile)
     reduced = names.replace('.fasta','')
-    try:
-        os.system('blastn -task blastn -query "%s" -db combined.seqs -out "%s".blast.out -dust no -num_alignments 2000 -outfmt "7 std sseq"' % (infile,reduced))
-    except:
-        print "blast failed on %s" % infile
+    if blast == 'blastn':
+        try:
+            os.system('blastn -task blastn -query "%s" -db combined.seqs -out "%s".blast.out -dust no -num_alignments 2000 -outfmt "7 std sseq"' % (infile,reduced))
+        except:
+            print "blast failed on %s" % infile
+    else:
+        try:
+            os.system('tblastn -query "%s" -db combined.seqs -out "%s".blast.out -seg F -comp_based_stats F -num_alignments 2000 -outfmt "7 std sseq"' % (infile,reduced))
+        except:
+            print "blast failed on %s" % infile
     return reduced
 
 def parsed_blast_to_seqs(infile):
@@ -201,7 +207,10 @@ def remove_gaps(infile):
     file_to_fasta("tab.filtered")
 
 def main(directory, genes, blast, processors, remove_gap, keep):
-    dependencies = ['blastn','makeblastdb','muscle']
+    if blast == 'blastn':
+        dependencies = ['blastn','makeblastdb','muscle']
+    else:
+        dependencies = ['tblastn','makeblastdb','muscle']
     for dependency in dependencies:
         ra = subprocess.call(['which', '%s' % dependency])
         if ra == 0:
@@ -234,7 +243,7 @@ def main(directory, genes, blast, processors, remove_gap, keep):
                             for idx, f in enumerate(table_files)]
     def _perform_workflow(data):
         tn, f = data
-        name = run_blast(f)
+        name = run_blast(f, blast)
         """This makes sure that there is only one sequence per genome"""
         os.system("sort -u -k 2,2 '%s.blast.out' > '%s.blast.unique'" % (name,name))
         parsed_blast_to_seqs("%s.blast.unique" % name)
