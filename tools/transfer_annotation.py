@@ -25,6 +25,7 @@ def blast_against_self(blast_type, query, database, output, processors):
            "-num_threads", str(processors),
            "-evalue", "0.1",
            "-outfmt", "6",
+           "-comp_based_stats", "F",
            "-seg", "no",
            "-out", output]
     subprocess.call(cmd, stdout=devnull, stderr=devnull)
