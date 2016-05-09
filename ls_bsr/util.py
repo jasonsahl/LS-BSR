@@ -726,9 +726,9 @@ def find_dups_dev(ref_scores, length, max_plog, min_hlog, clusters, processors):
         print >> duplicate_file, k,"\n",
     nr=[x for i, x in enumerate(paralogs) if x not in paralogs[i+1:]]
     print >> paralog_file, "\n".join(nr),
-    return nr, dup_dict
     duplicate_file.close()
     paralog_file.close()
+    return nr, dup_dict
 
 def filter_paralogs(matrix, ids):
     in_matrix = open(matrix, "U")
