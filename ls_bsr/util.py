@@ -74,13 +74,15 @@ def divide_values(file, ref_scores):
     outfile.close()
 
 
-def predict_genes(dir_path, processors):
+def predict_genes(fastadir, processors):
     """simple gene prediction using Prodigal in order
     to find coding regions from a genome sequence"""
-    os.chdir("%s/joined" % dir_path)
-    curr_dir=os.getcwd()
-    files = os.listdir(curr_dir)
-    files_and_temp_names = [(str(idx), os.path.join(curr_dir, f))
+    os.chdir("%s" % fastadir)
+    #curr_dir=os.getcwd()
+    #print curr_dir
+    #files = os.listdir(curr_dir)
+    files = os.listdir(fastadir)
+    files_and_temp_names = [(str(idx), os.path.join(fastadir, f))
                             for idx, f in enumerate(files)]
     def _perform_workflow(data):
         tn, f = data

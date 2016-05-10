@@ -17,6 +17,7 @@ import types
 from ls_bsr.util import *
 from igs.utils import logging
 import glob
+import tempfile
 
 def test_file(option, opt_str, value, parser):
     try:
@@ -84,7 +85,7 @@ def test_fplog(option, opt_str, value, parser):
         sys.exit()
 
 def main(directory, id, filter, processors, genes, cluster_method, blast, length,
-         max_plog, min_hlog, f_plog, keep, filter_peps, filter_scaffolds, debug):
+         max_plog, min_hlog, f_plog, keep, filter_peps, filter_scaffolds, prefix, debug):
     start_dir = os.getcwd()
     ap=os.path.abspath("%s" % start_dir)
     dir_path=os.path.abspath("%s" % directory)
@@ -97,13 +98,13 @@ def main(directory, id, filter, processors, genes, cluster_method, blast, length
             print "blastn isn't in your path, but needs to be!"
             sys.exit()
     try:
-        os.makedirs('%s/joined' % dir_path)
+        fastadir = tempfile.mkdtemp()
     except:
-        print "old run directory exists in your genomes directory (%s/joined).  Delete and run again" % dir_path
+        print "old run directory exists in your genomes directory (%s).  Delete and run again" % fastadir
         sys.exit()
     for infile in glob.glob(os.path.join(dir_path, '*.fasta')):
         name=get_seq_name(infile)
-        os.link("%s" % infile, "%s/joined/%s.new" % (dir_path,name))
+        os.link("%s" % infile, "%s/%s.new" % (fastadir,name))
     if "null" in genes:
         rc = subprocess.call(['which', 'prodigal'])
         if rc == 0:
@@ -126,7 +127,8 @@ def main(directory, id, filter, processors, genes, cluster_method, blast, length
                 print "You have requested blat, but it is not in your PATH"
                 sys.exit()
         logging.logPrint("predicting genes with Prodigal")
-        predict_genes(dir_path, processors)
+        #predict_genes(dir_path, processors)
+        predict_genes(fastadir, processors)
         logging.logPrint("Prodigal done")
         """This function produces locus tags"""
         genbank_hits = process_genbank_files(dir_path)
@@ -167,8 +169,10 @@ def main(directory, id, filter, processors, genes, cluster_method, blast, length
                 logging.logPrint("clustering with USEARCH at an ID of %s" % id)
                 run_usearch(id)
                 os.system("cat *.usearch.out > all_sorted.txt")
-                os.system("mv all_sorted.txt %s/joined" % dir_path)
-                os.chdir("%s/joined" % dir_path)
+                #os.system("mv all_sorted.txt %s/joined" % dir_path)
+                os.system("mv all_sorted.txt %s" % fastadir)
+                os.chdir("%s" % fastadir)
+                #os.chdir("%s/joined" % dir_path)
                 uclust_cluster(id)
                 logging.logPrint("USEARCH clustering finished")
             else:
@@ -253,8 +257,10 @@ def main(directory, id, filter, processors, genes, cluster_method, blast, length
             print "duplicate headers identified, exiting.."
             sys.exit()
         clusters = get_cluster_ids(gene_path)
-        os.system("cp %s %s/joined/" % (gene_path,dir_path))
-        os.chdir("%s/joined" % dir_path)
+        #os.system("cp %s %s/joined/" % (gene_path,dir_path))
+        os.system("cp %s %s" % (gene_path,fastadir))
+        #os.chdir("%s/joined" % dir_path)
+        os.chdir("%s" % fastadir)
         if gene_path.endswith(".pep"):
             logging.logPrint("using tblastn on peptides")
             try:
@@ -357,15 +363,61 @@ def main(directory, id, filter, processors, genes, cluster_method, blast, length
     else:
         pass
     try:
-        subprocess.check_call("cp dup_matrix.txt names.txt consensus.pep consensus.fasta duplicate_ids.txt paralog_ids.txt %s" % start_dir, shell=True, stderr=open(os.devnull, 'w'))
+        subprocess.check_call("cp dup_matrix.txt names.txt consensus.pep consensus.fasta duplicate_ids.txt paralog_ids.txt %s" % ap, shell=True, stderr=open(os.devnull, 'w'))
     except:
         sys.exc_clear()
+    """new code to rename files according to a prefix"""
+    import datetime
+    timestamp = datetime.datetime.now()
+    rename = str(timestamp.year), str(timestamp.month), str(timestamp.day), str(timestamp.hour), str(timestamp.minute), str(timestamp.second)
+    os.chdir("%s" % ap)
+    if "NULL" in prefix:
+        os.system("mv dup_matrix.txt %s_dup_matrix.txt" % "".join(rename))
+        os.system("mv names.txt %s_names.txt" % "".join(rename))
+        os.system("mv duplicate_ids.txt %s_duplicate_ids.txt" % "".join(rename))
+        os.system("mv paralog_ids.txt %s_paralog_ids.txt" % "".join(rename))
+        os.system("mv bsr_matrix_values.txt %s_bsr_matrix.txt" % "".join(rename))
+        if os.path.isfile("consensus.fasta"):
+            os.system("mv consensus.fasta %s_consensus.fasta" % "".join(rename))
+        if os.path.isfile("consensus.pep"):
+            os.system("mv consensus.pep %s_consensus.pep" % "".join(rename))
+    else:
+        os.system("mv dup_matrix.txt %s_dup_matrix.txt" % prefix)
+        os.system("mv names.txt %s_names.txt" % prefix)
+        os.system("mv duplicate_ids.txt %s_duplicate_ids.txt" % prefix)
+        os.system("mv paralog_ids.txt %s_paralog_ids.txt" % prefix)
+        os.system("mv bsr_matrix_values.txt %s_bsr_matrix.txt" % prefix)
+        if os.path.isfile("consensus.fasta"):
+            os.system("mv consensus.fasta %s_consensus.fasta" % prefix)
+        if os.path.isfile("consensus.pep"):
+            os.system("mv consensus.pep %s_consensus.pep" % prefix)
+    if "NULL" in prefix:
+        outfile = open("%s_run_parameters.txt" % "".join(rename), "w")
+    else:
+        outfile = open("%s_run_parameters.txt" % prefix, "w")
+    print >> outfile, "-d %s \\" % directory
+    print >> outfile, "-i %s \\" % id
+    print >> outfile, "-f %s \\" % filter
+    print >> outfile, "-p %s \\" % processors
+    print >> outfile, "-g %s \\" % genes
+    print >> outfile, "-c %s \\" % cluster_method
+    print >> outfile, "-b %s \\" % blast
+    print >> outfile, "-l %s \\" % length
+    print >> outfile, "-m %s \\" % max_plog
+    print >> outfile, "-n %s \\" % min_hlog
+    print >> outfile, "-t %s \\" % f_plog
+    print >> outfile, "-k %s \\" % keep
+    print >> outfile, "-s %s \\" % filter_peps
+    print >> outfile, "-e %s \\" % filter_scaffolds
+    print >> outfile, "-x %s \\" % prefix
+    print >> outfile, "-z %s" % debug
+    print >> outfile, "temp data stored here if kept: %s" % fastadir
+    outfile.close()
     logging.logPrint("all Done")
-    os.chdir("%s" % dir_path)
     if "T" == keep:
         pass
     else:
-        os.system("rm -rf joined")
+        os.system("rm -rf %s" % fastadir)
     os.chdir("%s" % ap)
 
 if __name__ == "__main__":
@@ -413,6 +465,9 @@ if __name__ == "__main__":
     parser.add_option("-e", "--filter_scaffolds", dest="filter_scaffolds", action="callback",
                       help="Filter any contig that contains an N? Defaults to F",
                       default="F", callback=test_filter, type="string")
+    parser.add_option("-x", "--prefix", dest="prefix", action="store",
+                      help="prefix for naming output files, defaults to time/date",
+                      default="NULL", type="string")
     parser.add_option("-z", "--debug", dest="debug", action="callback",
                       help="turn debug on?  Defaults to F",
                       default="F", callback=test_filter, type="string")
@@ -426,4 +481,5 @@ if __name__ == "__main__":
             exit(-1)
 
     main(options.directory,options.id,options.filter,options.processors,options.genes,options.cluster_method,options.blast,
-         options.length,options.max_plog,options.min_hlog,options.f_plog,options.keep,options.filter_peps,options.filter_scaffolds,options.debug)
+         options.length,options.max_plog,options.min_hlog,options.f_plog,options.keep,options.filter_peps,
+         options.filter_scaffolds,options.prefix,options.debug)
