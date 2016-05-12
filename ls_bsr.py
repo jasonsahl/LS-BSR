@@ -101,10 +101,11 @@ def main(directory,id,filter,processors,genes,cluster_method,blast,length,
         fastadir = tempfile.mkdtemp()
     else:
         fastadir = os.path.abspath("%s" % temp_dir)
-    if os.path.exists('%s' % temp_dir):
-        pass
-    else:
-        os.makedirs('%s' % temp_dir)
+        if os.path.exists('%s' % temp_dir):
+            print "old run directory exists in your genomes directory (%s).  Delete and run again" % temp_dir
+            sys.exit()
+        else:
+            os.makedirs('%s' % temp_dir)
     for infile in glob.glob(os.path.join(dir_path, '*.fasta')):
         name=get_seq_name(infile)
         os.link("%s" % infile, "%s/%s.new" % (fastadir,name))
