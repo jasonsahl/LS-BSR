@@ -84,8 +84,8 @@ def test_fplog(option, opt_str, value, parser):
         print "select from T or F for f_plog setting"
         sys.exit()
 
-def main(directory, id, filter, processors, genes, cluster_method, blast, length,
-         max_plog, min_hlog, f_plog, keep, filter_peps, filter_scaffolds, prefix, debug):
+def main(directory,id,filter,processors,genes,cluster_method,blast,length,
+         max_plog,min_hlog,f_plog,keep,filter_peps,filter_scaffolds,prefix,temp_dir,debug):
     start_dir = os.getcwd()
     ap=os.path.abspath("%s" % start_dir)
     dir_path=os.path.abspath("%s" % directory)
@@ -97,11 +97,14 @@ def main(directory, id, filter, processors, genes, cluster_method, blast, length
         else:
             print "blastn isn't in your path, but needs to be!"
             sys.exit()
-    try:
+    if "NULL" in temp_dir:
         fastadir = tempfile.mkdtemp()
-    except:
-        print "old run directory exists in your genomes directory (%s).  Delete and run again" % fastadir
-        sys.exit()
+    else:
+        fastadir = os.path.abspath("%s" % temp_dir)
+    if os.path.exists('%s' % temp_dir):
+        pass
+    else:
+        os.makedirs('%s' % temp_dir)
     for infile in glob.glob(os.path.join(dir_path, '*.fasta')):
         name=get_seq_name(infile)
         os.link("%s" % infile, "%s/%s.new" % (fastadir,name))
@@ -468,6 +471,9 @@ if __name__ == "__main__":
     parser.add_option("-x", "--prefix", dest="prefix", action="store",
                       help="prefix for naming output files, defaults to time/date",
                       default="NULL", type="string")
+    parser.add_option("-y", "--temp_dir", dest="temp_dir", action="store",
+                      help="full path to desired temp directory location, defaults to python tempdir",
+                      default="NULL", type="string")
     parser.add_option("-z", "--debug", dest="debug", action="callback",
                       help="turn debug on?  Defaults to F",
                       default="F", callback=test_filter, type="string")
@@ -482,4 +488,4 @@ if __name__ == "__main__":
 
     main(options.directory,options.id,options.filter,options.processors,options.genes,options.cluster_method,options.blast,
          options.length,options.max_plog,options.min_hlog,options.f_plog,options.keep,options.filter_peps,
-         options.filter_scaffolds,options.prefix,options.debug)
+         options.filter_scaffolds,options.prefix,options.temp_dir,options.debug)
