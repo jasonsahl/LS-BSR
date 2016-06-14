@@ -5,6 +5,8 @@ the variable region of the pan-genome"""
 
 from optparse import OptionParser
 from ls_bsr.util import filter_variome
+import sys
+import os
 
 def test_file(option, opt_str, value, parser):
     try:
@@ -28,9 +30,9 @@ if __name__ == "__main__":
     parser.add_option("-s", "--step", dest="step",
                       help="how many genomes fewer than the total to consider for loss, defaults to 1",
                       action="store", default="1", type="int")
-   
+
     options, args = parser.parse_args()
-    
+
     mandatories = ["matrix"]
     for m in mandatories:
         if not options.__dict__[m]:

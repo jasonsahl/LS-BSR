@@ -3,6 +3,8 @@
 """extract only the unique IDs from a BSR matrix"""
 
 from optparse import OptionParser
+import sys
+import os
 
 def test_file(option, opt_str, value, parser):
     try:
@@ -47,9 +49,9 @@ if __name__ == "__main__":
     parser.add_option("-t", "--threshold", dest="threshold",
                       help="lower threshold for ORF presence, defaults to 0.4",
                       action="store", default="0.4", type="float")
-   
+
     options, args = parser.parse_args()
-    
+
     mandatories = ["matrix"]
     for m in mandatories:
         if not options.__dict__[m]:
