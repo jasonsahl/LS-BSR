@@ -46,17 +46,18 @@ def get_cluster_ids(in_fasta):
 
 def divide_values(file, ref_scores):
     """divide each BSR value in a row by that row's maximum value"""
+    errors = []
     infile = open(file, "U")
     firstLine = infile.readline()
     FL_F=firstLine.split()
     outfile = open("BSR_matrix_values.txt", "a")
     print >> outfile, '\t'.join([str(item) for item in FL_F])
-    outdata=[ ]
+    outdata=[]
     for line in infile:
         fields=line.split()
         all_fields=list(fields)
         try:
-            fields=map(float, fields[1:])
+            fields=map(float, all_fields[1:])
         except:
             raise TypeError("abnormal number of fields observed")
         values= [ ]
@@ -64,12 +65,15 @@ def divide_values(file, ref_scores):
             try:
                 values.append(float(x)/float(ref_scores.get(all_fields[0])))
             except:
-                """somewhat arbitrary, but covers the case where the reference
-                value is missing"""
-                values.append(float(x)/float("1000"))
+                """if a mismatch error in names encountered, change values to 0"""
+                errors.append(all_fields[0])
+                values.append(float("0"))
         sort_values=['%.2f' % elem for elem in values]
         print >> outfile, '\t'.join([str(item) for item in sort_values])
         outdata.append(values)
+    if len(errors)>0:
+        nr=[x for i, x in enumerate(errors) if x not in errors[i+1:]]
+        logging.logPrint("The following genes had no hits in datasets or are too short, values changed to 0, check names and output: %s" % "\n".join(nr))
     return outdata
     outfile.close()
 
@@ -78,9 +82,6 @@ def predict_genes(fastadir, processors):
     """simple gene prediction using Prodigal in order
     to find coding regions from a genome sequence"""
     os.chdir("%s" % fastadir)
-    #curr_dir=os.getcwd()
-    #print curr_dir
-    #files = os.listdir(curr_dir)
     files = os.listdir(fastadir)
     files_and_temp_names = [(str(idx), os.path.join(fastadir, f))
                             for idx, f in enumerate(files)]
@@ -324,17 +325,22 @@ def translate_genes(genes):
     infile = open(genes, "rU")
     output = [ ]
     output_handle = open("genes.pep", "w")
+    too_short = []
     for record in SeqIO.parse(infile, "fasta"):
         try:
             if len(record.seq.translate(to_stop=True, table=11))>=30:
                 print >> output_handle, ">"+record.id
                 print >> output_handle, record.seq.translate(to_stop=True, table=11)
                 output.append(record.seq.translate(to_stop=True, table=11))
+            else:
+                too_short.append(record.id)
         except:
             raise TypeError("odd characters observed in sequence")
     for record in output: return str(record)
     infile.close()
     output_handle.close()
+    if len(too_short)>0:
+        logging.logPrint("The following sequences were too short and will not be processed: %s" % "\n".join(too_short))
     return output
 
 rec=1
@@ -683,20 +689,23 @@ def find_dups_dev(ref_scores, length, max_plog, min_hlog, clusters, processors):
                         continue
             except:
                 raise TypeError("problem parsing %s" % f)
+            new_dict = {}
             for k,v in genome_specific_dict.iteritems():
                 for cluster in clusters:
                     if k == "ID":
                         pass
                     elif k == cluster:
                         try:
-                            genome_specific_dict.update({k:len(v)})
+                            new_dict.update({k:len(v)})
                         except:
-                            genome_specific_dict.update({k:"0"})
+                            new_dict.update({k:"0"})
             for cluster in clusters:
                 if cluster not in genome_specific_dict:
-                    genome_specific_dict.update({cluster:"0"})
-            od = collections.OrderedDict(sorted(genome_specific_dict.items()))
-            for k,v in od.iteritems():
+                    new_dict.update({cluster:"0"})
+            od = collections.OrderedDict(sorted(new_dict.items()))
+            ids = OrderedDict({"ID":reduced_name})
+            both =OrderedDict(list(ids.items())+list(new_dict.items()))
+            for k,v in both.iteritems():
                 print >> outfile, str(v)
                 if k in target_list:
                     pass
@@ -1058,6 +1067,7 @@ def run_vsearch(id, processors):
            "-uc", "results.uc",
            "-threads", "%s" % processors,
            "-centroids", "vsearch.out"]
+
     subprocess.call(cmd,stdout=devnull,stderr=devnull)
     devnull.close()
 

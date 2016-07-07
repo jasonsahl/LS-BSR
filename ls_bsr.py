@@ -131,7 +131,6 @@ def main(directory,id,filter,processors,genes,cluster_method,blast,length,
                 print "You have requested blat, but it is not in your PATH"
                 sys.exit()
         logging.logPrint("predicting genes with Prodigal")
-        #predict_genes(dir_path, processors)
         predict_genes(fastadir, processors)
         logging.logPrint("Prodigal done")
         """This function produces locus tags"""
@@ -173,10 +172,8 @@ def main(directory,id,filter,processors,genes,cluster_method,blast,length,
                 logging.logPrint("clustering with USEARCH at an ID of %s" % id)
                 run_usearch(id)
                 os.system("cat *.usearch.out > all_sorted.txt")
-                #os.system("mv all_sorted.txt %s/joined" % dir_path)
                 os.system("mv all_sorted.txt %s" % fastadir)
                 os.chdir("%s" % fastadir)
-                #os.chdir("%s/joined" % dir_path)
                 uclust_cluster(id)
                 logging.logPrint("USEARCH clustering finished")
             else:
@@ -261,9 +258,7 @@ def main(directory,id,filter,processors,genes,cluster_method,blast,length,
             print "duplicate headers identified, exiting.."
             sys.exit()
         clusters = get_cluster_ids(gene_path)
-        #os.system("cp %s %s/joined/" % (gene_path,dir_path))
         os.system("cp %s %s" % (gene_path,fastadir))
-        #os.chdir("%s/joined" % dir_path)
         os.chdir("%s" % fastadir)
         if gene_path.endswith(".pep"):
             logging.logPrint("using tblastn on peptides")
@@ -307,6 +302,7 @@ def main(directory,id,filter,processors,genes,cluster_method,blast,length,
                     print "problem with blastn, exiting"
                     sys.exit()
                 subprocess.check_call("sort -u -k 1,1 tmp_blast.out > self_blast.out", shell=True)
+                os.system("cp self_blast.out tmp.out")
                 ref_scores=parse_self_blast(open("self_blast.out", "U"))
                 subprocess.check_call("rm tmp_blast.out self_blast.out", shell=True)
                 logging.logPrint("starting BLAST")
