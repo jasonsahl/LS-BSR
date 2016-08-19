@@ -819,18 +819,18 @@ def uclust_sort(usearch):
     subprocess.call(cmd,stdout=devnull,stderr=devnull)
     devnull.close()
 
-def process_pangenome(matrix, upper, lower, iterations, type):
+def process_pangenome(matrix, upper, lower, iterations, type, prefix):
     my_matrix = open(matrix, "U")
-    if type == "acc":
-        acc_outfile = open("accumulation_replicates.txt", "w")
-    elif type == "uni":
-        uni_outfile = open("uniques_replicates.txt", "w")
-    elif type == "core":
-        core_outfile = open("core_replicates.txt", "w")
+    if "acc" in type:
+        acc_outfile = open("%s_accumulation_replicates.txt" % prefix, "w")
+    elif "uni" in type:
+        uni_outfile = open("%s_uniques_replicates.txt" % prefix, "w")
+    elif "core" in type:
+        core_outfile = open("%s_core_replicates.txt" % prefix, "w")
     else:
-        acc_outfile = open("accumulation_replicates.txt", "w")
-        uni_outfile = open("uniques_replicates.txt", "w")
-        core_outfile = open("core_replicates.txt", "w")
+        acc_outfile = open("%s_accumulation_replicates.txt" % prefix, "w")
+        uni_outfile = open("%s_uniques_replicates.txt" % prefix, "w")
+        core_outfile = open("%s_core_replicates.txt" % prefix, "w")
     firstLine = my_matrix.readline()
     first_fields = firstLine.split()
     genomes = len(first_fields)

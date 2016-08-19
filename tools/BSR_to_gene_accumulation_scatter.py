@@ -27,12 +27,12 @@ def test_types(option, opt_str, value, parser):
         print "option not supported.  Only select acc, uni, or all"
         sys.exit()
 
-def main(matrix, upper, lower, iterations, type):
-    process_pangenome(matrix, upper, lower, iterations, type)
-            
+def main(matrix,upper,lower,iterations,type,prefix):
+    process_pangenome(matrix, upper, lower, iterations, type, prefix)
+
 if __name__ == "__main__":
     usage="usage: %prog [options]"
-    parser = OptionParser(usage=usage) 
+    parser = OptionParser(usage=usage)
     parser.add_option("-b", "--bsr_matrix", dest="matrix",
                       help="path to BSR matrix [REQUIRED]",
                       action="callback", callback=test_file, type="string")
@@ -48,14 +48,17 @@ if __name__ == "__main__":
     parser.add_option("-t", "--type", dest="type",
                       help="run accumulation (acc), uniques (uni), core(core), or all; defaults to all",
                       action="callback", callback=test_types, default="all", type="string")
-    
+    parser.add_option("-p", "--prefix", dest="prefix",
+                      help="prefix for naming output files [REQUIRED]",
+                      type="string", action="store")
+
     options, args = parser.parse_args()
-    
-    mandatories = ["matrix"]
+
+    mandatories = ["matrix","prefix"]
     for m in mandatories:
         if not options.__dict__[m]:
             print "\nMust provide %s.\n" %m
             parser.print_help()
             exit(-1)
 
-    main(options.matrix,options.upper,options.lower,options.iterations,options.type)
+    main(options.matrix,options.upper,options.lower,options.iterations,options.type,options.prefix)
