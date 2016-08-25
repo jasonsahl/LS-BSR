@@ -778,7 +778,7 @@ class Test22(unittest.TestCase):
         fp.write("stx2a   0.07\n")
         fp.write("junk    1.00\n")
         fp.close()
-        self.assertEqual(process_pangenome(fpath, "0.8", "0.4", 1, "all"), ([[2]], [[2]], [[2]]))
+        self.assertEqual(process_pangenome(fpath, "0.8", "0.4", 1, "all","random"), ([[2]], [[2]], [[2]]))
         shutil.rmtree(tdir)
         os.system("rm core_replicates.txt uniques_replicates.txt accumulation_replicates.txt")
     def test_process_pangenome_cores_only(self):
@@ -794,7 +794,7 @@ class Test22(unittest.TestCase):
         fp.write("stx2a   0.07\n")
         fp.write("junk    1.00\n")
         fp.close()
-        self.assertEqual(process_pangenome(fpath, "0.8", "0.4", 1, "core"), ([],[],[[2]]))
+        self.assertEqual(process_pangenome(fpath, "0.8", "0.4", 1, "core","random"), ([],[],[[2]]))
         shutil.rmtree(tdir)
         os.system("rm core_replicates.txt")
     def test_process_pangenome_unis_only(self):
@@ -810,7 +810,7 @@ class Test22(unittest.TestCase):
         fp.write("stx2a   0.07\n")
         fp.write("junk    1.00\n")
         fp.close()
-        self.assertEqual(process_pangenome(fpath, "0.8", "0.4", 1, "uni"), ([],[[2]],[]))
+        self.assertEqual(process_pangenome(fpath, "0.8", "0.4", 1, "uni","random"), ([],[[2]],[]))
         shutil.rmtree(tdir)
         os.system("rm uniques_replicates.txt")
     def test_process_pangenome_core_only(self):
@@ -826,7 +826,7 @@ class Test22(unittest.TestCase):
         fp.write("stx2a   0.07\n")
         fp.write("junk    1.00\n")
         fp.close()
-        self.assertEqual(process_pangenome(fpath, "0.8", "0.4", 1, "acc"), ([[2]],[],[]))
+        self.assertEqual(process_pangenome(fpath, "0.8", "0.4", 1, "acc", "random"), ([[2]],[],[]))
         shutil.rmtree(tdir)
         os.system("rm accumulation_replicates.txt")
     def test_process_pangenome_upper(self):
@@ -838,7 +838,7 @@ class Test22(unittest.TestCase):
         fp.write("IpaH3   0.89\n")
         fp.write("LT      0.00\n")
         fp.close()
-        self.assertEqual(process_pangenome(fpath, "0.9", "0.4", 1, "all"), ([[0]], [[0]], [[0]]))
+        self.assertEqual(process_pangenome(fpath, "0.9", "0.4", 1, "all", "random"), ([[0]], [[0]], [[0]]))
         shutil.rmtree(tdir)
         os.system("rm core_replicates.txt uniques_replicates.txt accumulation_replicates.txt")
     def test_process_pangenome_upper(self):
@@ -850,7 +850,7 @@ class Test22(unittest.TestCase):
         fp.write("IpaH3   0.91\n")
         fp.write("LT      0.41\n")
         fp.close()
-        self.assertEqual(process_pangenome(fpath, "0.9", "0.4", 1, "all"), ([[1]], [[1]], [[1]]))
+        self.assertEqual(process_pangenome(fpath, "0.9", "0.4", 1, "all", "random"), ([[1]], [[1]], [[1]]))
         shutil.rmtree(tdir)
         os.system("rm core_replicates.txt uniques_replicates.txt accumulation_replicates.txt")
 
