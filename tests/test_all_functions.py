@@ -852,7 +852,7 @@ class Test22(unittest.TestCase):
         fp.close()
         self.assertEqual(process_pangenome(fpath, "0.9", "0.4", 1, "all", "random"), ([[1]], [[1]], [[1]]))
         shutil.rmtree(tdir)
-        os.system("rm core_replicates.txt uniques_replicates.txt accumulation_replicates.txt")
+        os.system("rm random_core_replicates.txt random_uniques_replicates.txt random_accumulation_replicates.txt")
 
 class Test23(unittest.TestCase):
     def test_bsr_to_pangb_basic_function(self):
