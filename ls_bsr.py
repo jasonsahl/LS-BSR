@@ -121,8 +121,8 @@ def main(directory,id,filter,processors,genes,cluster_method,blast,length,
             print "citation: Edgar RC. 2010. Search and clustering orders of magnitude faster than BLAST. Bioinformatics 26:2460-2461"
         elif "cd-hit" in cluster_method:
             print "citation: Li, W., Godzik, A. 2006. Cd-hit: a fast program for clustering and comparing large sets of protein or nuceltodie sequences. Bioinformatics 22(13):1658-1659"
-        else:
-            pass
+        elif "vsearch" in cluster_method:
+            print "citation: Rognes, T., Flouri, T., Nichols, B., Qunice, C., Mahe, Frederic. 2016. VSEARCH: a versatile open source tool for metagenomics. PeerJ Preprints. DOI: https://doi.org/10.7287/peerj.preprints.2409v1"
         if blast=="blat":
             ac = subprocess.call(['which', 'blat'])
             if ac == 0:
