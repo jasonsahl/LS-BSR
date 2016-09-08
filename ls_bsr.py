@@ -165,7 +165,7 @@ def main(directory,id,filter,processors,genes,cluster_method,blast,length,
             ac = subprocess.call(['which', 'usearch'])
             if ac == 0:
                 os.system("mkdir split_files")
-                os.system("mv all_gene_seqs.out split_files/all_sorted.txt")
+                os.system("cp all_gene_seqs.out split_files/all_sorted.txt")
                 os.chdir("split_files/")
                 logging.logPrint("Splitting FASTA file for use with USEARCH")
                 split_files("all_sorted.txt")
