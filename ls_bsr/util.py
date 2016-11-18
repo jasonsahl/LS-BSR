@@ -402,7 +402,6 @@ def prune_matrix(matrix, group1, group2):
     in_matrix.close()
 
 def compare_values(pruned_1,pruned_2,upper,lower):
-    import numpy as np
     group1 = open(pruned_1, "U")
     group2 = open(pruned_2, "U")
     group1_out = open("group1_out.txt", "w")
@@ -412,29 +411,29 @@ def compare_values(pruned_1,pruned_2,upper,lower):
     group1_mean = [ ]
     next(group1)
     for line in group1:
-	fields = line.split()
-	presents = [ ]
-	homolog = [ ]
-	ints=map(float, fields[1:])
-	mean = float(np.mean(ints))
+    	fields = line.split()
+    	presents = [ ]
+    	homolog = [ ]
+    	ints=map(float, fields[1:])
+        mean = float(sum(ints)/len(ints))
         group1_mean.append(mean)
-	for x in ints:
-	    if float(x)>=float(upper): presents.append(x)
+        for x in ints:
+            if float(x)>=float(upper): presents.append(x)
             if float(x)>=float(upper): group1_presents.append(x)
-	    if float(x)>=float(lower): homolog.append(x)
-	print >> group1_out,str(fields[0])+"\t"+str(mean)+"\t"+str(len(presents))+"\t"+str(len(fields[1:]))+"\t"+str(len(homolog))
+    	    if float(x)>=float(lower): homolog.append(x)
+    	print >> group1_out,str(fields[0])+"\t"+str(mean)+"\t"+str(len(presents))+"\t"+str(len(fields[1:]))+"\t"+str(len(homolog))
     next(group2)
     for line in group2:
-	fields = line.split()
-	presents = [ ]
-	homolog = [ ]
-	ints=map(float, fields[1:])
-	mean = float(np.mean(ints))
-	for x in ints:
-	    if float(x)>=float(upper): presents.append(x)
+    	fields = line.split()
+    	presents = [ ]
+    	homolog = [ ]
+    	ints=map(float, fields[1:])
+        mean = float(sum(ints)/len(ints))
+    	for x in ints:
+    	    if float(x)>=float(upper): presents.append(x)
             if float(x)>=float(upper): group2_presents.append(x)
-	    if float(x)>=float(lower): homolog.append(x)
-	print >> group2_out,str(mean)+"\t"+str(len(presents))+"\t"+str(len(fields[1:]))+"\t"+str(len(homolog))
+    	    if float(x)>=float(lower): homolog.append(x)
+    	print >> group2_out,str(mean)+"\t"+str(len(presents))+"\t"+str(len(fields[1:]))+"\t"+str(len(homolog))
     return group1_presents, group2_presents, group1_mean
     group1.close()
     group2.close()

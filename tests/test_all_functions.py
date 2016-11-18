@@ -780,7 +780,7 @@ class Test22(unittest.TestCase):
         fp.close()
         self.assertEqual(process_pangenome(fpath, "0.8", "0.4", 1, "all","random"), ([[2]], [[2]], [[2]]))
         shutil.rmtree(tdir)
-        os.system("rm core_replicates.txt uniques_replicates.txt accumulation_replicates.txt")
+        #os.system("rm core_replicates.txt uniques_replicates.txt accumulation_replicates.txt")
     def test_process_pangenome_cores_only(self):
         """tests when you only run the cores"""
         tdir = tempfile.mkdtemp(prefix="filetest_",)
@@ -796,7 +796,7 @@ class Test22(unittest.TestCase):
         fp.close()
         self.assertEqual(process_pangenome(fpath, "0.8", "0.4", 1, "core","random"), ([],[],[[2]]))
         shutil.rmtree(tdir)
-        os.system("rm core_replicates.txt")
+        #os.system("rm core_replicates.txt")
     def test_process_pangenome_unis_only(self):
         """tests when you only want the uniques"""
         tdir = tempfile.mkdtemp(prefix="filetest_",)
@@ -812,7 +812,7 @@ class Test22(unittest.TestCase):
         fp.close()
         self.assertEqual(process_pangenome(fpath, "0.8", "0.4", 1, "uni","random"), ([],[[2]],[]))
         shutil.rmtree(tdir)
-        os.system("rm uniques_replicates.txt")
+        #os.system("rm uniques_replicates.txt")
     def test_process_pangenome_core_only(self):
         """tests when you only want the accums"""
         tdir = tempfile.mkdtemp(prefix="filetest_",)
@@ -828,7 +828,7 @@ class Test22(unittest.TestCase):
         fp.close()
         self.assertEqual(process_pangenome(fpath, "0.8", "0.4", 1, "acc", "random"), ([[2]],[],[]))
         shutil.rmtree(tdir)
-        os.system("rm accumulation_replicates.txt")
+        #os.system("rm accumulation_replicates.txt")
     def test_process_pangenome_upper(self):
         """tests when you only want the accums"""
         tdir = tempfile.mkdtemp(prefix="filetest_",)
@@ -840,7 +840,7 @@ class Test22(unittest.TestCase):
         fp.close()
         self.assertEqual(process_pangenome(fpath, "0.9", "0.4", 1, "all", "random"), ([[0]], [[0]], [[0]]))
         shutil.rmtree(tdir)
-        os.system("rm core_replicates.txt uniques_replicates.txt accumulation_replicates.txt")
+        #os.system("rm core_replicates.txt uniques_replicates.txt accumulation_replicates.txt")
     def test_process_pangenome_upper(self):
         """tests when you only want the accums"""
         tdir = tempfile.mkdtemp(prefix="filetest_",)
@@ -852,7 +852,7 @@ class Test22(unittest.TestCase):
         fp.close()
         self.assertEqual(process_pangenome(fpath, "0.9", "0.4", 1, "all", "random"), ([[1]], [[1]], [[1]]))
         shutil.rmtree(tdir)
-        os.system("rm random_core_replicates.txt random_uniques_replicates.txt random_accumulation_replicates.txt")
+        #os.system("rm random_core_replicates.txt random_uniques_replicates.txt random_accumulation_replicates.txt")
 
 class Test23(unittest.TestCase):
     def test_bsr_to_pangb_basic_function(self):
