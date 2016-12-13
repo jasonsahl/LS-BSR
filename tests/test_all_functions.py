@@ -24,7 +24,7 @@ class Test1(unittest.TestCase):
         self.assertEqual(get_seq_name("\wrong\way"), "\\wrong\\way")
 
 class Test2(unittest.TestCase):
-    def test_translate_consensus_basic_function(self):
+    def test_translate_genes_basic_function(self):
         """tests standard functionality of the translate_consensus function"""
         tdir = tempfile.mkdtemp(prefix="filetest_",)
         fpath = os.path.join(tdir,"testfile")
@@ -32,10 +32,10 @@ class Test2(unittest.TestCase):
         fp.write(">Cluster0\n")
         fp.write("ATGACGAGCTTTCCG")
         fp.close()
-        self.assertEqual(translate_consensus(fpath), 'MTSFP')
+        self.assertEqual(translate_genes(fpath,"tmp.pep",0), 'MTSFP')
         shutil.rmtree(tdir)
         os.system("rm tmp.pep")
-    def test_translate_consensus_premature_stop(self):
+    def test_translate_genes_premature_stop(self):
         """tests the case of a difference seqeunce.  Also, tests
         wheter a stop codon will be recognized and excluded"""
         tdir = tempfile.mkdtemp(prefix="filetest_",)
@@ -44,10 +44,10 @@ class Test2(unittest.TestCase):
         fp.write(">Cluster0\n")
         fp.write("ATGAATCACTACTAA")
         fp.close()
-        self.assertEqual(translate_consensus(fpath), 'MNHY')
+        self.assertEqual(translate_genes(fpath,"tmp.pep",0), 'MNHY')
         shutil.rmtree(tdir)
         os.system("rm tmp.pep")
-    def test_translate_consensus_integer(self):
+    def test_translate_genes_integer(self):
         """Tests the condition of having an integer, instead
         of sequence.  This should make the script throw a typeerror"""
         tdir = tempfile.mkdtemp(prefix="filetest_",)
@@ -56,10 +56,10 @@ class Test2(unittest.TestCase):
         fp.write(">Cluster1\n")
         fp.write("AT1CGAGCTTTCCG")
         fp.close()
-        self.assertRaises(TypeError, translate_consensus, fpath)
+        self.assertRaises(TypeError, translate_genes, fpath, "tmp.pep", 0)
         shutil.rmtree(tdir)
         os.system("rm tmp.pep")
-    def test_translate_consensus_empty_sequence(self):
+    def test_translate_genes_empty_sequence(self):
         """Tests the condition where no sequence is present"""
         tdir = tempfile.mkdtemp(prefix="filetest_",)
         fpath = os.path.join(tdir,"testfile")
@@ -67,7 +67,7 @@ class Test2(unittest.TestCase):
         fp.write(">Cluster1\n")
         fp.write("")
         fp.close()
-        self.assertEqual(translate_consensus(fpath), '')
+        self.assertEqual(translate_genes(fpath,"tmp.pep",0), '')
         shutil.rmtree(tdir)
         os.system("rm tmp.pep")
 
@@ -257,7 +257,7 @@ class Test9(unittest.TestCase):
         fp.write(">gi|22123922|ref|NC_004088.1|_1575\n")
         fp.write("ATGAAGCTAAATATCAAAGTTAATTGTTCTTATATCTGTGAACCCATACGTAAGCAA")
         fp.close()
-        self.assertEqual(translate_genes(fpath), 'MNPHLTEHPPVGDIDALLQDTWLQVISLRQGVTCAEGEGQAFWQRCVADIERVHQALKDAGHSEQSCQHIRYAQCALLDE')
+        self.assertEqual(translate_genes(fpath,"genes.pep",0), 'MNPHLTEHPPVGDIDALLQDTWLQVISLRQGVTCAEGEGQAFWQRCVADIERVHQALKDAGHSEQSCQHIRYAQCALLDE')
         os.system("rm genes.pep")
         shutil.rmtree(tdir)
     def test_translate_genes_out_of_frame(self):
@@ -266,8 +266,9 @@ class Test9(unittest.TestCase):
         fpath = os.path.join(tdir,"testfile.filtered")
         fp = open(fpath, "w")
         fp.write(">gi|22123922|ref|NC_004088.1|_3285\n")
-        fp.write("CTCATCCAGCAGTGCACATTGGGCGTATCGGATGTGCTGGCAACTCTGCTCGCTGTGACCGGCGTCTTTCAGCGCCTGATGGACACGTTCAATGTCCGCCACACAGCGCTGCCAGAATGCCTGCCCTTCGCCCTCGGCACAGGTTACCCCTTGACGCAGGCTGATCACCTGTAGCCAGGTGTCCTGCAACAGGGCGTCAATATCCCCGACTGGGGGGTGTTCGGTTAGGTGAGGATTCAT")
-        self.assertEqual(translate_genes(fpath), [])
+        fp.write("CTCATCCAGCAGTGCACATTGGGCGTATCGGATGTGCTGGCAACTCTGCTCGCTGTGACCGGCGTCTTTCAGCGCCTGATGGACACGTTCAATGTCCGCCACACAGCGCTGCCAGAATGCCTGCCCTTCGCCCTCGGCACAGGTTACCCCTTGACGCAGGCTGATCACCTGTAGCCAGGTGTCCTGCAACAGGGCGTCAATATCCCCGACTGGGGGGTGTTCGGTTAGGTGAGGATTCAT\n")
+        fp.close()
+        self.assertEqual(translate_genes(fpath,"genes.pep",0), "LIQQCTLGVSDVLATLLAVTGVFQRLMDTFNVRHTALPECLPFALGTGYPLTQADHL")
         os.system("rm genes.pep")
         shutil.rmtree(tdir)
     def test_translate_genes_odd_characters(self):
@@ -278,18 +279,7 @@ class Test9(unittest.TestCase):
         fp.write(">gi|22123922|ref|NC_004088.1|_3285\n")
         fp.write("1234567890")
         fp.close()
-        self.assertRaises(TypeError, translate_genes, fpath)
-        os.system("rm genes.pep")
-        shutil.rmtree(tdir)
-    def test_translate_genes_non_fasta(self):
-        """tests the condition where the file is not fasta.  Will
-        not throw an error, but will report an empty set"""
-        tdir = tempfile.mkdtemp(prefix="filetest_",)
-        fpath = os.path.join(tdir,"testfile.filtered")
-        fp = open(fpath, "w")
-        fp.write("not a fasta file")
-        fp.close()
-        self.assertEqual(translate_genes(fpath), [])
+        self.assertRaises(TypeError, translate_genes, fpath, "genes.pep", 0)
         os.system("rm genes.pep")
         shutil.rmtree(tdir)
 
@@ -656,7 +646,7 @@ class Test19(unittest.TestCase):
         fp.write("Cluster2	Cluster2	100.00	15	0	0	1	15	1	15	1e-07	60.6")
         fp.close()
         #self.assertEqual(find_dups({'Cluster0': '500', 'Cluster1': '40.5', 'Cluster2': '60.6'}, 0.7, 0.85, 75), (['Cluster0'], {'Cluster0': ['500', '420'], 'Cluster1': ['40.5', '40.5']}))
-        self.assertEqual(find_dups({'Cluster0': '500', 'Cluster1': '40.5', 'Cluster2': '60.6'}, 0.7, 0.85, 75, ('Cluster1','Cluster0','Cluster2')), (['Cluster0'], {'Cluster0': ['500', '420'], 'Cluster1': ['40.5', '40.5']}))
+        self.assertEqual(find_dups_dev({'Cluster0': '500', 'Cluster1': '40.5', 'Cluster2': '60.6'}, 0.7, 0.85, 75, ('Cluster1','Cluster0','Cluster2'),2), (['Cluster0'], {'Cluster0': ['500', '420'], 'Cluster1': ['40.5', '40.5']}))
         os.chdir("%s" % curr_dir)
         shutil.rmtree(tdir)
     def test_find_dups_multiple_dups(self):
@@ -672,7 +662,7 @@ class Test19(unittest.TestCase):
         fp.write("Cluster1	Cluster1	100.00	15	0	0	1	15	1	15	1e-07	40.5\n")
         fp.write("Cluster2	Cluster2	100.00	15	0	0	1	15	1	15	1e-07	60.6")
         fp.close()
-        self.assertEqual(find_dups({'Cluster0': '500', 'Cluster1': '40.5', 'Cluster2': '60.6'}, 0.7, 0.85, 75, ('Cluster1','Cluster0','Cluster2')), (['Cluster0'], {'Cluster0': ['500', '420', '430'], 'Cluster1': ['40.5', '40.5']}))
+        self.assertEqual(find_dups_dev({'Cluster0': '500', 'Cluster1': '40.5', 'Cluster2': '60.6'}, 0.7, 0.85, 75, ('Cluster1','Cluster0','Cluster2'),2), (['Cluster0'], {'Cluster0': ['500', '420', '430'], 'Cluster1': ['40.5', '40.5']}))
         os.chdir("%s" % curr_dir)
         shutil.rmtree(tdir)
     def test_find_dups_bad_input(self):
@@ -687,7 +677,7 @@ class Test19(unittest.TestCase):
         fp.write("Cluster0      ClusterY         82.00  15      0       0       1       11      0       10      1e-01   430\n")
         fp.write("Cluster1	Cluster1	100.00	15	0	0	1	15	1	15	1e-07")
         fp.close()
-        self.assertRaises(TypeError, find_dups, 0.7, 0.85, 75)
+        self.assertRaises(TypeError, find_dups_dev, 0.7, 0.85, 75, 2)
         os.chdir("%s" % curr_dir)
         shutil.rmtree(tdir)
 
@@ -852,7 +842,7 @@ class Test22(unittest.TestCase):
         fp.close()
         self.assertEqual(process_pangenome(fpath, "0.9", "0.4", 1, "all", "random"), ([[1]], [[1]], [[1]]))
         shutil.rmtree(tdir)
-        #os.system("rm random_core_replicates.txt random_uniques_replicates.txt random_accumulation_replicates.txt")
+        os.system("rm random_core_replicates.txt random_uniques_replicates.txt random_accumulation_replicates.txt")
 
 class Test23(unittest.TestCase):
     def test_bsr_to_pangb_basic_function(self):
