@@ -3,6 +3,7 @@
 """removes conserve ORFs, so we are only looking at
 the variable region of the pan-genome"""
 
+from __future__ import print_function
 from optparse import OptionParser
 from ls_bsr.util import filter_variome
 import sys
@@ -12,7 +13,7 @@ def test_file(option, opt_str, value, parser):
     try:
         with open(value): setattr(parser.values, option.dest, value)
     except IOError:
-        print '%s file cannot be opened' % option
+        print('%s file cannot be opened' % option)
         sys.exit()
 
 def main(matrix, threshold, step):
@@ -36,7 +37,7 @@ if __name__ == "__main__":
     mandatories = ["matrix"]
     for m in mandatories:
         if not options.__dict__[m]:
-            print "\nMust provide %s.\n" %m
+            print("\nMust provide %s.\n" %m)
             parser.print_help()
             exit(-1)
 

@@ -1,5 +1,8 @@
 # Parallel implementations of various functions
-import Queue
+try:
+    import Queue
+except:
+    import queue
 
 from igs.threading import threads
 from time import sleep
@@ -19,8 +22,8 @@ def pmap(f, iterable, num_workers=1):
             except KeyboardInterrupt:
                 work_queue = Queue.Queue()
                 break
-                
-        
+
+
     # We want to ensure the order is the same
     # on the output string so we index each value
     # so we can reconstruct it
@@ -48,10 +51,5 @@ def pmap(f, iterable, num_workers=1):
 
     for th in worker_threads:
         th.join()
-    
+
     return [v for _, v in result]
-
-
-
-
-    

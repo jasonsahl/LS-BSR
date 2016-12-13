@@ -3,6 +3,7 @@
 """Sub-samples a LS-BSR matrix
 and creates data that can generate
 a scatterplot in Excel"""
+from __future__ import print_function
 from optparse import OptionParser
 import sys
 from ls_bsr.util import process_pangenome
@@ -11,7 +12,7 @@ def test_file(option, opt_str, value, parser):
     try:
         with open(value): setattr(parser.values, option.dest, value)
     except IOError:
-        print '%s file cannot be opened' % option
+        print('%s file cannot be opened' % option)
         sys.exit()
 
 def test_types(option, opt_str, value, parser):
@@ -24,7 +25,7 @@ def test_types(option, opt_str, value, parser):
     elif "all" in value:
         setattr(parser.values, option.dest, value)
     else:
-        print "option not supported.  Only select acc, uni, or all"
+        print("option not supported.  Only select acc, uni, or all")
         sys.exit()
 
 def main(matrix,upper,lower,iterations,type,prefix):
@@ -57,7 +58,7 @@ if __name__ == "__main__":
     mandatories = ["matrix","prefix"]
     for m in mandatories:
         if not options.__dict__[m]:
-            print "\nMust provide %s.\n" %m
+            print("\nMust provide %s.\n" %m)
             parser.print_help()
             exit(-1)
 

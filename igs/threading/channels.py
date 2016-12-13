@@ -1,11 +1,14 @@
 ##
 # Channels provide a means of communicatin between threads
-from Queue import Queue
+try:
+    from Queue import Queue
+except:
+    import queue as queue
 
 class Channel:
     """
-    A channel is a unidirectional form of communication between threads.  
-    
+    A channel is a unidirectional form of communication between threads.
+
     A channel allows for the following actions:
 
     send - Send an object over the channel
@@ -19,7 +22,7 @@ class Channel:
 
 
     """
-    
+
     def __init__(self):
         self.queue = Queue()
 
@@ -33,21 +36,21 @@ class Channel:
     def sendError(self, err):
         """Send an error"""
         self.queue.put_nowait((False, err))
-        
+
     def sendWithChannel(self, obj):
         """Send 'obj' as well as a new channel through this channel and return the new channel"""
         ch = Channel()
         self.send((obj, ch))
         return ch
 
-        
+
     def receive(self, timeout=None):
         """
         Receive an object from the channel.  Blocks unless a timeout is specified.  Give a timeout of 0 to poll
         """
 
         block = True
-        
+
         ok, item = self.queue.get(block, timeout)
         self.queue.task_done()
         if not ok:

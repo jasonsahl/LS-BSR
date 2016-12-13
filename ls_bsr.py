@@ -6,7 +6,7 @@ in a set of genomes in fasta format.
 written by Jason Sahl
 contacted at jasonsahl@gmail.com
 """
-
+from __future__ import print_function
 import sys
 import os
 import optparse
@@ -23,7 +23,7 @@ def test_file(option, opt_str, value, parser):
     try:
         with open(value): setattr(parser.values, option.dest, value)
     except IOError:
-        print '%s file cannot be opened' % option
+        print('%s file cannot be opened' % option)
         sys.exit()
 
 def test_filter(option, opt_str, value, parser):
@@ -32,7 +32,7 @@ def test_filter(option, opt_str, value, parser):
     elif "T" in value:
         setattr(parser.values, option.dest, value)
     else:
-        print "option not supported.  Only select from T and F"
+        print("option not supported.  Only select from T and F")
         sys.exit()
 
 def test_cluster(option, opt_str, value, parser):
@@ -43,7 +43,7 @@ def test_cluster(option, opt_str, value, parser):
     elif "cd-hit" in value:
         setattr(parser.values, option.dest, value)
     else:
-        print "option not supported. Choose from vsearch, usearch, cd-hit"
+        print("option not supported. Choose from vsearch, usearch, cd-hit")
         sys.exit()
 
 def test_blast(option, opt_str, value, parser):
@@ -56,14 +56,14 @@ def test_blast(option, opt_str, value, parser):
     elif "blastall" in value:
         setattr(parser.values, option.dest, value)
     else:
-        print "Blast option not supported.  Only select from tblastn, blat, or blastn"
+        print("Blast option not supported.  Only select from tblastn, blat, or blastn")
         sys.exit()
 
 def test_dir(option, opt_str, value, parser):
     if os.path.exists(value):
         setattr(parser.values, option.dest, value)
     else:
-        print "directory of fastas cannot be found"
+        print("directory of fastas cannot be found")
         sys.exit()
 
 def test_id(option, opt_str, value, parser):
@@ -72,7 +72,7 @@ def test_id(option, opt_str, value, parser):
     elif type(value) == types.FloatType:
         setattr(parser.values, option.dest, value)
     else:
-        print "id value needs to be a float"
+        print("id value needs to be a float")
         sys.exit()
 
 def test_fplog(option, opt_str, value, parser):
@@ -81,11 +81,11 @@ def test_fplog(option, opt_str, value, parser):
     elif "T" in value:
         setattr(parser.values, option.dest, value)
     else:
-        print "select from T or F for f_plog setting"
+        print("select from T or F for f_plog setting")
         sys.exit()
 
 def main(directory,id,filter,processors,genes,cluster_method,blast,length,
-         max_plog,min_hlog,f_plog,keep,filter_peps,filter_scaffolds,prefix,temp_dir,debug):
+         max_plog,min_hlog,f_plog,keep,filter_peps,filter_scaffolds,prefix,temp_dir,min_pep_length,debug):
     start_dir = os.getcwd()
     ap=os.path.abspath("%s" % start_dir)
     dir_path=os.path.abspath("%s" % directory)
@@ -93,16 +93,16 @@ def main(directory,id,filter,processors,genes,cluster_method,blast,length,
     if blast=="blastn" or blast=="tblastn":
         ab = subprocess.call(['which', 'blastn'])
         if ab == 0:
-            print "citation: Altschul SF, Madden TL, Schaffer AA, Zhang J, Zhang Z, Miller W, and Lipman DJ. 1997. Gapped BLAST and PSI-BLAST: a new generation of protein database search programs. Nucleic Acids Res 25:3389-3402"
+            print("citation: Altschul SF, Madden TL, Schaffer AA, Zhang J, Zhang Z, Miller W, and Lipman DJ. 1997. Gapped BLAST and PSI-BLAST: a new generation of protein database search programs. Nucleic Acids Res 25:3389-3402")
         else:
-            print "blastn isn't in your path, but needs to be!"
+            print("blastn isn't in your path, but needs to be!")
             sys.exit()
     if "NULL" in temp_dir:
         fastadir = tempfile.mkdtemp()
     else:
         fastadir = os.path.abspath("%s" % temp_dir)
         if os.path.exists('%s' % temp_dir):
-            print "old run directory exists in your genomes directory (%s).  Delete and run again" % temp_dir
+            print("old run directory exists in your genomes directory (%s).  Delete and run again" % temp_dir)
             sys.exit()
         else:
             os.makedirs('%s' % temp_dir)
@@ -114,24 +114,25 @@ def main(directory,id,filter,processors,genes,cluster_method,blast,length,
         if rc == 0:
             pass
         else:
-            print "prodigal is not in your path, but needs to be!"
+            print("prodigal is not in your path, but needs to be!")
             sys.exit()
-        print "citation: Hyatt D, Chen GL, Locascio PF, Land ML, Larimer FW, and Hauser LJ. 2010. Prodigal: prokaryotic gene recognition and translation initiation site identification. BMC Bioinformatics 11:119"
+        print("citation: Hyatt D, Chen GL, Locascio PF, Land ML, Larimer FW, and Hauser LJ. 2010. Prodigal: prokaryotic gene recognition and translation initiation site identification. BMC Bioinformatics 11:119")
         if "usearch" in cluster_method:
-            print "citation: Edgar RC. 2010. Search and clustering orders of magnitude faster than BLAST. Bioinformatics 26:2460-2461"
+            print("citation: Edgar RC. 2010. Search and clustering orders of magnitude faster than BLAST. Bioinformatics 26:2460-2461")
         elif "cd-hit" in cluster_method:
-            print "citation: Li, W., Godzik, A. 2006. Cd-hit: a fast program for clustering and comparing large sets of protein or nuceltodie sequences. Bioinformatics 22(13):1658-1659"
+            print("citation: Li, W., Godzik, A. 2006. Cd-hit: a fast program for clustering and comparing large sets of protein or nuceltodie sequences. Bioinformatics 22(13):1658-1659")
         elif "vsearch" in cluster_method:
-            print "citation: Rognes, T., Flouri, T., Nichols, B., Qunice, C., Mahe, Frederic. 2016. VSEARCH: a versatile open source tool for metagenomics. PeerJ Preprints. DOI: https://doi.org/10.7287/peerj.preprints.2409v1"
+            print("citation: Rognes, T., Flouri, T., Nichols, B., Qunice, C., Mahe, Frederic. 2016. VSEARCH: a versatile open source tool for metagenomics. PeerJ Preprints. DOI: https://doi.org/10.7287/peerj.preprints.2409v1")
         if blast=="blat":
             ac = subprocess.call(['which', 'blat'])
             if ac == 0:
-                print "citation: W.James Kent. 2002. BLAT - The BLAST-Like Alignment Tool.  Genome Research 12:656-664"
+                print("citation: W.James Kent. 2002. BLAT - The BLAST-Like Alignment Tool.  Genome Research 12:656-664")
             else:
-                print "You have requested blat, but it is not in your PATH"
+                print("You have requested blat, but it is not in your PATH")
                 sys.exit()
         logging.logPrint("predicting genes with Prodigal")
         predict_genes(fastadir, processors)
+        #predict_genes_dev(fastadir, processors)
         logging.logPrint("Prodigal done")
         """This function produces locus tags"""
         genbank_hits = process_genbank_files(dir_path)
@@ -159,7 +160,7 @@ def main(directory,id,filter,processors,genes,cluster_method,blast,length,
                 reduced_hit = hit.replace(".gbk","")
                 SeqIO.convert("%s/%s" % (dir_path, hit), "genbank", "%s.fasta.new" % reduced_hit, "fasta")
         if "NULL" in cluster_method:
-            print "Clustering chosen, but no method selected...exiting"
+            print("Clustering chosen, but no method selected...exiting")
             sys.exit()
         elif "usearch" in cluster_method:
             ac = subprocess.call(['which', 'usearch'])
@@ -177,7 +178,7 @@ def main(directory,id,filter,processors,genes,cluster_method,blast,length,
                 uclust_cluster(id)
                 logging.logPrint("USEARCH clustering finished")
             else:
-                print "usearch must be in your path as usearch...exiting"
+                print("usearch must be in your path as usearch...exiting")
                 sys.exit()
         elif "vsearch" in cluster_method:
             ac = subprocess.call(['which', 'vsearch'])
@@ -187,7 +188,7 @@ def main(directory,id,filter,processors,genes,cluster_method,blast,length,
                 os.system("mv vsearch.out consensus.fasta")
                 logging.logPrint("VSEARCH clustering finished")
             else:
-                print "vsearch must be in your path as vsearch...exiting"
+                print("vsearch must be in your path as vsearch...exiting")
                 sys.exit()
         elif "cd-hit" in cluster_method:
             ac = subprocess.call(['which', 'cd-hit-est'])
@@ -195,21 +196,21 @@ def main(directory,id,filter,processors,genes,cluster_method,blast,length,
                 logging.logPrint("clustering with cd-hit at an ID of %s, using %s processors" % (id,processors))
                 subprocess.check_call("cd-hit-est -i all_gene_seqs.out -o consensus.fasta -M 0 -T %s -c %s > /dev/null 2>&1" % (processors, id), shell=True)
             else:
-                print "cd-hit must be in your path as cd-hit-est...exiting"
+                print("cd-hit must be in your path as cd-hit-est...exiting")
                 sys.exit()
         """need to check for dups here"""
         dup_ids = test_duplicate_header_ids("consensus.fasta")
         if dup_ids == "True":
             pass
         elif dup_ids == "False":
-            print "duplicate headers identified, renaming.."
+            print("duplicate headers identified, renaming..")
             rename_fasta_header("consensus.fasta", "tmp.txt")
             os.system("mv tmp.txt consensus.fasta")
         else:
             pass
         if "tblastn" == blast:
             subprocess.check_call("makeblastdb -in consensus.fasta -dbtype nucl > /dev/null 2>&1", shell=True)
-            translate_consensus("consensus.fasta")
+            translate_genes("consensus.fasta","tmp.pep",min_pep_length)
             if filter_peps == "T":
                 filter_seqs("tmp.pep")
                 os.system("rm tmp.pep")
@@ -246,7 +247,7 @@ def main(directory,id,filter,processors,genes,cluster_method,blast,length,
         logging.logPrint("Using pre-compiled set of predicted genes")
         files = glob.glob(os.path.join(dir_path, "*.fasta"))
         if len(files)==0:
-            print "no usable reference genomes found!"
+            print("no usable reference genomes found!")
             sys.exit()
         else:
             pass
@@ -255,7 +256,7 @@ def main(directory,id,filter,processors,genes,cluster_method,blast,length,
         if dup_ids == "True":
             pass
         elif dup_ids == "False":
-            print "duplicate headers identified, exiting.."
+            print("duplicate headers identified, exiting..")
             sys.exit()
         clusters = get_cluster_ids(gene_path)
         os.system("cp %s %s" % (gene_path,fastadir))
@@ -276,16 +277,13 @@ def main(directory,id,filter,processors,genes,cluster_method,blast,length,
         elif gene_path.endswith(".fasta"):
             if "tblastn" == blast:
                 logging.logPrint("using tblastn")
-                translate_genes(gene_path)
+                translate_genes(gene_path,"genes.pep",min_pep_length)
                 try:
                     subprocess.check_call("makeblastdb -in %s -dbtype nucl > /dev/null 2>&1" % gene_path, shell=True)
                 except:
                     logging.logPrint("problem encountered with BLAST database")
                     sys.exit()
                 blast_against_self_tblastn("tblastn", gene_path, "genes.pep", "tmp_blast.out", processors, filter)
-                subprocess.check_call("sort -u -k 1,1 tmp_blast.out > self_blast.out", shell=True)
-                ref_scores=parse_self_blast(open("self_blast.out", "U"))
-                subprocess.check_call("rm tmp_blast.out self_blast.out", shell=True)
                 logging.logPrint("starting BLAST")
                 blast_against_each_genome_tblastn(dir_path, processors, "genes.pep", filter)
                 os.system("cp genes.pep %s" % start_dir)
@@ -299,31 +297,30 @@ def main(directory,id,filter,processors,genes,cluster_method,blast,length,
                 try:
                     blast_against_self_blastn("blastn", gene_path, gene_path, "tmp_blast.out", filter, processors)
                 except:
-                    print "problem with blastn, exiting"
+                    print("problem with blastn, exiting")
                     sys.exit()
-                subprocess.check_call("sort -u -k 1,1 tmp_blast.out > self_blast.out", shell=True)
-                os.system("cp self_blast.out tmp.out")
-                ref_scores=parse_self_blast(open("self_blast.out", "U"))
-                subprocess.check_call("rm tmp_blast.out self_blast.out", shell=True)
                 logging.logPrint("starting BLAST")
                 try:
                     blast_against_each_genome_blastn(dir_path, processors, filter, gene_path)
                 except:
-                    print "problem with blastn, exiting"
+                    print("problem with blastn, exiting")
                     sys.exit()
             elif "blat" == blast:
                 logging.logPrint("using blat")
                 blat_against_self(gene_path, gene_path, "tmp_blast.out", processors)
-                subprocess.check_call("sort -u -k 1,1 tmp_blast.out > self_blast.out", shell=True)
-                ref_scores=parse_self_blast(open("self_blast.out", "U"))
-                subprocess.check_call("rm tmp_blast.out self_blast.out", shell=True)
                 logging.logPrint("starting BLAT")
                 blat_against_each_genome(dir_path,gene_path,processors)
             else:
                 pass
         else:
-            print "input file format not supported"
+            print("input file format not supported")
             sys.exit()
+            """testing to see if I can remove some redundancy"""
+        subprocess.check_call("sort -u -k 1,1 tmp_blast.out > self_blast.out", shell=True)
+        os.system("cp self_blast.out tmp.out")
+        ref_scores=parse_self_blast(open("self_blast.out", "U"))
+        subprocess.check_call("rm tmp_blast.out self_blast.out", shell=True)
+        """testing block complete"""
     find_dups_dev(ref_scores, length, max_plog, min_hlog, clusters, processors)
     if blast=="blat":
         logging.logPrint("BLAT done")
@@ -352,7 +349,7 @@ def main(directory,id,filter,processors,genes,cluster_method,blast,length,
         open("ref.list", "a").write("%s\n" % x)
     names_out = open("names.txt", "w")
     names_redux = [val for subl in new_names for val in subl]
-    for x in names_redux: print >> names_out, "".join(x)
+    for x in names_redux: names_out.write("".join(x)+"\n")
     names_out.close()
     create_bsr_matrix_dev(new_table_list)
     divide_values("bsr_matrix", ref_scores)
@@ -363,7 +360,7 @@ def main(directory,id,filter,processors,genes,cluster_method,blast,length,
     else:
         pass
     try:
-        subprocess.check_call("cp dup_matrix.txt names.txt consensus.pep consensus.fasta duplicate_ids.txt paralog_ids.txt %s" % ap, shell=True, stderr=open(os.devnull, 'w'))
+        subprocess.check_call("cp dup_matrix.txt names.txt consensus.pep duplicate_ids.txt consensus.fasta paralog_ids.txt %s" % ap, shell=True, stderr=open(os.devnull, 'w'))
     except:
         sys.exc_clear()
     """new code to rename files according to a prefix"""
@@ -395,23 +392,23 @@ def main(directory,id,filter,processors,genes,cluster_method,blast,length,
         outfile = open("%s_run_parameters.txt" % "".join(rename), "w")
     else:
         outfile = open("%s_run_parameters.txt" % prefix, "w")
-    print >> outfile, "-d %s \\" % directory
-    print >> outfile, "-i %s \\" % id
-    print >> outfile, "-f %s \\" % filter
-    print >> outfile, "-p %s \\" % processors
-    print >> outfile, "-g %s \\" % genes
-    print >> outfile, "-c %s \\" % cluster_method
-    print >> outfile, "-b %s \\" % blast
-    print >> outfile, "-l %s \\" % length
-    print >> outfile, "-m %s \\" % max_plog
-    print >> outfile, "-n %s \\" % min_hlog
-    print >> outfile, "-t %s \\" % f_plog
-    print >> outfile, "-k %s \\" % keep
-    print >> outfile, "-s %s \\" % filter_peps
-    print >> outfile, "-e %s \\" % filter_scaffolds
-    print >> outfile, "-x %s \\" % prefix
-    print >> outfile, "-z %s" % debug
-    print >> outfile, "temp data stored here if kept: %s" % fastadir
+    outfile.write("-d %s \\\n" % directory)
+    outfile.write("-i %s \\\n" % id)
+    outfile.write("-f %s \\\n" % filter)
+    outfile.write("-p %s \\\n" % processors)
+    outfile.write("-g %s \\\n" % genes)
+    outfile.write("-c %s \\\n" % cluster_method)
+    outfile.write("-b %s \\\n" % blast)
+    outfile.write("-l %s \\\n" % length)
+    outfile.write("-m %s \\\n" % max_plog)
+    outfile.write("-n %s \\\n" % min_hlog)
+    outfile.write("-t %s \\\n" % f_plog)
+    outfile.write("-k %s \\\n" % keep)
+    outfile.write("-s %s \\\n" % filter_peps)
+    outfile.write("-e %s \\\n" % filter_scaffolds)
+    outfile.write("-x %s \\\n" % prefix)
+    outfile.write("-z %s\n" % debug)
+    outfile.write("temp data stored here if kept: %s" % fastadir)
     outfile.close()
     logging.logPrint("all Done")
     if "T" == keep:
@@ -471,6 +468,9 @@ if __name__ == "__main__":
     parser.add_option("-y", "--temp_dir", dest="temp_dir", action="store",
                       help="full path to desired temp directory location, defaults to python tempdir",
                       default="NULL", type="string")
+    parser.add_option("-a", "--min_pep_length", dest="min_pep_length", action="store",
+                      help="minimum peptide length to keep, defaults to 33",
+                      default="33", type="int")
     parser.add_option("-z", "--debug", dest="debug", action="callback",
                       help="turn debug on?  Defaults to F",
                       default="F", callback=test_filter, type="string")
@@ -479,10 +479,10 @@ if __name__ == "__main__":
     mandatories = ["directory"]
     for m in mandatories:
         if not getattr(options, m, None):
-            print "\nMust provide %s.\n" %m
+            print("\nMust provide %s.\n" %m)
             parser.print_help()
             exit(-1)
 
     main(options.directory,options.id,options.filter,options.processors,options.genes,options.cluster_method,options.blast,
          options.length,options.max_plog,options.min_hlog,options.f_plog,options.keep,options.filter_peps,
-         options.filter_scaffolds,options.prefix,options.temp_dir,options.debug)
+         options.filter_scaffolds,options.prefix,options.temp_dir,options.min_pep_length,options.debug)

@@ -3,6 +3,7 @@
 """splits a reference sequence into chunks of N size,
 with a provided step size"""
 
+from __future__ import division
 import itertools
 from Bio import SeqIO
 import os
@@ -13,7 +14,7 @@ def test_file(option, opt_str, value, parser):
     try:
         with open(value): setattr(parser.values, option.dest, value)
     except IOError:
-        print '%s cannot be opened' % option
+        print('%s cannot be opened' % option)
         sys.exit()
 
 class Increments:
@@ -45,7 +46,7 @@ def write_sequences(reads,name):
     """write shredded fasta sequences to disk"""
     handle = open("%s_seqs_shredded.txt" % name, "w")
     for read in reads:
-        print >> handle, ">%s_%d\n%s" % (name, record_count_1.next(), read)
+        handle.write(">%s_%d\n%s\n" % (name, record_count_1.next(), read))
     handle.close()
 
 def sliding_window(sequence, frag_length, step_size=5):
@@ -77,7 +78,7 @@ if __name__ == "__main__":
     mandatories = ["reference"]
     for m in mandatories:
         if not getattr(options, m, None):
-            print "\nMust provide %s.\n" %m
+            print("\nMust provide %s.\n" %m)
             parser.print_help()
             exit(-1)
 

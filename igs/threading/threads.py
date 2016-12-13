@@ -21,4 +21,10 @@ def runThreadWithChannel(func):
     th = runThread(func, ch)
     return f.Record(thread=th, channel=ch)
 
-    
+def mp_shell(func, params, numProc):
+    from multiprocessing import Pool
+    from functools import partial
+    pool = Pool(processes=int(numProc))
+    new_func = partial(func,params)
+    pool.map(new_func,params)
+    pool.terminate()

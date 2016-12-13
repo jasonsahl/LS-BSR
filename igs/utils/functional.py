@@ -1,6 +1,7 @@
+from __future__ import print_function
 from copy import copy
-
 from igs.utils.errors import TryError
+
 
 ##
 # These are just some simple functions for doing functional style things
@@ -69,7 +70,6 @@ def find(f, iterable):
     for idx, v in enumerate(iterable):
         if f(v):
             return idx
-
     return None
 
 def chunk(ch, i):
@@ -79,7 +79,6 @@ def chunk(ch, i):
         if len(chunk) == ch:
             yield chunk
             chunk = []
-
     if chunk:
         yield chunk
 
@@ -97,4 +96,3 @@ class Record:
         newSelf = copy(self)
         newSelf.__dict__.update(fields)
         return newSelf
-    
