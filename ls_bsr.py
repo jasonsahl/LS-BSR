@@ -107,7 +107,11 @@ def main(directory,id,filter,processors,genes,cluster_method,blast,length,
             sys.exit()
         else:
             os.makedirs('%s' % temp_dir)
-    for infile in glob.glob(os.path.join(dir_path, '*.fasta')):
+    infiles = glob.glob(os.path.join(dir_path, '*.fasta'))
+    if len(infiles) == 0:
+        print("No input files (.fasta) found in %s. Check your input folder and try again" % dir_path)
+        sys.exit()
+    for infile in infiles:
         name=get_seq_name(infile)
         try:
             os.link("%s" % infile, "%s/%s.new" % (fastadir,name))
