@@ -644,18 +644,14 @@ def find_dups_dev(ref_scores, length, max_plog, min_hlog, clusters, processors):
             od = collections.OrderedDict(sorted(new_dict.items()))
             ids = OrderedDict({"ID":reduced_name})
             both =OrderedDict(list(ids.items())+list(new_dict.items()))
-            tmp_out = open("%s.tmp_dup_file" % reduced_name, "w")
             for k,v in both.iteritems():
                 if k == "ID":
                     outfile.write(str(v)+"\n")
-                """This should order the output by the order in clusters"""
             for cluster in clusters:
                 for k,v in both.iteritems():
                     if k == cluster:
                         outfile.write(str(v)+"\n")
-                        tmp_out.write(str(k)+"\t"+str(v)+"\n")
             outfile.close()
-            tmp_out.close()
     results = set(p_func.pmap(_perform_workflow,
                               files_and_temp_names,
                               num_workers=processors))
