@@ -4,6 +4,7 @@
 list of genomes.  This will typically be associated
 with the order of genomes in a phylogeny"""
 
+from __future__ import print_function
 import os
 import sys
 import optparse
@@ -16,7 +17,7 @@ def test_file(option, opt_str, value, parser):
     try:
         with open(value): setattr(parser.values, option.dest, value)
     except IOError:
-        print '%s file cannot be opened' % option
+        print('%s file cannot be opened' % option)
         sys.exit()
 
 def main(matrix, tree):
@@ -40,7 +41,7 @@ if __name__ == "__main__":
     mandatories = ["matrix","tree"]
     for m in mandatories:
         if not getattr(options, m, None):
-            print "\nMust provide %s.\n" %m
+            print("\nMust provide %s.\n" %m)
             parser.print_help()
             exit(-1)
 

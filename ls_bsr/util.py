@@ -596,6 +596,7 @@ def find_dups_dev(ref_scores, length, max_plog, min_hlog, clusters, processors):
     ref_file = open("dup_refs.txt", "w")
     genome_specific_list_of_lists = []
     target_list = []
+    ordered_target_list = []
     files = os.listdir(curr_dir)
     files_and_temp_names = [(str(idx), os.path.join(curr_dir, f))
                             for idx, f in enumerate(files)]
@@ -609,8 +610,12 @@ def find_dups_dev(ref_scores, length, max_plog, min_hlog, clusters, processors):
             outfile = open("%s.counts.txt" % reduced_name, "w")
             try:
                 for line in open(f, "U"):
-                    fields = line.split()
-                    if fields[0] not in ref_scores: pass
+                    newline = line.strip()
+                    fields = newline.split()
+                    """Each blast query should be in the reference blast file"""
+                    if fields[0] not in ref_scores:
+                        print("potential problem found with BLAST File..")
+                        sys.exit()
                     elif float(fields[2])>=int(min_hlog) and (float(fields[11])/float(ref_scores.get(fields[0])))>=float(length):
                         try:
                             my_dict_o[fields[0]].append(fields[11])
@@ -635,23 +640,29 @@ def find_dups_dev(ref_scores, length, max_plog, min_hlog, clusters, processors):
             for cluster in clusters:
                 if cluster not in genome_specific_dict:
                     new_dict.update({cluster:"0"})
+            """this is our ordered dictionary"""
             od = collections.OrderedDict(sorted(new_dict.items()))
             ids = OrderedDict({"ID":reduced_name})
             both =OrderedDict(list(ids.items())+list(new_dict.items()))
+            tmp_out = open("%s.tmp_dup_file" % reduced_name, "w")
             for k,v in both.iteritems():
-                outfile.write(str(v)+"\n")
-                if k in target_list:
-                    pass
-                else:
-                    target_list.append(k)
+                if k == "ID":
+                    outfile.write(str(v)+"\n")
+                """This should order the output by the order in clusters"""
+            for cluster in clusters:
+                for k,v in both.iteritems():
+                    if k == cluster:
+                        outfile.write(str(v)+"\n")
+                        tmp_out.write(str(k)+"\t"+str(v)+"\n")
             outfile.close()
+            tmp_out.close()
     results = set(p_func.pmap(_perform_workflow,
                               files_and_temp_names,
                               num_workers=processors))
-    ref_file.write("\n".join(target_list)+"\n")
+    """Here's where I write to the reference file, which is the first column of dup_matrix.txt"""
+    ref_file.write("ID"+"\n")
+    ref_file.write("\n".join(clusters)+"\n")
     ref_file.close()
-    """known issue - if gene id is Capital and before "I", there can be a shuffling of IDs
-    I need to sort the dictionary and keep the first item constant as ID"""
     try:
         generate_dup_matrix()
         os.system("paste dup_refs.txt dup_values > dup_matrix.txt")
