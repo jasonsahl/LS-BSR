@@ -229,6 +229,7 @@ def main(directory,id,filter,processors,genes,cluster_method,blast,length,
             pass
         subprocess.check_call("sort -u -k 1,1 tmp_blast.out > self_blast.out", shell=True)
         ref_scores=parse_self_blast(open("self_blast.out", "U"))
+        os.system("cp tmp_blast.out ref.scores")
         subprocess.check_call("rm tmp_blast.out self_blast.out", shell=True)
         os.system("rm *new_genes.*")
         if blast == "tblastn" or blast == "blastn":
@@ -271,6 +272,7 @@ def main(directory,id,filter,processors,genes,cluster_method,blast,length,
             blast_against_self_tblastn("blastp", gene_path, gene_path, "tmp_blast.out", processors, filter)
             subprocess.check_call("sort -u -k 1,1 tmp_blast.out > self_blast.out", shell=True)
             ref_scores=parse_self_blast(open("self_blast.out", "U"))
+            os.system("cp self_blast.out ref.scores")
             subprocess.check_call("rm tmp_blast.out self_blast.out", shell=True)
             logging.logPrint("starting BLAST")
             blast_against_each_genome_tblastn(dir_path, processors, gene_path, filter)
@@ -317,7 +319,7 @@ def main(directory,id,filter,processors,genes,cluster_method,blast,length,
             sys.exit()
             """testing to see if I can remove some redundancy"""
         subprocess.check_call("sort -u -k 1,1 tmp_blast.out > self_blast.out", shell=True)
-        os.system("cp self_blast.out tmp.out")
+        os.system("cp self_blast.out ref.scores")
         ref_scores=parse_self_blast(open("self_blast.out", "U"))
         subprocess.check_call("rm tmp_blast.out self_blast.out", shell=True)
         """testing block complete"""
@@ -354,11 +356,6 @@ def main(directory,id,filter,processors,genes,cluster_method,blast,length,
     create_bsr_matrix_dev(new_table_list)
     divide_values("bsr_matrix", ref_scores)
     subprocess.check_call("paste ref.list BSR_matrix_values.txt > %s/bsr_matrix_values.txt" % start_dir, shell=True)
-    if "T" in f_plog:
-        filter_paralogs("%s/bsr_matrix_values.txt" % start_dir, "paralog_ids.txt")
-        os.system("cp bsr_matrix_values_filtered.txt %s" % start_dir)
-    else:
-        pass
     try:
         subprocess.check_call("cp dup_matrix.txt names.txt consensus.pep duplicate_ids.txt consensus.fasta paralog_ids.txt %s" % ap, shell=True, stderr=open(os.devnull, 'w'))
     except:
@@ -367,6 +364,12 @@ def main(directory,id,filter,processors,genes,cluster_method,blast,length,
     import datetime
     timestamp = datetime.datetime.now()
     rename = str(timestamp.year), str(timestamp.month), str(timestamp.day), str(timestamp.hour), str(timestamp.minute), str(timestamp.second)
+    if "T" in f_plog:
+        filter_paralogs("%s/bsr_matrix_values.txt" % start_dir, "paralog_ids.txt")
+        if "NULL" in prefix:
+            os.system("cp bsr_matrix_values_filtered.txt %s/%s_paralogs_filtered_bsr_matrix_values.txt" % (start_dir,"".join(rename)))
+        else:
+            os.system("cp bsr_matrix_values_filtered.txt %s/%s_paralogs_filtered_bsr_matrix_values.txt" % (start_dir,prefix))
     os.chdir("%s" % ap)
     if "NULL" in prefix:
         os.system("mv dup_matrix.txt %s_dup_matrix.txt" % "".join(rename))
