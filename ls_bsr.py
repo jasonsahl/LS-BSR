@@ -131,8 +131,8 @@ def main(directory,id,filter,processors,genes,cluster_method,blast,length,
                 print("You have requested blat, but it is not in your PATH")
                 sys.exit()
         logging.logPrint("predicting genes with Prodigal")
-        predict_genes(fastadir, processors)
-        #predict_genes_dev(fastadir, processors)
+        #predict_genes(fastadir, processors)
+        predict_genes_dev(fastadir, processors)
         logging.logPrint("Prodigal done")
         """This function produces locus tags"""
         genbank_hits = process_genbank_files(dir_path)
@@ -171,7 +171,8 @@ def main(directory,id,filter,processors,genes,cluster_method,blast,length,
                 logging.logPrint("Splitting FASTA file for use with USEARCH")
                 split_files("all_sorted.txt")
                 logging.logPrint("clustering with USEARCH at an ID of %s" % id)
-                run_usearch(id)
+                #run_usearch(id)
+                run_usearch_dev(id,4)
                 os.system("cat *.usearch.out > all_sorted.txt")
                 os.system("mv all_sorted.txt %s" % fastadir)
                 os.chdir("%s" % fastadir)
@@ -237,11 +238,11 @@ def main(directory,id,filter,processors,genes,cluster_method,blast,length,
         else:
             logging.logPrint("starting BLAT")
         if "tblastn" == blast:
-            blast_against_each_genome_tblastn(dir_path, processors, "consensus.pep", filter)
+            blast_against_each_genome_tblastn(processors, "consensus.pep", filter)
         elif "blastn" == blast:
-            blast_against_each_genome_blastn(dir_path, processors, filter, "consensus.fasta")
+            blast_against_each_genome_blastn(processors, filter, "consensus.fasta")
         elif "blat" == blast:
-            blat_against_each_genome(dir_path, "consensus.fasta",processors)
+            blat_against_each_genome("consensus.fasta",processors)
         else:
             pass
     else:
@@ -275,7 +276,7 @@ def main(directory,id,filter,processors,genes,cluster_method,blast,length,
             os.system("cp self_blast.out ref.scores")
             subprocess.check_call("rm tmp_blast.out self_blast.out", shell=True)
             logging.logPrint("starting BLAST")
-            blast_against_each_genome_tblastn(dir_path, processors, gene_path, filter)
+            blast_against_each_genome_tblastn(processors, gene_path, filter)
         elif gene_path.endswith(".fasta"):
             if "tblastn" == blast:
                 logging.logPrint("using tblastn")
@@ -287,7 +288,7 @@ def main(directory,id,filter,processors,genes,cluster_method,blast,length,
                     sys.exit()
                 blast_against_self_tblastn("tblastn", gene_path, "genes.pep", "tmp_blast.out", processors, filter)
                 logging.logPrint("starting BLAST")
-                blast_against_each_genome_tblastn(dir_path, processors, "genes.pep", filter)
+                blast_against_each_genome_tblastn(processors, "genes.pep", filter)
                 os.system("cp genes.pep %s" % start_dir)
             elif "blastn" == blast:
                 logging.logPrint("using blastn")
@@ -303,7 +304,7 @@ def main(directory,id,filter,processors,genes,cluster_method,blast,length,
                     sys.exit()
                 logging.logPrint("starting BLAST")
                 try:
-                    blast_against_each_genome_blastn(dir_path, processors, filter, gene_path)
+                    blast_against_each_genome_blastn(processors, filter, gene_path)
                 except:
                     print("problem with blastn, exiting")
                     sys.exit()
@@ -311,7 +312,7 @@ def main(directory,id,filter,processors,genes,cluster_method,blast,length,
                 logging.logPrint("using blat")
                 blat_against_self(gene_path, gene_path, "tmp_blast.out", processors)
                 logging.logPrint("starting BLAT")
-                blat_against_each_genome(dir_path,gene_path,processors)
+                blat_against_each_genome(gene_path,processors)
             else:
                 pass
         else:

@@ -21,9 +21,9 @@ def test_file(option, opt_str, value, parser):
 
 def add_headers(infile, outfile, lower, upper):
     file_out = open(outfile, "w")
-    print >> file_out,"marker"+"\t"+"group1_mean"+"\t"+">="+str(upper)+"\t"+"total_in_group_1"+"\t"+">="+str(lower)+"\t"+"group2_mean"+"\t"+">="+str(upper)+"\t"+"total_in_group2"+"\t"+">="+str(lower)
+    file_out.write("marker"+"\t"+"group1_mean"+"\t"+">="+str(upper)+"\t"+"total_in_group_1"+"\t"+">="+str(lower)+"\t"+"group2_mean"+"\t"+">="+str(upper)+"\t"+"total_in_group2"+"\t"+">="+str(lower)+"\n")
     for line in open(infile, "U"):
-        print >> file_out, line,
+        file_out.write(line)
     file_out.close()
 
 def main(matrix,group1,group2,fasta,upper,lower):
@@ -33,10 +33,10 @@ def main(matrix,group1,group2,fasta,upper,lower):
     find_uniques("groups_combined.txt",fasta)
     add_headers("groups_combined.txt","groups_combined_header.txt",lower,upper)
     os.system("rm group1_out.txt group2_out.txt")
-    
+
 if __name__ == "__main__":
     usage="usage: %prog [options]"
-    parser = OptionParser(usage=usage) 
+    parser = OptionParser(usage=usage)
     parser.add_option("-b", "--bsr_matrix", dest="matrix",
                       help="/path/to/bsr_matrix [REQUIRED]",
                       action="callback", callback=test_file, type="string")
@@ -57,7 +57,7 @@ if __name__ == "__main__":
 		      default="0.4", type="float")
 
     options, args = parser.parse_args()
-    
+
     mandatories = ["matrix", "group1", "group2", "fasta"]
     for m in mandatories:
         if not options.__dict__[m]:

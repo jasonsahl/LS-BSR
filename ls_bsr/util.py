@@ -34,6 +34,12 @@ import types
 from collections import deque,OrderedDict
 import collections
 
+def mp_shell(func, params, numProc):
+    from multiprocessing import Pool
+    p = Pool(numProc)
+    p.map(func, params)
+    p.terminate()
+
 def get_cluster_ids(in_fasta):
     clusters = []
     infile = open(in_fasta, "U")
@@ -93,19 +99,6 @@ def predict_genes(fastadir, processors):
                               files_and_temp_names,
                               num_workers=processors))
 
-def predict_genes_dev(fastadir, processors):
-    """simple gene prediction using Prodigal in order
-    to find coding regions from a genome sequence"""
-    os.chdir("%s" % fastadir)
-    files = os.listdir(fastadir)
-    files_and_temp_names = [(str(idx), os.path.join(fastadir, f))
-                            for idx, f in enumerate(files)]
-    def _perform_workflow(data):
-        tn, f = data
-        subprocess.check_call("prodigal -i %s -d %s_genes.seqs -a %s_genes.pep > /dev/null 2>&1" % (f, f, f), shell=True)
-    results = mp_shell(_perform_workflow, files_and_temp_names, processors)
-
-
 def rename_fasta_header(fasta_in, fasta_out):
     """this is used for renaming the output,
     in the off chance that there are duplicate
@@ -133,7 +126,7 @@ def uclust_cluster(id):
            "-centroids", "consensus.fasta"]
     subprocess.call(cmd, stderr=devnull, stdout=devnull)
 
-def blast_against_each_genome_tblastn(dir_path, processors, peptides, filter):
+def blast_against_each_genome_tblastn(processors, peptides, filter):
     """BLAST all peptides against each genome"""
     curr_dir=os.getcwd()
     files = os.listdir(curr_dir)
@@ -171,7 +164,7 @@ def blast_against_each_genome_tblastn(dir_path, processors, peptides, filter):
                               files_and_temp_names,
                               num_workers=processors))
 
-def blast_against_each_genome_blastn(dir_path, processors, filter, peptides):
+def blast_against_each_genome_blastn(processors, filter, peptides):
     """BLAST all peptides against each genome"""
     if "F" in filter:
         my_seg = "yes"
@@ -390,12 +383,12 @@ def prune_matrix(matrix, group1, group2):
     for x in fields:
         if x not in group1_ids: group1_idx.append(fields.index(x))
     deque((list.pop(fields, i) for i in sorted(group1_idx, reverse=True)), maxlen=0)
-    group1_out.write("\t"+"\t"+"\t".join(fields))
+    group1_out.write("\t"+"\t"+"\t".join(fields)+"\n")
     for line in in_matrix:
         fields = line.split()
         name = fields[0]
         deque((list.pop(fields, i) for i in sorted(group1_idx, reverse=True)), maxlen=0)
-    group1_out.write("".join(name)+"\t"+"\t".join(fields))
+        group1_out.write("".join(name)+"\t"+"\t".join(fields)+"\n")
     in_matrix = open(matrix, "U")
     firstLine = in_matrix.readline()
     fields = firstLine.split()
@@ -404,12 +397,12 @@ def prune_matrix(matrix, group1, group2):
     for x in fields:
         if x not in group2_ids: group2_idx.append(fields.index(x))
     deque((list.pop(fields, i) for i in sorted(group2_idx, reverse=True)), maxlen=0)
-    group2_out.write("\t"+"\t".join(fields))
+    group2_out.write("\t"+"\t".join(fields)+"\n")
     for line in in_matrix:
         fields = line.split()
         name = fields[0]
         deque((list.pop(fields, i) for i in sorted(group2_idx, reverse=True)), maxlen=0)
-        group2_out.write("".join(name)+"\t"+"\t".join(fields))
+        group2_out.write("".join(name)+"\t"+"\t".join(fields)+"\n")
     return group1_ids, group2_ids, group1_idx, group2_idx
     in_matrix.close()
 
@@ -433,7 +426,7 @@ def compare_values(pruned_1,pruned_2,upper,lower):
             if float(x)>=float(upper): presents.append(x)
             if float(x)>=float(upper): group1_presents.append(x)
             if float(x)>=float(lower): homolog.append(x)
-        group1_out.write(str(fields[0])+"\t"+str(mean)+"\t"+str(len(presents))+"\t"+str(len(fields[1:]))+"\t"+str(len(homolog)))
+        group1_out.write(str(fields[0])+"\t"+str(mean)+"\t"+str(len(presents))+"\t"+str(len(fields[1:]))+"\t"+str(len(homolog))+"\n")
     next(group2)
     for line in group2:
         fields = line.split()
@@ -445,12 +438,12 @@ def compare_values(pruned_1,pruned_2,upper,lower):
             if float(x)>=float(upper): presents.append(x)
             if float(x)>=float(upper): group2_presents.append(x)
             if float(x)>=float(lower): homolog.append(x)
-        group2_out.write(str(mean)+"\t"+str(len(presents))+"\t"+str(len(fields[1:]))+"\t"+str(len(homolog)))
-    return group1_presents, group2_presents, group1_mean
+        group2_out.write(str(mean)+"\t"+str(len(presents))+"\t"+str(len(fields[1:]))+"\t"+str(len(homolog))+"\n")
     group1.close()
     group2.close()
     group1_out.close()
     group2_out.close()
+    return group1_presents, group2_presents, group1_mean
 
 def find_uniques(combined,fasta):
     infile = open(combined, "U")
@@ -919,7 +912,7 @@ def parse_tree(tree):
 def blat_against_self(query,reference,output,processors):
     subprocess.check_call("blat -out=blast8 -minIdentity=75 %s %s %s > /dev/null 2>&1" % (reference,query,output), shell=True)
 
-def blat_against_each_genome(dir_path,database,processors):
+def blat_against_each_genome(database,processors):
     """BLAT all genes against each genome"""
     curr_dir=os.getcwd()
     files = os.listdir(curr_dir)
@@ -1078,3 +1071,36 @@ def generate_dup_matrix():
     for alist in test:
         outfile.write("\t".join(alist)+"\n")
     outfile.close()
+
+def _usearch_workflow(infile):
+    devnull = open("/dev/null", "w")
+    cmd = ["usearch",
+           "-cluster_fast", "%s" % infile[0],
+           "-id", str(infile[1]),
+           "-uc", "results.uc",
+           "-centroids", "%s.usearch.out" % str(autoIncrement())]
+    subprocess.call(cmd,stdout=devnull,stderr=devnull)
+    devnull.close()
+
+def run_usearch_dev(id,processors):
+    rec=1
+    curr_dir=os.getcwd()
+    # Put all files that start with 'x' in list
+    files_and_temp_names = []
+    for file in glob.glob(os.path.join(curr_dir, "x*")):
+	       files_and_temp_names.append([file,id])
+    mp_shell(_usearch_workflow, files_and_temp_names, processors)
+
+def _prodigal_workflow(data):
+    tn, f = data
+    subprocess.check_call("prodigal -i %s -d %s_genes.seqs -a %s_genes.pep > /dev/null 2>&1" % (f, f, f), shell=True)
+
+def predict_genes_dev(fastadir, processors):
+    """simple gene prediction using Prodigal in order
+    to find coding regions from a genome sequence"""
+    os.chdir("%s" % fastadir)
+    files = os.listdir(fastadir)
+    files_and_temp_names = [(str(idx), os.path.join(fastadir, f))
+                            for idx, f in enumerate(files)]
+
+    mp_shell(_prodigal_workflow, files_and_temp_names, processors)
