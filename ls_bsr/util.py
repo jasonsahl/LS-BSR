@@ -1104,3 +1104,102 @@ def predict_genes_dev(fastadir, processors):
                             for idx, f in enumerate(files)]
 
     mp_shell(_prodigal_workflow, files_and_temp_names, processors)
+
+def _perform_workflow_blat_genome(data):
+    tn = data[0]
+    f = data[1]
+    database = data[2]
+    if ".fasta.new" in f:
+        try:
+            subprocess.check_call("blat -out=blast8 -minIdentity=75 %s %s %s_blast.out > /dev/null 2>&1" % (f,database,f), shell=True)
+        except:
+            print("genomes %s cannot be used" % f)
+
+def blat_against_each_genome_dev(database,processors):
+    """BLAT all genes against each genome"""
+    curr_dir=os.getcwd()
+    files = os.listdir(curr_dir)
+    files_and_temp_names = []
+    for idx,f in enumerate(files):
+        files_and_temp_names.append([str(idx), os.path.join(curr_dir, f), database])
+    mp_shell(_perform_workflow_blat_genome,file_and_temp_names,processors)
+
+def _perform_workflow_tblastn(data):
+    tn = data[0]
+    f = data[1]
+    my_seg = data[2]
+    peptides = data[3]
+    if ".fasta.new" in f:
+        try:
+            subprocess.check_call("makeblastdb -in %s -dbtype nucl > /dev/null 2>&1" % f, shell=True)
+        except:
+            print("problem found in formatting genome %s" % f)
+    if ".fasta.new" in f:
+        try:
+            devnull = open('/dev/null', 'w')
+            cmd = ["tblastn",
+                   "-query", peptides,
+                   "-db", f,
+                   "-seg", my_seg,
+                   "-comp_based_stats", "F",
+                   "-num_threads", "1",
+                   "-evalue", "0.1",
+                   "-outfmt", "6",
+                   "-out", "%s_blast.out" % f]
+            subprocess.call(cmd, stdout=devnull, stderr=devnull)
+            devnull.close()
+        except:
+            print("genomes %s cannot be used" % f)
+
+def blast_against_each_genome_tblastn_dev(processors, peptides, filter):
+    """BLAST all peptides against each genome"""
+    curr_dir=os.getcwd()
+    files = os.listdir(curr_dir)
+    if "T" in filter:
+        my_seg = "yes"
+    else:
+        my_seg = "no"
+    files_and_temp_names = []
+    for idx, f in enumerate(files):
+        files_and_temp_names.append([str(idx), os.path.join(curr_dir, f), my_seg, peptides])
+    mp_shell(_perform_workflow_tblastn, files_and_temp_names, processors)
+
+def _perform_workflow_blastn(data):
+    tn = data[0]
+    f = data[1]
+    my_seg = data[2]
+    peptides = data[3]
+    if ".fasta.new" in f:
+        try:
+            subprocess.check_call("makeblastdb -in %s -dbtype nucl > /dev/null 2>&1" % f, shell=True)
+        except:
+            print("problem found in formatting genome %s" % f)
+    if ".fasta.new" in f:
+        devnull = open('/dev/null', 'w')
+        try:
+            cmd = ["blastn",
+                   "-task", "blastn",
+                   "-query", peptides,
+                   "-db", f,
+                   "-dust", str(my_seg),
+                   "-num_threads", "1",
+                   "-evalue", "0.1",
+                   "-outfmt", "6",
+                   "-out", "%s_blast.out" % f]
+            subprocess.call(cmd, stdout=devnull, stderr=devnull)
+            devnull.close()
+        except:
+            print("The genome file %s was not processed" % f)
+
+def blast_against_each_genome_blastn_dev(dir_path, processors, filter, peptides):
+    """BLAST all peptides against each genome"""
+    if "F" in filter:
+        my_seg = "yes"
+    else:
+        my_seg = "no"
+    curr_dir=os.getcwd()
+    files = os.listdir(curr_dir)
+    files_and_temp_names = []
+    for idx, f in enumerate(files):
+        files_and_temp_names.append([str(idx), os.path.join(curr_dir,f), my_seg, peptides])
+    mp_shell(_perform_workflow_blastn, files_and_temp_names, processors)

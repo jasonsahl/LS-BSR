@@ -238,11 +238,14 @@ def main(directory,id,filter,processors,genes,cluster_method,blast,length,
         else:
             logging.logPrint("starting BLAT")
         if "tblastn" == blast:
-            blast_against_each_genome_tblastn(processors, "consensus.pep", filter)
+            #blast_against_each_genome_tblastn(processors, "consensus.pep", filter)
+            blast_against_each_genome_tblastn_dev(processors, "consensus.pep", filter)
         elif "blastn" == blast:
-            blast_against_each_genome_blastn(processors, filter, "consensus.fasta")
+            #blast_against_each_genome_blastn(processors, filter, "consensus.fasta")
+            blast_against_each_genome_blastn_dev(processors, filter, "consensus.fasta")
         elif "blat" == blast:
-            blat_against_each_genome("consensus.fasta",processors)
+            #blat_against_each_genome("consensus.fasta",processors)
+            blat_against_each_genome_dev("consensus.fasta",processors)
         else:
             pass
     else:
