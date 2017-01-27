@@ -277,9 +277,9 @@ def main(directory,id,filter,processors,genes,cluster_method,blast,length,
             subprocess.check_call("sort -u -k 1,1 tmp_blast.out > self_blast.out", shell=True)
             ref_scores=parse_self_blast(open("self_blast.out", "U"))
             os.system("cp self_blast.out ref.scores")
-            subprocess.check_call("rm tmp_blast.out self_blast.out", shell=True)
+            subprocess.check_call("rm self_blast.out", shell=True)
             logging.logPrint("starting BLAST")
-            blast_against_each_genome_tblastn(processors, gene_path, filter)
+            blast_against_each_genome_tblastn_dev(processors, gene_path, filter)
         elif gene_path.endswith(".fasta"):
             if "tblastn" == blast:
                 logging.logPrint("using tblastn")
@@ -291,7 +291,7 @@ def main(directory,id,filter,processors,genes,cluster_method,blast,length,
                     sys.exit()
                 blast_against_self_tblastn("tblastn", gene_path, "genes.pep", "tmp_blast.out", processors, filter)
                 logging.logPrint("starting BLAST")
-                blast_against_each_genome_tblastn(processors, "genes.pep", filter)
+                blast_against_each_genome_tblastn_dev(processors, "genes.pep", filter)
                 os.system("cp genes.pep %s" % start_dir)
             elif "blastn" == blast:
                 logging.logPrint("using blastn")
@@ -307,7 +307,7 @@ def main(directory,id,filter,processors,genes,cluster_method,blast,length,
                     sys.exit()
                 logging.logPrint("starting BLAST")
                 try:
-                    blast_against_each_genome_blastn(processors, filter, gene_path)
+                    blast_against_each_genome_blastn_dev(processors, filter, gene_path)
                 except:
                     print("problem with blastn, exiting")
                     sys.exit()
@@ -315,7 +315,7 @@ def main(directory,id,filter,processors,genes,cluster_method,blast,length,
                 logging.logPrint("using blat")
                 blat_against_self(gene_path, gene_path, "tmp_blast.out", processors)
                 logging.logPrint("starting BLAT")
-                blat_against_each_genome(gene_path,processors)
+                blat_against_each_genome_dev(gene_path,processors)
             else:
                 pass
         else:
