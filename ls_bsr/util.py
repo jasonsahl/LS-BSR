@@ -1122,7 +1122,7 @@ def blat_against_each_genome_dev(database,processors):
     files_and_temp_names = []
     for idx,f in enumerate(files):
         files_and_temp_names.append([str(idx), os.path.join(curr_dir, f), database])
-    mp_shell(_perform_workflow_blat_genome,file_and_temp_names,processors)
+    mp_shell(_perform_workflow_blat_genome,files_and_temp_names,processors)
 
 def _perform_workflow_tblastn(data):
     tn = data[0]
