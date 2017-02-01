@@ -883,7 +883,7 @@ def transpose_matrix(matrix):
         reduced.append(fields)
     test=map(list, zip(*reduced))
     for x in test:
-        out_matrix.write("\t".join(x))
+        out_matrix.write("\t".join(x)+"\n")
     out_matrix.close()
 
 def reorder_matrix(in_matrix, names):
@@ -897,7 +897,7 @@ def reorder_matrix(in_matrix, names):
             newline = line.strip("\n")
             fields = newline.split("\t")
             if name == fields[0]:
-                outfile.write(line)
+                outfile.write(line,)
     my_matrix.close()
     outfile.close()
 
