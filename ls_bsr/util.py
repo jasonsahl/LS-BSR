@@ -1191,7 +1191,7 @@ def _perform_workflow_blastn(data):
         except:
             print("The genome file %s was not processed" % f)
 
-def blast_against_each_genome_blastn_dev(dir_path, processors, filter, peptides):
+def blast_against_each_genome_blastn_dev(processors, filter, peptides):
     """BLAST all peptides against each genome"""
     if "F" in filter:
         my_seg = "yes"
