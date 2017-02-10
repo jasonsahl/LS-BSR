@@ -327,7 +327,8 @@ def main(directory,id,filter,processors,genes,cluster_method,blast,length,
         ref_scores=parse_self_blast(open("self_blast.out", "U"))
         subprocess.check_call("rm tmp_blast.out self_blast.out", shell=True)
         """testing block complete"""
-    find_dups_dev(ref_scores, length, max_plog, min_hlog, clusters, processors)
+    logging.logPrint("Finding duplicates")
+    find_dups_dev2(ref_scores, length, max_plog, min_hlog, clusters, processors)
     if blast=="blat":
         logging.logPrint("BLAT done")
     else:

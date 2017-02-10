@@ -1203,3 +1203,122 @@ def blast_against_each_genome_blastn_dev(processors, filter, peptides):
     for idx, f in enumerate(files):
         files_and_temp_names.append([str(idx), os.path.join(curr_dir,f), my_seg, peptides])
     mp_shell(_perform_workflow_blastn, files_and_temp_names, processors)
+
+def _perform_workflow_fdd(q, my_dict_o, data):
+    tn = data[0]
+    f = data[1]
+    ref_scores = data[2]
+    length = data[3]
+    max_plog = data[4]
+    min_hlog = data[5]
+    clusters = data[6]
+    processors = data[7]
+    if "_blast.out" in f:
+        genome_specific_dict = {}
+        name = get_seq_name(f)
+        reduced_name = name.replace(".fasta.new_blast.out","")
+        genome_specific_dict["ID"] = reduced_name
+        outfile = open("%s.counts.txt" % reduced_name, "w")
+        try:
+            for line in open(f, "U"):
+                fields = line.split()
+                if fields[0] not in ref_scores:
+                    pass
+                elif float(fields[2]) >= int(min_hlog) and (float(fields[11]) / float(ref_scores.get(fields[0]))) >= float(length):
+                    try:
+                        my_dict_o[fields[0]].append(fields[11])
+                        genome_specific_dict[fields[0]].append(fields[11])
+                    except KeyError:
+                        my_dict_o[fields[0]] = [fields[11]]
+                        genome_specific_dict[fields[0]] = [fields[11]]
+                else:
+                    continue
+        except:
+            raise TypeError("problem parsing %s" % f)
+
+        new_dict = {}
+        for k,v in genome_specific_dict.iteritems():
+            for cluster in clusters:
+                if k == "ID":
+                    pass
+                elif k == cluster:
+                    try:
+                        #ew_dict[k] = len(v)
+                        new_dict.update({k:len(v)})
+                    except:
+                        new_dict.update({k:"0"})
+                        #new_dict[k] = "0"
+        for cluster in clusters:
+            if cluster not in genome_specific_dict:
+                #new_dict[cluster] = "0"
+                new_dict.update({cluster:"0"})
+        od = collections.OrderedDict(sorted(new_dict.items()))
+        ids = collections.OrderedDict({"ID":reduced_name})
+        both = collections.OrderedDict(list(ids.items())+list(new_dict.items()))
+        for k,v in both.iteritems():
+                if k == "ID":
+                    outfile.write(str(v)+"\n")
+        for cluster in clusters:
+            for k,v in both.iteritems():
+                if k == cluster:
+                    outfile.write(str(v)+"\n")
+        #for k,v in both.iteritems():
+        #    outfile.write(str(v)+"\n")
+        #    q.put(k)
+
+        outfile.close()
+
+def find_dups_dev2(ref_scores, length, max_plog, min_hlog, clusters, processors):
+    from multiprocessing import Manager, Pool
+    m = Manager()
+    q = m.Queue()
+    my_dict_o = m.dict()
+    p = Pool(processors)
+    curr_dir=os.getcwd()
+    dup_dict = {}
+    paralogs = [ ]
+    duplicate_file = open("duplicate_ids.txt", "w")
+    paralog_file = open("paralog_ids.txt", "w")
+    ref_file = open("dup_refs.txt", "a")
+    genome_specific_list_of_lists = []
+    files = os.listdir(curr_dir)
+    files_and_temp_names = []
+    for idx, f in enumerate(files):
+        files_and_temp_names.append([str(idx), os.path.join(curr_dir, f), ref_scores, length, max_plog, min_hlog, clusters, processors])
+    # Multiprocessing here (mp_shell for Ctrl+F)
+    for process in files_and_temp_names:
+        p.apply(_perform_workflow_fdd, args=(q,my_dict_o,process))
+    # Get rid of any duplicate values in queue
+    unique = set()
+    while q.empty() == False:
+        unique.add(q.get())
+    #for item in unique:
+    #    ref_file.write(item + "\n")
+    #ref_file.close()
+    """This was changed from Josh's code"""
+    ref_file.write("ID"+"\n")
+    ref_file.write("\n".join(clusters)+"\n")
+    ref_file.close()
+    """known issue - if gene id is Capital and before "I", there can be a shuffling of IDs
+    I need to sort the dictionary and keep the first item constant as ID"""
+    try:
+        os.system("paste dup_refs.txt *.counts.txt > dup_matrix.txt")
+    except:
+        print("too many genomes to paste, need new function")
+    for k in my_dict_o.keys():
+        if int(len(my_dict_o[k]))>=2:
+            dup_dict.update({k:my_dict_o[k]})
+    for k,v in dup_dict.iteritems():
+        max_value = max(v)
+        for x in v:
+            if float(x)/float(max_value)<=max_plog:
+                paralogs.append(k)
+            else:
+                continue
+    for k, v in dup_dict.iteritems():
+        duplicate_file.write(str(k)+"\n")
+    nr=[x for i, x in enumerate(paralogs) if x not in paralogs[i+1:]]
+    paralog_file.write("\n".join(nr)+"\n")
+    duplicate_file.close()
+    paralog_file.close()
+    return nr, dup_dict
