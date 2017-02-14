@@ -18,6 +18,7 @@ from ls_bsr.util import *
 from igs.utils import logging
 import glob
 import tempfile
+from shutil import copy
 
 def test_file(option, opt_str, value, parser):
     try:
@@ -106,9 +107,16 @@ def main(directory,id,filter,processors,genes,cluster_method,blast,length,
             sys.exit()
         else:
             os.makedirs('%s' % temp_dir)
-    for infile in glob.glob(os.path.join(dir_path, '*.fasta')):
+    infiles = glob.glob(os.path.join(dir_path, '*.fasta'))
+    if len(infiles) == 0:
+        print("No input files (.fasta) found in %s. Check your input folder and try again" % dir_path)
+        sys.exit()
+    for infile in infiles:
         name=get_seq_name(infile)
-        os.link("%s" % infile, "%s/%s.new" % (fastadir,name))
+        try:
+            os.link("%s" % infile, "%s/%s.new" % (fastadir,name))
+        except OSError:
+            copy("%s" % infile, "%s/%s.new" % (fastadir,name))
     if "null" in genes:
         rc = subprocess.call(['which', 'prodigal'])
         if rc == 0:
