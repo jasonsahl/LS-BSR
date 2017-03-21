@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 """test functions for LS-BSR tools"""
 
 import unittest
@@ -22,54 +20,6 @@ class Test1(unittest.TestCase):
     """tests the case where something weird is passed"""
     def test_get_seq_name_wrong_slash(self):
         self.assertEqual(get_seq_name("\wrong\way"), "\\wrong\\way")
-
-class Test2(unittest.TestCase):
-    def test_translate_genes_basic_function(self):
-        """tests standard functionality of the translate_consensus function"""
-        tdir = tempfile.mkdtemp(prefix="filetest_",)
-        fpath = os.path.join(tdir,"testfile")
-        fp = open(fpath, "w")
-        fp.write(">Cluster0\n")
-        fp.write("ATGACGAGCTTTCCG")
-        fp.close()
-        self.assertEqual(translate_genes(fpath,"tmp.pep",0), 'MTSFP')
-        shutil.rmtree(tdir)
-        os.system("rm tmp.pep")
-    def test_translate_genes_premature_stop(self):
-        """tests the case of a difference seqeunce.  Also, tests
-        wheter a stop codon will be recognized and excluded"""
-        tdir = tempfile.mkdtemp(prefix="filetest_",)
-        fpath = os.path.join(tdir,"testfile")
-        fp = open(fpath, "w")
-        fp.write(">Cluster0\n")
-        fp.write("ATGAATCACTACTAA")
-        fp.close()
-        self.assertEqual(translate_genes(fpath,"tmp.pep",0), 'MNHY')
-        shutil.rmtree(tdir)
-        os.system("rm tmp.pep")
-    def test_translate_genes_integer(self):
-        """Tests the condition of having an integer, instead
-        of sequence.  This should make the script throw a typeerror"""
-        tdir = tempfile.mkdtemp(prefix="filetest_",)
-        fpath = os.path.join(tdir,"testfile")
-        fp = open(fpath, "w")
-        fp.write(">Cluster1\n")
-        fp.write("AT1CGAGCTTTCCG")
-        fp.close()
-        self.assertRaises(TypeError, translate_genes, fpath, "tmp.pep", 0)
-        shutil.rmtree(tdir)
-        os.system("rm tmp.pep")
-    def test_translate_genes_empty_sequence(self):
-        """Tests the condition where no sequence is present"""
-        tdir = tempfile.mkdtemp(prefix="filetest_",)
-        fpath = os.path.join(tdir,"testfile")
-        fp = open(fpath, "w")
-        fp.write(">Cluster1\n")
-        fp.write("")
-        fp.close()
-        self.assertEqual(translate_genes(fpath,"tmp.pep",0), '')
-        shutil.rmtree(tdir)
-        os.system("rm tmp.pep")
 
 class Test3(unittest.TestCase):
     def test_filter_seqs_length_filter(self):
@@ -139,71 +89,67 @@ class Test4(unittest.TestCase):
         self.assertEqual(parse_self_blast(open(fpath,"U")),{})
         shutil.rmtree(tdir)
 
-class Test5(unittest.TestCase):
-    def test_parse_blast_report_basic_function(self):
-        """"tests the basic functionality of the parse_blast_report
-        function"""
-        tdir = tempfile.mkdtemp(prefix="filetest_",)
-        fpath = os.path.join(tdir,"testfile_blast.out")
-        os.chdir("%s" % tdir)
-        fp = open(fpath, "w")
-        fp.write("Cluster0	Cluster0	100.00	15	0	0	1	15	1	15	1e-07	30.2")
-        fp.close()
-        self.assertEqual(parse_blast_report("true"), ['Cluster0', '30.2'])
-        os.chdir("%s" % curr_dir)
-        shutil.rmtree(tdir)
-    def test_parse_blast_report_missing_fields(self):
-        """tests the condition where too few fields are present
-        .  Should throw a typeerror"""
-        ndir = tempfile.mkdtemp(prefix="filetest_",)
-        os.chdir("%s" % ndir)
-        fpath = os.path.join(ndir,"output_blast.out")
-        fp = open(fpath, "w")
-        fp.write("Cluster0	Cluster0	100.00	15	0	0	1	15	1	15")
-        fp.close()
-        self.assertRaises(TypeError, parse_blast_report, "true")
-        os.chdir("%s" % curr_dir)
-        shutil.rmtree(ndir)
-
-class Test6(unittest.TestCase):
-    def test_get_unique_lines_basic_function(self):
-        """tests basic functionality of the get_unique_lines function"""
-        tdir = tempfile.mkdtemp(prefix="filetest_",)
-        fpath = os.path.join(tdir,"testfile.filtered")
-        os.chdir("%s" % tdir)
-        fp = open(fpath, "w")
-        fp.write("Cluster0	30.2\n")
-        fp.write("Cluster0	15.3\n")
-        fp.close()
-        self.assertEqual(get_unique_lines(), ['Cluster0\t30.2\n'])
-        os.chdir("%s" % curr_dir)
-        shutil.rmtree(tdir)
-    def test_get_unique_lines_empty_file(self):
-        """if file is empty, you can't get an error
-        but you can get an empty set"""
-        tdir = tempfile.mkdtemp(prefix="filetest_",)
-        fpath = os.path.join(tdir,"testfile.filtered")
-        os.chdir("%s" % tdir)
-        fp = open(fpath, "w")
-        fp.write("")
-        fp.close()
-        self.assertEqual(get_unique_lines(), [])
-        os.chdir("%s" % curr_dir)
-        shutil.rmtree(tdir)
-    def test_get_unique_lines_missing_fields(self):
-        """tests condition where you have a different number
-        of input fields"""
-        tdir = tempfile.mkdtemp(prefix="filetest_",)
-        fpath = os.path.join(tdir,"testfile.filtered")
-        os.chdir("%s" % tdir)
-        fp = open(fpath, "w")
-        fp.write("Cluster0	30.2	15.4\n")
-        fp.write("Cluster0	15.3\n")
-        fp.close()
-        self.assertEqual(get_unique_lines(), ['Cluster0\t30.2\t15.4\n'])
-        os.chdir("%s" % curr_dir)
-        shutil.rmtree(tdir)
-
+#class Test5(unittest.TestCase):
+#    def test_parse_blast_report_basic_function(self):
+#        """"tests the basic functionality of the parse_blast_report
+#        function"""
+#        tdir = tempfile.mkdtemp(prefix="filetest_",)
+#        fpath = os.path.join(tdir,"testfile_blast.out")
+#        os.chdir("%s" % tdir)
+#        fp = open(fpath, "w")
+#        fp.write("Cluster0	Cluster0	100.00	15	0	0	1	15	1	15	1e-07	30.2")
+#        fp.close()
+#        self.assertEqual(parse_blast_report("true",1), ['Cluster0', '30.2'])
+#        os.chdir("%s" % curr_dir)
+#        shutil.rmtree(tdir)
+#    def test_parse_blast_report_missing_fields(self):
+#        """tests the condition where too few fields are present
+#        .  Should throw a typeerror"""
+#        ndir = tempfile.mkdtemp(prefix="filetest_",)
+#        os.chdir("%s" % ndir)
+#        fpath = os.path.join(ndir,"output_blast.out")
+#        fp = open(fpath, "w")
+#        fp.write("Cluster0	Cluster0	100.00	15	0	0	1	15	1	15")
+#        fp.close()
+#        self.assertRaises(TypeError, parse_blast_report, "true", 1)
+#        os.chdir("%s" % curr_dir)
+#        shutil.rmtree(ndir)
+#    def test_parse_blast_report_duplicate_clusters(self):
+#        """tests to see if function removes duplicate clusters"""
+#        tdir = tempfile.mkdtemp(prefix="filetest_",)
+#        fpath = os.path.join(tdir,"testfile_blast.out")
+#        os.chdir("%s" % tdir)
+#        fp = open(fpath, "w")
+#        fp.write("Cluster0	Cluster0	100.00	15	0	0	1	15	1	15	1e-07	30.2")
+#        fp.write("Cluster0	Cluster0	100.00	15	0	0	1	15	1	15	1e-07	30.2")
+#        fp.close()
+#        self.assertEqual(parse_blast_report("true", 1), ['Cluster0', '30.2'])
+#        os.chdir("%s" % curr_dir)
+#        shutil.rmtree(tdir)
+#    def test_parse_blast_report_max_values(self):
+#        """tests to see if function writes the cluster with the largest blast score"""
+#        tdir = tempfile.mkdtemp(prefix="filetest_",)
+#        fpath = os.path.join(tdir,"testfile_blast.out")
+#        os.chdir("%s" % tdir)
+#        fp = open(fpath, "w")
+#        fp.write("Cluster0	Cluster0	100.00	15	0	0	1	15	1	15	1e-07	10.5")
+#        fp.write("Cluster0	Cluster0	100.00	15	0	0	1	15	1	15	1e-07	30.2")
+#        fp.close()
+#        self.assertEqual(parse_blast_report("true"), 1, ['Cluster0', '30.2'])
+#        os.chdir("%s" % curr_dir)
+#        shutil.rmtree(tdir)
+#    def test_parse_blast_report_empty_file(self):
+#        """if file is empty, you can't get an error
+#        but you can get an empty set"""
+#        tdir = tempfile.mkdtemp(prefix="filetest_",)
+#        fpath = os.path.join(tdir,"testfile_blast.out")
+#        os.chdir("%s" % tdir)
+#        fp = open(fpath, "w")
+#        fp.write("")
+#        fp.close()
+ #       self.assertEqual(parse_blast_report("true", 1), [])
+#        os.chdir("%s" % curr_dir)
+#        shutil.rmtree(tdir)
 
 class Test8(unittest.TestCase):
     def test_divide_values_basic_function(self):
@@ -257,8 +203,8 @@ class Test9(unittest.TestCase):
         fp.write(">gi|22123922|ref|NC_004088.1|_1575\n")
         fp.write("ATGAAGCTAAATATCAAAGTTAATTGTTCTTATATCTGTGAACCCATACGTAAGCAA")
         fp.close()
-        self.assertEqual(translate_genes(fpath,"genes.pep",0), 'MNPHLTEHPPVGDIDALLQDTWLQVISLRQGVTCAEGEGQAFWQRCVADIERVHQALKDAGHSEQSCQHIRYAQCALLDE')
-        os.system("rm genes.pep")
+        self.assertEqual(translate_genes(fpath, "tmp.out", 10), 'MNPHLTEHPPVGDIDALLQDTWLQVISLRQGVTCAEGEGQAFWQRCVADIERVHQALKDAGHSEQSCQHIRYAQCALLDE')
+        #os.system("rm genes.pep")
         shutil.rmtree(tdir)
     def test_translate_genes_out_of_frame(self):
         """test the condition where the sequence is not in frame"""
@@ -266,10 +212,9 @@ class Test9(unittest.TestCase):
         fpath = os.path.join(tdir,"testfile.filtered")
         fp = open(fpath, "w")
         fp.write(">gi|22123922|ref|NC_004088.1|_3285\n")
-        fp.write("CTCATCCAGCAGTGCACATTGGGCGTATCGGATGTGCTGGCAACTCTGCTCGCTGTGACCGGCGTCTTTCAGCGCCTGATGGACACGTTCAATGTCCGCCACACAGCGCTGCCAGAATGCCTGCCCTTCGCCCTCGGCACAGGTTACCCCTTGACGCAGGCTGATCACCTGTAGCCAGGTGTCCTGCAACAGGGCGTCAATATCCCCGACTGGGGGGTGTTCGGTTAGGTGAGGATTCAT\n")
-        fp.close()
-        self.assertEqual(translate_genes(fpath,"genes.pep",0), "LIQQCTLGVSDVLATLLAVTGVFQRLMDTFNVRHTALPECLPFALGTGYPLTQADHL")
-        os.system("rm genes.pep")
+        fp.write("CTCATCCAGCAGTGCACATTGGGCGTATCGGATGTGCTGGCAACTCTGCTCGCTGTGACCGGCGTCTTTCAGCGCCTGATGGACACGTTCAATGTCCGCCACACAGCGCTGCCAGAATGCCTGCCCTTCGCCCTCGGCACAGGTTACCCCTTGACGCAGGCTGATCACCTGTAGCCAGGTGTCCTGCAACAGGGCGTCAATATCCCCGACTGGGGGGTGTTCGGTTAGGTGAGGATTCAT")
+        self.assertEqual(translate_genes(fpath, "tmp.out", 10), None)
+        #os.system("rm genes.pep")
         shutil.rmtree(tdir)
     def test_translate_genes_odd_characters(self):
         """tests the condition where weird characters are encountered"""
@@ -279,8 +224,19 @@ class Test9(unittest.TestCase):
         fp.write(">gi|22123922|ref|NC_004088.1|_3285\n")
         fp.write("1234567890")
         fp.close()
-        self.assertRaises(TypeError, translate_genes, fpath, "genes.pep", 0)
-        os.system("rm genes.pep")
+        self.assertRaises(TypeError, translate_genes, fpath)
+        #os.system("rm genes.pep")
+        shutil.rmtree(tdir)
+    def test_translate_genes_non_fasta(self):
+        """tests the condition where the file is not fasta.  Will
+        not throw an error, but will report an empty set"""
+        tdir = tempfile.mkdtemp(prefix="filetest_",)
+        fpath = os.path.join(tdir,"testfile.filtered")
+        fp = open(fpath, "w")
+        fp.write("not a fasta file")
+        fp.close()
+        self.assertEqual(translate_genes(fpath, "tmp.out", 10), None)
+        #os.system("rm genes.pep")
         shutil.rmtree(tdir)
 
 class Test10(unittest.TestCase):
@@ -632,54 +588,54 @@ class Test18(unittest.TestCase):
         shutil.rmtree(tdir)
         os.system("rm frequency_data.txt")
 
-class Test19(unittest.TestCase):
-    def test_find_dups_basic_function(self):
-        """tests the basic functionality of find_dups function"""
-        tdir = tempfile.mkdtemp(prefix="filetest_",)
-        fpath = os.path.join(tdir,"testfile_blast.out")
-        os.chdir("%s" % tdir)
-        fp = open(fpath, "w")
-        fp.write("Cluster0	Cluster0	100.00	15	0	0	1	15	1	15	1e-07	500\n")
-        fp.write("Cluster0      ClusterX         80.00  15      0       0       1       15      1       15      1e-06   420\n")
-        fp.write("Cluster1	Cluster1	100.00	15	0	0	1	15	1	15	1e-07	40.5\n")
-        fp.write("Cluster1	Cluster1	100.00	15	0	0	1	15	1	15	1e-07	40.5\n")
-        fp.write("Cluster2	Cluster2	100.00	15	0	0	1	15	1	15	1e-07	60.6")
-        fp.close()
-        #self.assertEqual(find_dups({'Cluster0': '500', 'Cluster1': '40.5', 'Cluster2': '60.6'}, 0.7, 0.85, 75), (['Cluster0'], {'Cluster0': ['500', '420'], 'Cluster1': ['40.5', '40.5']}))
-        self.assertEqual(find_dups_dev({'Cluster0': '500', 'Cluster1': '40.5', 'Cluster2': '60.6'}, 0.7, 0.85, 75, ('Cluster1','Cluster0','Cluster2'),2), (['Cluster0'], {'Cluster0': ['500', '420'], 'Cluster1': ['40.5', '40.5']}))
-        os.chdir("%s" % curr_dir)
-        shutil.rmtree(tdir)
-    def test_find_dups_multiple_dups(self):
-        """Tests the case where more than two duplicates are found for a given hit"""
-        tdir = tempfile.mkdtemp(prefix="filetest_",)
-        fpath = os.path.join(tdir,"testfile_blast.out")
-        os.chdir("%s" % tdir)
-        fp = open(fpath, "w")
-        fp.write("Cluster0	Cluster0	100.00	15	0	0	1	15	1	15	1e-07	500\n")
-        fp.write("Cluster0      ClusterX         80.00  15      0       0       1       15      1       15      1e-06   420\n")
-        fp.write("Cluster0      ClusterY         82.00  15      0       0       1       11      0       10      1e-01   430\n")
-        fp.write("Cluster1	Cluster1	100.00	15	0	0	1	15	1	15	1e-07	40.5\n")
-        fp.write("Cluster1	Cluster1	100.00	15	0	0	1	15	1	15	1e-07	40.5\n")
-        fp.write("Cluster2	Cluster2	100.00	15	0	0	1	15	1	15	1e-07	60.6")
-        fp.close()
-        self.assertEqual(find_dups_dev({'Cluster0': '500', 'Cluster1': '40.5', 'Cluster2': '60.6'}, 0.7, 0.85, 75, ('Cluster1','Cluster0','Cluster2'),2), (['Cluster0'], {'Cluster0': ['500', '420', '430'], 'Cluster1': ['40.5', '40.5']}))
-        os.chdir("%s" % curr_dir)
-        shutil.rmtree(tdir)
-    def test_find_dups_bad_input(self):
-        """Tests the case where a malformed input file is found"""
-        tdir = tempfile.mkdtemp(prefix="filetest_",)
-        fpath = os.path.join(tdir,"testfile_blast.out")
-        os.chdir("%s" % tdir)
-        fp = open(fpath, "w")
-        fp = open(fpath, "w")
-        fp.write("Cluster0	Cluster0	100.00	15	0	0	1	15	1	15	1e-07	500\n")
-        fp.write("Cluster0      ClusterX         80.00  15      0       0       1       15      1       15      1e-06   420\n")
-        fp.write("Cluster0      ClusterY         82.00  15      0       0       1       11      0       10      1e-01   430\n")
-        fp.write("Cluster1	Cluster1	100.00	15	0	0	1	15	1	15	1e-07")
-        fp.close()
-        self.assertRaises(TypeError, find_dups_dev, 0.7, 0.85, 75, 2)
-        os.chdir("%s" % curr_dir)
-        shutil.rmtree(tdir)
+#class Test19(unittest.TestCase):
+#    def test_find_dups_basic_function(self):
+#        """tests the basic functionality of find_dups function"""
+#        tdir = tempfile.mkdtemp(prefix="filetest_",)
+#        fpath = os.path.join(tdir,"testfile_blast.out")
+#        os.chdir("%s" % tdir)
+#        fp = open(fpath, "w")
+#        fp.write("Cluster0	Cluster0	100.00	15	0	0	1	15	1	15	1e-07	500\n")
+#        fp.write("Cluster0      ClusterX         80.00  15      0       0       1       15      1       15      1e-06   420\n")
+#        fp.write("Cluster1	Cluster1	100.00	15	0	0	1	15	1	15	1e-07	40.5\n")
+#        fp.write("Cluster1	Cluster1	100.00	15	0	0	1	15	1	15	1e-07	40.5\n")
+#        fp.write("Cluster2	Cluster2	100.00	15	0	0	1	15	1	15	1e-07	60.6")
+#        fp.close()
+#        #self.assertEqual(find_dups({'Cluster0': '500', 'Cluster1': '40.5', 'Cluster2': '60.6'}, 0.7, 0.85, 75), (['Cluster0'], {'Cluster0': ['500', '420'], 'Cluster1': ['40.5', '40.5']}))
+#        self.assertEqual(find_dups_dev({'Cluster0': '500', 'Cluster1': '40.5', 'Cluster2': '60.6'}, 0.7, 0.85, 75, ('Cluster1','Cluster0','Cluster2')), (['Cluster0'], {'Cluster0': ['500', '420'], 'Cluster1': ['40.5', '40.5']}))
+#        os.chdir("%s" % curr_dir)
+#        shutil.rmtree(tdir)
+#    def test_find_dups_multiple_dups(self):
+#        """Tests the case where more than two duplicates are found for a given hit"""
+#        tdir = tempfile.mkdtemp(prefix="filetest_",)
+#        fpath = os.path.join(tdir,"testfile_blast.out")
+#        os.chdir("%s" % tdir)
+#        fp = open(fpath, "w")
+#        fp.write("Cluster0	Cluster0	100.00	15	0	0	1	15	1	15	1e-07	500\n")
+#        fp.write("Cluster0      ClusterX         80.00  15      0       0       1       15      1       15      1e-06   420\n")
+#        fp.write("Cluster0      ClusterY         82.00  15      0       0       1       11      0       10      1e-01   430\n")
+#        fp.write("Cluster1	Cluster1	100.00	15	0	0	1	15	1	15	1e-07	40.5\n")
+#        fp.write("Cluster1	Cluster1	100.00	15	0	0	1	15	1	15	1e-07	40.5\n")
+#        fp.write("Cluster2	Cluster2	100.00	15	0	0	1	15	1	15	1e-07	60.6")
+#        fp.close()
+#        self.assertEqual(find_dups({'Cluster0': '500', 'Cluster1': '40.5', 'Cluster2': '60.6'}, 0.7, 0.85, 75, ('Cluster1','Cluster0','Cluster2')), (['Cluster0'], {'Cluster0': ['500', '420', '430'], 'Cluster1': ['40.5', '40.5']}))
+#        os.chdir("%s" % curr_dir)
+#        shutil.rmtree(tdir)
+#    def test_find_dups_bad_input(self):
+#        """Tests the case where a malformed input file is found"""
+#        tdir = tempfile.mkdtemp(prefix="filetest_",)
+#        fpath = os.path.join(tdir,"testfile_blast.out")
+#        os.chdir("%s" % tdir)
+#        fp = open(fpath, "w")
+#        fp = open(fpath, "w")
+#        fp.write("Cluster0	Cluster0	100.00	15	0	0	1	15	1	15	1e-07	500\n")
+#        fp.write("Cluster0      ClusterX         80.00  15      0       0       1       15      1       15      1e-06   420\n")
+#        fp.write("Cluster0      ClusterY         82.00  15      0       0       1       11      0       10      1e-01   430\n")
+#        fp.write("Cluster1	Cluster1	100.00	15	0	0	1	15	1	15	1e-07")
+#        fp.close()
+#        self.assertRaises(TypeError, find_dups, 0.7, 0.85, 75)
+#        os.chdir("%s" % curr_dir)
+#        shutil.rmtree(tdir)
 
 class Test20(unittest.TestCase):
     def test_filter_paralogs_basic_function(self):
@@ -842,7 +798,7 @@ class Test22(unittest.TestCase):
         fp.close()
         self.assertEqual(process_pangenome(fpath, "0.9", "0.4", 1, "all", "random"), ([[1]], [[1]], [[1]]))
         shutil.rmtree(tdir)
-        os.system("rm random_core_replicates.txt random_uniques_replicates.txt random_accumulation_replicates.txt")
+        #os.system("rm random_core_replicates.txt random_uniques_replicates.txt random_accumulation_replicates.txt")
 
 class Test23(unittest.TestCase):
     def test_bsr_to_pangb_basic_function(self):

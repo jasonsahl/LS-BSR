@@ -31,3 +31,11 @@
 3. All print statements have been replaced with print functions (still not entirely Python3 compatible, but on its way)
 4. Added "-a", minimum peptide length. The previous default was set to "30", while new default is "33"
 5. If nt sequences aren't in multiples of 3, they are trimmed back
+
+###Changes made on 3/21/2017###
+
+1. The "-y" flag has been removed. Now, the temporary folder is created in the current directory. If no prefix "-x" is provided,
+   the temporary folder will be in $cwd/tmp. If you provide a prefix, the temporary directory will be "$CWD/prefix"
+2. The multithreaded function has been changed for many of the functions. This shouldn't affect the function, but may result in less hanging.
+3. The "paralogs.txt" file is no longer being produced. All duplicates are under the "duplicate_ids.txt"
+

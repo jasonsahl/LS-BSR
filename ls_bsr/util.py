@@ -37,8 +37,9 @@ import collections
 def mp_shell(func, params, numProc):
     from multiprocessing import Pool
     p = Pool(numProc)
-    p.map(func, params)
+    out = p.map(func, params)
     p.terminate()
+    return out
 
 def get_cluster_ids(in_fasta):
     clusters = []
@@ -85,20 +86,6 @@ def divide_values(file, ref_scores):
     outfile.close()
     return outdata
 
-def predict_genes(fastadir, processors):
-    """simple gene prediction using Prodigal in order
-    to find coding regions from a genome sequence"""
-    os.chdir("%s" % fastadir)
-    files = os.listdir(fastadir)
-    files_and_temp_names = [(str(idx), os.path.join(fastadir, f))
-                            for idx, f in enumerate(files)]
-    def _perform_workflow(data):
-        tn, f = data
-        subprocess.check_call("prodigal -i %s -d %s_genes.seqs -a %s_genes.pep > /dev/null 2>&1" % (f, f, f), shell=True)
-    results = set(p_func.pmap(_perform_workflow,
-                              files_and_temp_names,
-                              num_workers=processors))
-
 def rename_fasta_header(fasta_in, fasta_out):
     """this is used for renaming the output,
     in the off chance that there are duplicate
@@ -126,81 +113,6 @@ def uclust_cluster(id):
            "-centroids", "consensus.fasta"]
     subprocess.call(cmd, stderr=devnull, stdout=devnull)
 
-def blast_against_each_genome_tblastn(processors, peptides, filter):
-    """BLAST all peptides against each genome"""
-    curr_dir=os.getcwd()
-    files = os.listdir(curr_dir)
-    devnull = open("/dev/null", "w")
-    if "T" in filter:
-        my_seg = "yes"
-    else:
-        my_seg = "no"
-    files_and_temp_names = [(str(idx), os.path.join(curr_dir, f))
-                            for idx, f in enumerate(files)]
-    def _perform_workflow(data):
-        tn, f = data
-        if ".fasta.new" in f:
-            try:
-                subprocess.check_call("makeblastdb -in %s -dbtype nucl > /dev/null 2>&1" % f, shell=True)
-            except:
-                print("problem found in formatting genome %s" % f)
-        if ".fasta.new" in f:
-            try:
-                devnull = open('/dev/null', 'w')
-                cmd = ["tblastn",
-                       "-query", peptides,
-                       "-db", f,
-                       "-seg", my_seg,
-                       "-comp_based_stats", "F",
-                       "-num_threads", "1",
-                       "-evalue", "0.1",
-                       "-outfmt", "6",
-                       "-out", "%s_blast.out" % f]
-                subprocess.call(cmd, stdout=devnull, stderr=devnull)
-            except:
-                print("genomes %s cannot be used" % f)
-
-    results = set(p_func.pmap(_perform_workflow,
-                              files_and_temp_names,
-                              num_workers=processors))
-
-def blast_against_each_genome_blastn(processors, filter, peptides):
-    """BLAST all peptides against each genome"""
-    if "F" in filter:
-        my_seg = "yes"
-    else:
-        my_seg = "no"
-    curr_dir=os.getcwd()
-    files = os.listdir(curr_dir)
-    files_and_temp_names = [(str(idx), os.path.join(curr_dir, f))
-                            for idx, f in enumerate(files)]
-    def _perform_workflow(data):
-        tn, f = data
-        if ".fasta.new" in f:
-            try:
-                subprocess.check_call("makeblastdb -in %s -dbtype nucl > /dev/null 2>&1" % f, shell=True)
-            except:
-                print("problem found in formatting genome %s" % f)
-        if ".fasta.new" in f:
-            devnull = open('/dev/null', 'w')
-            try:
-                cmd = ["blastn",
-                       "-task", "blastn",
-                       "-query", peptides,
-                       "-db", f,
-                       "-dust", str(my_seg),
-                       "-num_threads", "1",
-                       "-evalue", "0.1",
-                       "-outfmt", "6",
-                       "-out", "%s_blast.out" % f]
-                subprocess.call(cmd, stdout=devnull, stderr=devnull)
-            except:
-                print("The genome file %s was not processed" % f)
-
-    results = set(p_func.pmap(_perform_workflow,
-                              files_and_temp_names,
-                              num_workers=processors))
-
 def get_seq_name(in_fasta):
     """used for renaming the sequences"""
     return os.path.basename(in_fasta)
@@ -221,47 +133,49 @@ def filter_seqs(input_pep):
     outfile.close()
     return outdata
 
-def parse_blast_report(test):
-    """parse out only the name and bit score from the blast report"""
+def parse_blast_report_dev(test,processors):
+    """parse out only the unqiue names and bit score from the blast report"""
     curr_dir=os.getcwd()
-    outdata = [ ]
+    files_and_temp_names = []
+
     for infile in glob.glob(os.path.join(curr_dir, "*_blast.out")):
-        names = get_seq_name(infile)
-        outfile = open("%s.filtered" % names, "w")
-        for line in open(infile, "rU"):
-            try:
-                fields = line.split("\t")
-                outfile.write(fields[0]+"\t"+fields[11],)
-                if "true" in test:
-                    outdata.append(fields[0])
-                    outdata.append(fields[11])
-                else:
-                    pass
-            except:
-                raise TypeError("malformed blast line found")
-        outfile.close()
+        files_and_temp_names.append([infile, test])
+
+    outdata = mp_shell(_perform_workflow_pbr, files_and_temp_names, processors)
+
+    if "true" in test:
+        # mp_shell will return a list of lists. This will flatten it into a single list
+        return outdata
+    return
+
+def _perform_workflow_pbr(data):
+    infile = data[0]
+    test = data[1]
+    outdata = []
+    order = []
+    names = get_seq_name(infile)
+    outfile = open("%s.filtered.unique" % names, "w")
+    uniques = {}
+    for line in open(infile, "rU"):
+        try:
+            fields = line.split()
+            # Keep track of the largest value of fields[0]
+            if fields[0] not in uniques:
+                uniques[fields[0]] = fields[11].strip("\n")
+                order.append(fields[0])
+            else:
+                if float(fields[11]) > float(uniques[fields[0]]):
+                    uniques[fields[0]] = fields[11].strip("\n")
+        except IndexError:
+            raise TypeError("Malformed blast line found in %s" % infile)
+    for item in order:
+        if "true" in test:
+            outdata.append(item)
+            outdata.append(uniques[item])
+        outfile.write(item + "\t" + uniques[item] + "\n")
+    outfile.close()
     if "true" in test:
         return outdata
-    else:
-        pass
-
-def get_unique_lines():
-    """only return the top hit for each query"""
-    curr_dir=os.getcwd()
-    for infile in glob.glob(os.path.join(curr_dir, "*.filtered")):
-        names = get_seq_name(infile)
-        outfile = open("%s.filtered.unique" % names, "w")
-        d = {}
-        input = file(infile)
-        outdata = [ ]
-        for line in input:
-            unique = line.split("\t",1)[0]
-            if unique not in d:
-                d[unique] = 1
-                outfile.write(line)
-                outdata.append(line)
-        outfile.close()
-    return outdata
 
 def blast_against_self_blastn(blast_type, genes_pep, genes_nt, output, filter, processors):
     devnull = open('/dev/null', 'w')
@@ -279,7 +193,6 @@ def blast_against_self_blastn(blast_type, genes_pep, genes_nt, output, filter, p
            "-dust", str(my_seg),
            "-out", output]
     subprocess.call(cmd, stdout=devnull, stderr=devnull)
-    #subprocess.run(cmd,stdout=devnull,stderr=devnull)
 
 def blast_against_self_tblastn(blast_type, genes_nt, genes_pep, output,processors, filter):
     devnull = open('/dev/null', 'w')
@@ -579,7 +492,7 @@ def get_frequencies(matrix, threshold):
     outfile.close()
     return out_data
 
-def find_dups_dev(ref_scores, length, max_plog, min_hlog, clusters, processors):
+def find_dups(ref_scores, length, max_plog, min_hlog, clusters, processors):
     curr_dir=os.getcwd()
     my_dict_o = {}
     dup_dict = {}
@@ -715,19 +628,6 @@ def filter_variome(matrix, threshold, step):
     in_matrix.close()
     outfile.close()
     return outdata
-
-def run_usearch(id):
-    rec=1
-    curr_dir=os.getcwd()
-    devnull = open("/dev/null", "w")
-    for infile in glob.glob(os.path.join(curr_dir, "x*")):
-        cmd = ["usearch",
-           "-cluster_fast", "%s" % infile,
-           "-id", str(id),
-           "-uc", "results.uc",
-           "-centroids", "%s.usearch.out" % str(autoIncrement())]
-        subprocess.call(cmd,stdout=devnull,stderr=devnull)
-    devnull.close()
 
 def filter_scaffolds(in_fasta):
     """If an N is present in any scaffold, the entire contig will
@@ -912,24 +812,6 @@ def parse_tree(tree):
 def blat_against_self(query,reference,output,processors):
     subprocess.check_call("blat -out=blast8 -minIdentity=75 %s %s %s > /dev/null 2>&1" % (reference,query,output), shell=True)
 
-def blat_against_each_genome(database,processors):
-    """BLAT all genes against each genome"""
-    curr_dir=os.getcwd()
-    files = os.listdir(curr_dir)
-    files_and_temp_names = [(str(idx), os.path.join(curr_dir, f))
-                            for idx, f in enumerate(files)]
-    def _perform_workflow(data):
-        tn, f = data
-        if ".fasta.new" in f:
-            try:
-                subprocess.check_call("blat -out=blast8 -minIdentity=75 %s %s %s_blast.out > /dev/null 2>&1" % (f,database,f), shell=True)
-            except:
-                print("genomes %s cannot be used" % f)
-
-    results = set(p_func.pmap(_perform_workflow,
-                              files_and_temp_names,
-                              num_workers=processors))
-
 def make_table_dev(infile, test, clusters):
     """make the BSR matrix table"""
     values = [ ]
@@ -940,7 +822,8 @@ def make_table_dev(infile, test, clusters):
     name.append(out)
     reduced=[ ]
     """remove the junk at the end of the file"""
-    for x in name:reduced.append(x.replace('.fasta.new_blast.out.filtered.filtered.unique',''))
+    #for x in name:reduced.append(x.replace('.fasta.new_blast.out.filtered.filtered.unique',''))
+    for x in name:reduced.append(x.replace('.fasta.new_blast.out.filtered.unique',''))
     names.append(reduced)
     my_dict={}
     my_file=open(infile, "rU")
@@ -1095,7 +978,7 @@ def _prodigal_workflow(data):
     tn, f = data
     subprocess.check_call("prodigal -i %s -d %s_genes.seqs -a %s_genes.pep > /dev/null 2>&1" % (f, f, f), shell=True)
 
-def predict_genes_dev(fastadir, processors):
+def predict_genes(fastadir, processors):
     """simple gene prediction using Prodigal in order
     to find coding regions from a genome sequence"""
     os.chdir("%s" % fastadir)
@@ -1243,7 +1126,7 @@ def _perform_workflow_fdd(q, my_dict_o, data):
                     pass
                 elif k == cluster:
                     try:
-                        #ew_dict[k] = len(v)
+                        #new_dict[k] = len(v)
                         new_dict.update({k:len(v)})
                     except:
                         new_dict.update({k:"0"})
@@ -1267,8 +1150,9 @@ def _perform_workflow_fdd(q, my_dict_o, data):
         #    q.put(k)
 
         outfile.close()
+        return genome_specific_dict
 
-def find_dups_dev2(ref_scores, length, max_plog, min_hlog, clusters, processors):
+def find_dups_dev(ref_scores, length, max_plog, min_hlog, clusters, processors):
     from multiprocessing import Manager, Pool
     m = Manager()
     q = m.Queue()
@@ -1276,9 +1160,7 @@ def find_dups_dev2(ref_scores, length, max_plog, min_hlog, clusters, processors)
     p = Pool(processors)
     curr_dir=os.getcwd()
     dup_dict = {}
-    paralogs = [ ]
     duplicate_file = open("duplicate_ids.txt", "w")
-    paralog_file = open("paralog_ids.txt", "w")
     ref_file = open("dup_refs.txt", "a")
     genome_specific_list_of_lists = []
     files = os.listdir(curr_dir)
@@ -1286,39 +1168,59 @@ def find_dups_dev2(ref_scores, length, max_plog, min_hlog, clusters, processors)
     for idx, f in enumerate(files):
         files_and_temp_names.append([str(idx), os.path.join(curr_dir, f), ref_scores, length, max_plog, min_hlog, clusters, processors])
     # Multiprocessing here (mp_shell for Ctrl+F)
+    """How to test this function???"""
     for process in files_and_temp_names:
         p.apply(_perform_workflow_fdd, args=(q,my_dict_o,process))
     # Get rid of any duplicate values in queue
     unique = set()
     while q.empty() == False:
         unique.add(q.get())
-    #for item in unique:
-    #    ref_file.write(item + "\n")
-    #ref_file.close()
     """This was changed from Josh's code"""
     ref_file.write("ID"+"\n")
     ref_file.write("\n".join(clusters)+"\n")
     ref_file.close()
-    """known issue - if gene id is Capital and before "I", there can be a shuffling of IDs
-    I need to sort the dictionary and keep the first item constant as ID"""
     try:
-        os.system("paste dup_refs.txt *.counts.txt > dup_matrix.txt")
+        generate_dup_matrix()
+        os.system("paste dup_refs.txt dup_values > dup_matrix.txt")
     except:
-        print("too many genomes to paste, need new function")
-    for k in my_dict_o.keys():
-        if int(len(my_dict_o[k]))>=2:
-            dup_dict.update({k:my_dict_o[k]})
-    for k,v in dup_dict.iteritems():
-        max_value = max(v)
-        for x in v:
-            if float(x)/float(max_value)<=max_plog:
-                paralogs.append(k)
-            else:
-                continue
-    for k, v in dup_dict.iteritems():
-        duplicate_file.write(str(k)+"\n")
-    nr=[x for i, x in enumerate(paralogs) if x not in paralogs[i+1:]]
-    paralog_file.write("\n".join(nr)+"\n")
+        print("problem generating duplicate matrix")
+    """new way to report duplicates"""
+    duplicate_IDs = []
+    for line in open("dup_matrix.txt","rU"):
+        fields = line.split()
+        if fields[0] == "ID":
+            pass
+        else:
+            for field in fields[1:]:
+                if float(field)>1:
+                    if fields[0] in duplicate_IDs:
+                        pass
+                    else:
+                        duplicate_IDs.append(fields[0])
+    duplicate_file.write("\n".join(duplicate_IDs))
+    #print(duplicate_IDs)
+    """my_dict_o only seems to contain a single value for each key"""
+    #print(my_dict_o)
+    #for k in my_dict_o.keys():
+    #for k,v in my_dict_o.iteritems():
+        #if int(len(v))>=2:
+        #    dup_dict.update({k:v})
+    #    if int(len(my_dict_o[k]))>=2:
+    #        dup_dict.update({k:my_dict_o[k]})
+    #print(dup_dict)
+    """This finds the paralogs, I'm thinking I can do this differently"""
+    #for k,v in dup_dict.iteritems():
+    #    max_value = max(v)
+    #    for x in v:
+    #        if float(x)/float(max_value)<=max_plog:
+    #            paralogs.append(k)
+    #        else:
+    #            continue
+    #for k, v in dup_dict.iteritems():
+    #    duplicate_file.write(str(k)+"\n")
+    #nr=[x for i, x in enumerate(paralogs) if x not in paralogs[i+1:]]
+    #paralog_file.write("\n".join(nr)+"\n")
     duplicate_file.close()
-    paralog_file.close()
-    return nr, dup_dict
+    return duplicate_IDs
+    #paralog_file.close()
+    #return dup_dict
