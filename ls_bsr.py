@@ -351,7 +351,8 @@ def main(directory,id,filter,processors,genes,cluster_method,blast,length,
         centroid_list.append(x)
     table_list.append(centroid_list)
     logging.logPrint("starting matrix building")
-    new_names,new_table = new_loop(files_and_temp_names, processors, clusters, debug)
+    #new_names,new_table = new_loop(files_and_temp_names, processors, clusters, debug)
+    new_names,new_table = new_loop_dev(files_and_temp_names, processors, clusters, debug)
     new_table_list = table_list+new_table
     open("ref.list", "a").write("\n")
     for x in nr_sorted:

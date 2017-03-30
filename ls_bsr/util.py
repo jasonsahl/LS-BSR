@@ -1224,3 +1224,68 @@ def find_dups_dev(ref_scores, length, max_plog, min_hlog, clusters, processors):
     return duplicate_IDs
     #paralog_file.close()
     #return dup_dict
+
+def _perform_workflow_nl(data):
+     tn, f = data[0]
+     clusters = data[1]
+     names = data[2]
+     table_list = data[3]
+     debug = data[4]
+
+     name,values=make_table_test(f, "F", clusters)
+     names.append(name)
+     table_list.append(values)
+     if debug == "T":
+        logging.logPrint("sample %s processed" % f)
+
+def new_loop_dev(to_iterate, processors, clusters, debug):
+    from multiprocessing import Manager
+
+    manager = Manager()
+    names = manager.list()
+    table_list = manager.list()
+
+    files_and_temp_names_nl = []
+    for file in to_iterate:
+        files_and_temp_names_nl.append([file, clusters, names, table_list, debug])
+
+    mp_shell(_perform_workflow_nl, files_and_temp_names_nl, processors)
+
+    names = list(names)
+    table_list = list(table_list)
+
+    return names,table_list
+
+def make_table_test(infile, test, clusters):
+    """make the BSR matrix table"""
+    values = [ ]
+    names = [ ]
+    outdata = [ ]
+    name = get_seq_name(infile)
+    reduced=[ ]
+    """remove the junk at the end of the file"""
+    reduced.append(name.replace('.fasta.new_blast.out.filtered.unique',''))
+    names.append(reduced)
+    my_dict={}
+    my_file=open(infile, "rU")
+    """make a dictionary of all clusters and values"""
+    try:
+        for line in my_file:
+            fields=line.split()
+            my_dict.update({fields[0]:fields[1]})
+    except:
+        raise TypeError("abnormal number of fields")
+    my_file.close()
+    """add in values, including any potentially missing ones"""
+    for x in clusters:
+        if x not in my_dict:
+            my_dict.update({x:0})
+    for x in reduced:
+        values.append(x)
+    """sort keys to get the same order between samples"""
+    od = collections.OrderedDict(sorted(my_dict.items()))
+    values += od.values()
+    if "T" in test:
+        return sorted(outdata)
+
+    return names, values
