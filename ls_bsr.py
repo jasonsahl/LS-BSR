@@ -86,7 +86,7 @@ def test_fplog(option, opt_str, value, parser):
         sys.exit()
 
 def main(directory,id,filter,processors,genes,cluster_method,blast,length,
-         max_plog,min_hlog,f_plog,keep,filter_peps,filter_scaffolds,prefix,min_pep_length,debug):
+         max_plog,min_hlog,f_plog,keep,filter_peps,filter_scaffolds,prefix,find_dups,min_pep_length,debug):
     start_dir = os.getcwd()
     ap=os.path.abspath("%s" % start_dir)
     dir_path=os.path.abspath("%s" % directory)
@@ -330,9 +330,12 @@ def main(directory,id,filter,processors,genes,cluster_method,blast,length,
         ref_scores=parse_self_blast(open("self_blast.out", "U"))
         subprocess.check_call("rm tmp_blast.out self_blast.out", shell=True)
         """testing block complete"""
-    logging.logPrint("Finding duplicates")
     #find_dups(ref_scores, length, max_plog, min_hlog, clusters, processors)
-    find_dups_dev(ref_scores, length, max_plog, min_hlog, clusters, processors)
+    if "T" in find_dups:
+        logging.logPrint("Finding duplicates")
+        find_dups_dev(ref_scores, length, max_plog, min_hlog, clusters, processors)
+    else:
+        logging.logPrint("Duplicate filtering turned off")
     if blast=="blat":
         logging.logPrint("BLAT done")
     else:
@@ -373,7 +376,7 @@ def main(directory,id,filter,processors,genes,cluster_method,blast,length,
     import datetime
     timestamp = datetime.datetime.now()
     rename = str(timestamp.year), str(timestamp.month), str(timestamp.day), str(timestamp.hour), str(timestamp.minute), str(timestamp.second)
-    if "T" in f_plog:
+    if "T" in f_plog and "T" in find_dups:
         filter_paralogs("%s/bsr_matrix_values.txt" % start_dir, "duplicate_ids.txt")
         if "NULL" in prefix:
             os.system("cp bsr_matrix_values_filtered.txt %s/%s_paralogs_filtered_bsr_matrix_values.txt" % (start_dir,"".join(rename)))
@@ -381,18 +384,20 @@ def main(directory,id,filter,processors,genes,cluster_method,blast,length,
             os.system("cp bsr_matrix_values_filtered.txt %s/%s_paralogs_filtered_bsr_matrix_values.txt" % (start_dir,prefix))
     os.chdir("%s" % ap)
     if "NULL" in prefix:
-        os.system("mv dup_matrix.txt %s_dup_matrix.txt" % "".join(rename))
+        if "T" in find_dups:
+            os.system("mv dup_matrix.txt %s_dup_matrix.txt" % "".join(rename))
+            os.system("mv duplicate_ids.txt %s_duplicate_ids.txt" % "".join(rename))
         os.system("mv names.txt %s_names.txt" % "".join(rename))
-        os.system("mv duplicate_ids.txt %s_duplicate_ids.txt" % "".join(rename))
         os.system("mv bsr_matrix_values.txt %s_bsr_matrix.txt" % "".join(rename))
         if os.path.isfile("consensus.fasta"):
             os.system("mv consensus.fasta %s_consensus.fasta" % "".join(rename))
         if os.path.isfile("consensus.pep"):
             os.system("mv consensus.pep %s_consensus.pep" % "".join(rename))
     else:
-        os.system("mv dup_matrix.txt %s_dup_matrix.txt" % prefix)
+        if "T" in find_dups:
+            os.system("mv dup_matrix.txt %s_dup_matrix.txt" % prefix)
+            os.system("mv duplicate_ids.txt %s_duplicate_ids.txt" % prefix)
         os.system("mv names.txt %s_names.txt" % prefix)
-        os.system("mv duplicate_ids.txt %s_duplicate_ids.txt" % prefix)
         os.system("mv bsr_matrix_values.txt %s_bsr_matrix.txt" % prefix)
         if os.path.isfile("consensus.fasta"):
             os.system("mv consensus.fasta %s_consensus.fasta" % prefix)
@@ -416,6 +421,7 @@ def main(directory,id,filter,processors,genes,cluster_method,blast,length,
     outfile.write("-k %s \\\n" % keep)
     outfile.write("-s %s \\\n" % filter_peps)
     outfile.write("-e %s \\\n" % filter_scaffolds)
+    outfile.write("-y %s \\\n" % find_dups)
     outfile.write("-x %s \\\n" % prefix)
     outfile.write("-z %s\n" % debug)
     outfile.write("temp data stored here if kept: %s" % fastadir)
@@ -475,6 +481,9 @@ if __name__ == "__main__":
     parser.add_option("-x", "--prefix", dest="prefix", action="store",
                       help="prefix for naming output files, defaults to time/date",
                       default="NULL", type="string")
+    parser.add_option("-y", "--find_dups", dest="find_dups", action="callback",
+                      help="toggle duplicate finding on and off, defaults to T",
+                      default="T", callback=test_filter, type="string")
     parser.add_option("-a", "--min_pep_length", dest="min_pep_length", action="store",
                       help="minimum peptide length to keep, defaults to 33",
                       default="33", type="int")
@@ -492,4 +501,4 @@ if __name__ == "__main__":
 
     main(options.directory,options.id,options.filter,options.processors,options.genes,options.cluster_method,options.blast,
          options.length,options.max_plog,options.min_hlog,options.f_plog,options.keep,options.filter_peps,
-         options.filter_scaffolds,options.prefix,options.min_pep_length,options.debug)
+         options.filter_scaffolds,options.prefix,options.find_dups,options.min_pep_length,options.debug)
