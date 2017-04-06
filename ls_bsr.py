@@ -331,15 +331,16 @@ def main(directory,id,filter,processors,genes,cluster_method,blast,length,
         subprocess.check_call("rm tmp_blast.out self_blast.out", shell=True)
         """testing block complete"""
     #find_dups(ref_scores, length, max_plog, min_hlog, clusters, processors)
-    if "T" in find_dups:
-        logging.logPrint("Finding duplicates")
-        find_dups_dev(ref_scores, length, max_plog, min_hlog, clusters, processors)
-    else:
-        logging.logPrint("Duplicate filtering turned off")
     if blast=="blat":
         logging.logPrint("BLAT done")
     else:
         logging.logPrint("BLAST done")
+    if "T" in find_dups:
+        logging.logPrint("Finding duplicates")
+        find_dups_dev(ref_scores, length, max_plog, min_hlog, clusters, processors)
+        logging.logPrint("Finding duplicates complete")
+    else:
+        logging.logPrint("Duplicate filtering turned off")
     parse_blast_report_dev("false",4)
     curr_dir=os.getcwd()
     table_files = glob.glob(os.path.join(curr_dir, "*.filtered.unique"))

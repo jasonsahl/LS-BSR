@@ -1121,34 +1121,25 @@ def _perform_workflow_fdd(q, my_dict_o, data):
 
         new_dict = {}
         for k,v in genome_specific_dict.iteritems():
-            for cluster in clusters:
-                if k == "ID":
-                    pass
-                elif k == cluster:
+            if k == "ID":
+                pass
+            else:
+                if k in clusters:
                     try:
-                        #new_dict[k] = len(v)
                         new_dict.update({k:len(v)})
                     except:
                         new_dict.update({k:"0"})
-                        #new_dict[k] = "0"
-        for cluster in clusters:
-            if cluster not in genome_specific_dict:
-                #new_dict[cluster] = "0"
-                new_dict.update({cluster:"0"})
+        """This makes sure that every cluster is included"""
         od = collections.OrderedDict(sorted(new_dict.items()))
         ids = collections.OrderedDict({"ID":reduced_name})
         both = collections.OrderedDict(list(ids.items())+list(new_dict.items()))
-        for k,v in both.iteritems():
-                if k == "ID":
-                    outfile.write(str(v)+"\n")
+        outfile.write(str(both.values()[0]+"\n"))
+        """This makes sure that the output is in order"""
         for cluster in clusters:
-            for k,v in both.iteritems():
-                if k == cluster:
-                    outfile.write(str(v)+"\n")
-        #for k,v in both.iteritems():
-        #    outfile.write(str(v)+"\n")
-        #    q.put(k)
-
+            if cluster in both:
+                outfile.write(str(both.get(cluster))+"\n")
+            else:
+                outfile.write(str("0")+"\n")
         outfile.close()
         return genome_specific_dict
 
@@ -1175,7 +1166,7 @@ def find_dups_dev(ref_scores, length, max_plog, min_hlog, clusters, processors):
     unique = set()
     while q.empty() == False:
         unique.add(q.get())
-    """This was changed from Josh's code"""
+    """This generates the list of all possible CDSs"""
     ref_file.write("ID"+"\n")
     ref_file.write("\n".join(clusters)+"\n")
     ref_file.close()
