@@ -14,20 +14,13 @@ import random
 import collections
 try:
     from Bio.SeqRecord import SeqRecord
-    import Bio
+    #import Bio
     from Bio import SeqIO
     from Bio import Phylo
 except:
     print("BioPython is not in your PATH, but needs to be")
     sys.exit()
-try:
-    from igs.utils import functional as func
-    from igs.utils import logging
-    from igs.threading import functional as p_func
-    """test code"""
-except:
-    print("Your environment is not set correctly.  Please add LS-BSR to your PYTHONPATH and try again")
-    sys.exit()
+import igs_logging
 import errno
 import threading
 import types
