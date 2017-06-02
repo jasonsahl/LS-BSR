@@ -442,7 +442,10 @@ def get_core_gene_stats(matrix, threshold, lower):
 
     print("# of conserved genes = %s" % len(positives))
     print("# of unique genes = %s" % len(singles))
-    ratio = int(len(singles))/int(totals)
+    try:
+        ratio = int(len(singles))/int(totals)
+    except:
+        ratio = 0
     outfile.write("\n".join(positives)+"\n")
     singletons.write("\n".join(singles)+"\n")
     print("# of unique genes per genome = %s" % ratio)
