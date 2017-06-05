@@ -3,6 +3,7 @@
 """transfer annotation onto centroids"""
 
 from __future__ import division
+from __future__ import print_function
 import optparse
 import sys
 import os
@@ -14,7 +15,7 @@ def test_file(option, opt_str, value, parser):
     try:
         with open(value): setattr(parser.values, option.dest, value)
     except IOError:
-        print '%s file cannot be opened' % option
+        print('%s file cannot be opened' % option)
         sys.exit()
 
 def blast_against_self(blast_type, query, database, output, processors):
@@ -38,12 +39,12 @@ def transfer_annotation(consensus, blast_in):
         blast_dict.update({fields[0]:fields[1]})
     for record in SeqIO.parse(consensus, "fasta"):
         if record.id in blast_dict:
-            print >> outfile,">"+str(blast_dict.get(record.id))
-            print >> outfile,record.seq
+            outfile.write(">"+str(blast_dict.get(record.id))+"\n")
+            outfile.write(str(record.seq)+"\n")
         else:
             if int(len(record.seq))>10:
-                print >> outfile,">"+record.id
-                print >> outfile,record.seq
+                outfile.write(">"+record.id+"\n")
+                outfile.write(str(record.seq)+"\n")
     outfile.close()
 
 def parse_blast_report(infile):
@@ -93,7 +94,7 @@ def parse_self_blast(lines):
             raise TypeError("blast file is malformed")
     return my_dict
 
-def process_consensus(in_fasta, new_dict):
+def process_consensus(in_fasta,new_dict,out_fasta_prefix):
     my_lists = []
     outfile = open("in_fasta_annotated.fasta", "w")
     no_hit_records = []
@@ -123,7 +124,7 @@ def update_dict(ref_scores, query_file, all_clusters, threshold):
     """Returns centroid:associated_gene"""
     return new_dict
 
-def main(peptides,consensus,processors,threshold):
+def main(peptides,consensus,processors,threshold,out_fasta_prefix):
     devnull = open("/dev/null", "w")
     pep_path=os.path.abspath("%s" % peptides)
     consensus_path=os.path.abspath("%s" % consensus)
@@ -157,7 +158,7 @@ def main(peptides,consensus,processors,threshold):
     get_unique_lines("query_blast.filtered")
     clusters = get_cluster_ids(pep_path)
     new_dict = update_dict(ref_scores, "query.filtered.unique", clusters, threshold)
-    process_consensus(consensus_path, new_dict)
+    process_consensus(consensus_path,new_dict,out_fasta_prefix)
     os.system("rm query.peptides.xyx* xyx.blast.out query_blast.filtered query.filtered.unique")
 
 if __name__ == "__main__":
@@ -173,15 +174,18 @@ if __name__ == "__main__":
                       help="number of processors to use with BLAST, defaults to 2",
                       type="int", default="2")
     parser.add_option("-t", "--threshold", dest="threshold",
-                      help="[integer] lower BSR threshold for assigning annotation, defaults to 80[%]",
+                      help="[integer] lower percentage threshold for assigning annotation, defaults to 80[%]",
                       type="int", action="store", default="80")
+    parser.add_option("-o", "--out_fasta_prefix", dest="out_fasta_prefix",
+                      help="Naming scheme for output files [REQUIRED]",
+                      type="string", action="store")
     options, args = parser.parse_args()
 
-    mandatories = ["peptides", "consensus"]
+    mandatories = ["peptides", "consensus", "out_fasta_prefix"]
     for m in mandatories:
         if not getattr(options, m, None):
             print "\nMust provide %s.\n" %m
             parser.print_help()
             exit(-1)
 
-    main(options.peptides,options.consensus,options.processors,options.threshold)
+    main(options.peptides,options.consensus,options.processors,options.threshold,options.out_fasta_prefix)

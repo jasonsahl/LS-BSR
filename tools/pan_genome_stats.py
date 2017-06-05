@@ -16,9 +16,9 @@ def test_file(option, opt_str, value, parser):
         print('%s file cannot be opened' % option)
         sys.exit()
 
-def main(matrix, threshold, lower):
-    get_core_gene_stats(matrix, threshold, lower)
-    get_frequencies(matrix, threshold)
+def main(matrix, upper, lower):
+    get_core_gene_stats(matrix, upper, lower)
+    get_frequencies(matrix, upper)
 
 if __name__ == "__main__":
     usage="usage: %prog [options]"
@@ -26,7 +26,7 @@ if __name__ == "__main__":
     parser.add_option("-b", "--bsr_matrix", dest="matrix",
                       help="/path/to/bsr_matrix [REQUIRED]",
                       action="callback", callback=test_file, type="string")
-    parser.add_option("-t", "--threshold", dest="threshold",
+    parser.add_option("-u", "--upper", dest="upper",
                       help="upper threshold for ORF presence, defaults to 0.8",
                       action="store", default="0.8", type="float")
     parser.add_option("-l", "--lower", dest="lower",
@@ -41,4 +41,4 @@ if __name__ == "__main__":
             parser.print_help()
             exit(-1)
 
-    main(options.matrix, options.threshold, options.lower)
+    main(options.matrix, options.upper, options.lower)

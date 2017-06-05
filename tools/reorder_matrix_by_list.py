@@ -7,6 +7,7 @@ with the order of genomes in a phylogeny"""
 import sys
 import optparse
 from ls_bsr.util import transpose_matrix, reorder_matrix
+import os
 
 def test_file(option, opt_str, value, parser):
     try:
@@ -17,7 +18,13 @@ def test_file(option, opt_str, value, parser):
 
 def main(matrix, genomes):
     transpose_matrix(matrix)
-    reorder_matrix("tmp.matrix", genomes)
+    names = []
+    for line in open(genomes, "rU"):
+        newline = line.strip()
+        fields = newline.split()
+        names.append(fields)
+    reorder_matrix("tmp.matrix",names)
+    os.system("rm tmp.matrix")
 
 if __name__ == "__main__":
     usage="usage: %prog [options]"

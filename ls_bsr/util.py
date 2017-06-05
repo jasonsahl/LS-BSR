@@ -410,7 +410,7 @@ def filter_matrix(to_keep, in_matrix, prefix):
     for line in matrix:
         fields = line.split()
         deque((list.pop(fields, i) for i in sorted(to_remove, reverse=True)), maxlen=0)
-        outfile.write("\t".join(fields))
+        outfile.write("\t".join(fields)+"\n")
         outdata.append(fields)
     outfile.close()
     return outdata
@@ -765,7 +765,7 @@ def bsr_to_pangp(matrix, lower):
                 new_fields.append("1")
             else:
                 new_fields.append("-")
-        outfile.write("\t".join(new_fields))
+        outfile.write("\t".join(new_fields)+"\n")
     my_matrix.close()
     outfile.close()
     return new_fields
@@ -782,19 +782,18 @@ def transpose_matrix(matrix):
         out_matrix.write("\t".join(x)+"\n")
     out_matrix.close()
 
-def reorder_matrix(in_matrix, names):
+def reorder_matrix(in_matrix,names):
     my_matrix = open(in_matrix, "U")
     outfile = open("reordered_matrix.txt", "w")
     firstLine = my_matrix.readline()
     outfile.write(firstLine)
     my_matrix.close()
     for name in names:
-         for line in open(in_matrix, "U"):
+        for line in open(in_matrix, "U"):
             newline = line.strip("\n")
-            fields = newline.split("\t")
-            if name == fields[0]:
-                outfile.write(line,)
-    my_matrix.close()
+            fields = newline.split()
+            if "".join(name) == fields[0]:
+                outfile.write(line)
     outfile.close()
 
 def parse_tree(tree):
@@ -967,12 +966,23 @@ def run_usearch_dev(id,processors):
     # Put all files that start with 'x' in list
     files_and_temp_names = []
     for file in glob.glob(os.path.join(curr_dir, "x*")):
-	       files_and_temp_names.append([file,id])
+	    files_and_temp_names.append([file,id])
     mp_shell(_usearch_workflow, files_and_temp_names, processors)
+
+def sum_seq_length(fasta_in):
+    numbers = []
+    for record in SeqIO.parse(open(fasta_in), "fasta"):
+	    numbers.append(len(record.seq))
+    totals = sum(int(x) for x in numbers)
+    return totals
 
 def _prodigal_workflow(data):
     tn, f = data
-    subprocess.check_call("prodigal -i %s -d %s_genes.seqs -a %s_genes.pep > /dev/null 2>&1" % (f, f, f), shell=True)
+    length = sum_seq_length(f)
+    if length > 20000:
+        subprocess.check_call("prodigal -i %s -d %s_genes.seqs -a %s_genes.pep > /dev/null 2>&1" % (f, f, f), shell=True)
+    else:
+        subprocess.check_call("prodigal -i %s -d %s_genes.seqs -p meta -a %s_genes.pep > /dev/null 2>&1" % (f, f, f), shell=True)
 
 def predict_genes(fastadir, processors):
     """simple gene prediction using Prodigal in order
