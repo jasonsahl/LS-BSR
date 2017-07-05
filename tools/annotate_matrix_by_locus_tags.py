@@ -93,17 +93,17 @@ def update_dict(ref_scores, query_file, all_clusters, threshold):
 def process_bsr_matrix(matrix,new_dict):
     my_lists = []
     outfile = open("bsr_matrix_annotated.txt", "w")
-    for line in open(matrix, "U"):
-        if not line.startswith("centroid"):
-            refline = line.strip()
-            ref_fields = refline.split()
-            ref_fields.insert(0,"")
-            my_lists.append(ref_fields)
-        else:
-            newline = line.strip()
-            fields = newline.split()
-            fields[0] = new_dict.get(fields[0])
-            my_lists.append(fields)
+    infile = open(matrix,"rU")
+    lines = infile.readlines()
+    refline = lines[0].split()
+    refline.insert(0,"")
+    infile.close()
+    my_lists.append(refline)
+    for line in lines[1:]:
+        newline = line.strip()
+        fields = newline.split()
+        fields[0] = new_dict.get(fields[0])
+        my_lists.append(fields)
     sorted_lists = sorted(my_lists, key=itemgetter(0))
     for alist in sorted_lists:
         outfile.write("\t".join(alist)+"\n")
