@@ -14,7 +14,6 @@ import random
 import collections
 try:
     from Bio.SeqRecord import SeqRecord
-    #import Bio
     from Bio import SeqIO
     from Bio import Phylo
 except:
@@ -406,7 +405,7 @@ def filter_matrix(to_keep, in_matrix, prefix):
     deque((list.pop(first_fields, i) for i in sorted(to_keep, reverse=True)), maxlen=0)
     outdata.append(first_fields)
     first_fields.insert(0,"")
-    outfile.write("\t".join(first_fields))
+    outfile.write("\t".join(first_fields)+"\n")
     for line in matrix:
         fields = line.split()
         deque((list.pop(fields, i) for i in sorted(to_remove, reverse=True)), maxlen=0)
@@ -1195,32 +1194,9 @@ def find_dups_dev(ref_scores, length, max_plog, min_hlog, clusters, processors):
                     else:
                         duplicate_IDs.append(fields[0])
     duplicate_file.write("\n".join(duplicate_IDs))
-    #print(duplicate_IDs)
-    """my_dict_o only seems to contain a single value for each key"""
-    #print(my_dict_o)
-    #for k in my_dict_o.keys():
-    #for k,v in my_dict_o.iteritems():
-        #if int(len(v))>=2:
-        #    dup_dict.update({k:v})
-    #    if int(len(my_dict_o[k]))>=2:
-    #        dup_dict.update({k:my_dict_o[k]})
-    #print(dup_dict)
-    """This finds the paralogs, I'm thinking I can do this differently"""
-    #for k,v in dup_dict.iteritems():
-    #    max_value = max(v)
-    #    for x in v:
-    #        if float(x)/float(max_value)<=max_plog:
-    #            paralogs.append(k)
-    #        else:
-    #            continue
-    #for k, v in dup_dict.iteritems():
-    #    duplicate_file.write(str(k)+"\n")
-    #nr=[x for i, x in enumerate(paralogs) if x not in paralogs[i+1:]]
-    #paralog_file.write("\n".join(nr)+"\n")
+
     duplicate_file.close()
     return duplicate_IDs
-    #paralog_file.close()
-    #return dup_dict
 
 def _perform_workflow_nl(data):
      tn, f = data[0]
