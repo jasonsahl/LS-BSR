@@ -53,7 +53,7 @@ def parse_blast_report(infile):
     for line in open(infile, "rU"):
         try:
             fields = line.split("\t")
-            print >> outfile, fields[0]+"\t"+fields[1]+"\t"+fields[11],
+            outfile.write(fields[0]+"\t"+fields[1]+"\t"+fields[11])
         except:
             raise TypeError("malformed blast line found")
     outfile.close()
@@ -67,7 +67,7 @@ def get_unique_lines(infile):
         unique = line.split("\t",1)[0]
         if unique not in d:
             d[unique] = 1
-            print >> outfile,line,
+            outfile.write(line,)
     outfile.close()
 
 def get_cluster_ids(in_fasta):
@@ -79,7 +79,7 @@ def get_cluster_ids(in_fasta):
     if len(clusters) == len(nr):
         return clusters
     else:
-        print "Problem with gene list.  Are there duplicate headers in your file?"
+        print("Problem with gene list.  Are there duplicate headers in your file?")
         sys.exit()
 
 def parse_self_blast(lines):
@@ -97,17 +97,19 @@ def parse_self_blast(lines):
 def process_consensus(in_fasta,new_dict,out_fasta_prefix):
     my_lists = []
     outfile = open("in_fasta_annotated.fasta", "w")
-    no_hit_records = []
+    #no_hit_records = []
     for record in SeqIO.parse(open(in_fasta, "U"), "fasta"):
         if record.id not in new_dict:
-            no_hit_records.append(record)
+            #no_hit_records.append(record)
+            outfile.write(">"+str(record.id)+"\n")
+            outfile.write(str(record.seq)+"\n")
         else:
             new_id = record.id.replace(record.id, new_dict.get(record.id))
-            print >> outfile, ">"+str(new_id)+"::"+record.id
-            print >> outfile, record.seq
-    for record in no_hit_records:
-        print >> outfile, ">"+record.id
-        print >> outfile, record.seq
+            outfile.write(">"+str(new_id)+"::"+record.id+"\n")
+            outfile.write(str(record.seq)+"\n")
+    #for record in SeqIO.no_hit_records:
+    #    outfile.write(">"+str(record.id)+"\n")
+    #    outfile.write(str(record.seq)+"\n")
 
 def update_dict(ref_scores, query_file, all_clusters, threshold):
     new_dict = {}
@@ -120,7 +122,7 @@ def update_dict(ref_scores, query_file, all_clusters, threshold):
                     if (float(fields[2])/float(ref_scores.get(fields[1]))*100)>int(threshold):
                         new_dict.update({fields[0]:fields[1]})
                 except:
-                    print "couldn't process", fields[2], ref_scores.get(fields[0]), fields[1], fields[0]
+                    print("couldn't process", fields[2], ref_scores.get(fields[0]), fields[1], fields[0])
     """Returns centroid:associated_gene"""
     return new_dict
 
@@ -133,14 +135,14 @@ def main(peptides,consensus,processors,threshold,out_fasta_prefix):
         if ab == 0:
             pass
         else:
-            print "blastp must be in your path to use peptides"
+            print("blastp must be in your path to use peptides")
             sys.exit()
     elif consensus_path.endswith(".fasta"):
         ab = subprocess.call(['which', 'blastx'])
         if ab == 0:
             pass
         else:
-            print "blastx must be in your path to use nucleotides"
+            print("blastx must be in your path to use nucleotides")
             sys.exit()
     """"removes empty white space from your input file"""
     os.system("sed 's/ /_/g' %s > query.peptides.xyx" % pep_path)
@@ -184,7 +186,7 @@ if __name__ == "__main__":
     mandatories = ["peptides", "consensus", "out_fasta_prefix"]
     for m in mandatories:
         if not getattr(options, m, None):
-            print "\nMust provide %s.\n" %m
+            print("\nMust provide %s.\n" %m)
             parser.print_help()
             exit(-1)
 
