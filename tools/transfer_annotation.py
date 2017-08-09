@@ -96,20 +96,17 @@ def parse_self_blast(lines):
 
 def process_consensus(in_fasta,new_dict,out_fasta_prefix):
     my_lists = []
-    outfile = open("in_fasta_annotated.fasta", "w")
-    #no_hit_records = []
+    outfile = open("%s.annotated.fasta" % out_fasta_prefix, "w")
     for record in SeqIO.parse(open(in_fasta, "U"), "fasta"):
         if record.id not in new_dict:
-            #no_hit_records.append(record)
             outfile.write(">"+str(record.id)+"\n")
             outfile.write(str(record.seq)+"\n")
         else:
             new_id = record.id.replace(record.id, new_dict.get(record.id))
             outfile.write(">"+str(new_id)+"::"+record.id+"\n")
             outfile.write(str(record.seq)+"\n")
-    #for record in SeqIO.no_hit_records:
-    #    outfile.write(">"+str(record.id)+"\n")
-    #    outfile.write(str(record.seq)+"\n")
+    outfile.close()
+
 
 def update_dict(ref_scores, query_file, all_clusters, threshold):
     new_dict = {}
