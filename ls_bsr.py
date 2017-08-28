@@ -86,10 +86,19 @@ def test_fplog(option, opt_str, value, parser):
         sys.exit()
 
 def main(directory,id,filter,processors,genes,cluster_method,blast,length,
-         max_plog,min_hlog,f_plog,keep,filter_peps,filter_scaffolds,prefix,min_pep_length,debug):
+         max_plog,min_hlog,f_plog,keep,filter_peps,filter_scaffolds,prefix,min_pep_length,
+         intergenics):
     start_dir = os.getcwd()
     ap=os.path.abspath("%s" % start_dir)
     dir_path=os.path.abspath("%s" % directory)
+    """Here's a check to make sure that there are no conflicting methods"""
+    if "null" not in genes and "null" not in cluster_method:
+        logging.logPrint("Choose either genes or de novo clustering method, not both")
+        sys.exit()
+    """Test for use of intergenics with a protein alignment method"""
+    if intergenics=="T" and blast=="tblastn":
+        logging.logPrint("Incompatible choices: if incorporating intergenics, choose a nucleotide alignment method")
+        sys.exit()
     logging.logPrint("Testing paths of dependencies")
     if blast=="blastn" or blast=="tblastn":
         ab = subprocess.call(['which', 'blastn'])
@@ -140,12 +149,16 @@ def main(directory,id,filter,processors,genes,cluster_method,blast,length,
                 print("You have requested blat, but it is not in your PATH")
                 sys.exit()
         logging.logPrint("predicting genes with Prodigal")
-        predict_genes(fastadir, processors)
+        """Added intergenics here"""
+        predict_genes(fastadir, processors, intergenics)
         logging.logPrint("Prodigal done")
         """This function produces locus tags"""
         genbank_hits = process_genbank_files(dir_path)
         if genbank_hits == None or len(genbank_hits) == 0:
-            os.system("cat *genes.seqs > all_gene_seqs.out")
+            if intergenics == "F":
+                os.system("cat *genes.seqs > all_gene_seqs.out")
+            elif intergenics == "T":
+                os.system("cat *genes.seqs *intergenics.seqs > all_gene_seqs.out")
             if filter_scaffolds == "T":
                 filter_scaffolds("all_gene_seqs.out")
                 os.system("mv tmp.out all_gene_seqs.out")
@@ -154,7 +167,10 @@ def main(directory,id,filter,processors,genes,cluster_method,blast,length,
         else:
             logging.logPrint("Converting genbank files")
             """First combine all of the prodigal files into one file"""
-            os.system("cat *genes.seqs > all_gene_seqs.out")
+            if intergenics == "F":
+                os.system("cat *genes.seqs > all_gene_seqs.out")
+            elif intergenics == "T":
+                os.system("cat *genes.seqs *intergenics.seqs > all_gene_seqs.out")
             if filter_scaffolds == "T":
                 filter_scaffolds("all_gene_seqs.out")
                 os.system("mv tmp.out all_gene_seqs.out")
@@ -351,7 +367,7 @@ def main(directory,id,filter,processors,genes,cluster_method,blast,length,
         centroid_list.append(x)
     table_list.append(centroid_list)
     logging.logPrint("starting matrix building")
-    new_names,new_table = new_loop_dev(files_and_temp_names, processors, clusters, debug)
+    new_names,new_table = new_loop_dev(files_and_temp_names, processors, clusters)
     new_table_list = table_list+new_table
     open("ref.list", "a").write("\n")
     for x in nr_sorted:
@@ -416,7 +432,8 @@ def main(directory,id,filter,processors,genes,cluster_method,blast,length,
     outfile.write("-s %s \\\n" % filter_peps)
     outfile.write("-e %s \\\n" % filter_scaffolds)
     outfile.write("-x %s \\\n" % prefix)
-    outfile.write("-z %s\n" % debug)
+    outfile.write("-y %s\n" % intergenics)
+    #outfile.write("-z %s\n" % debug)
     outfile.write("temp data stored here if kept: %s" % fastadir)
     outfile.close()
     logging.logPrint("all Done")
@@ -446,7 +463,7 @@ if __name__ == "__main__":
                       type="string",default="null")
     parser.add_option("-c", "--cluster_method", dest="cluster_method", action="callback", callback=test_cluster,
                       help="Clustering method to use: choose from usearch, vsearch, cd-hit",
-                      type="string", default="NULL")
+                      type="string", default="null")
     parser.add_option("-b", "--blast", dest="blast", action="callback", callback=test_blast,
                       help="use tblastn, blastn, or blat (nucleotide search only), default is tblastn",
                       default="tblastn", type="string")
@@ -477,9 +494,9 @@ if __name__ == "__main__":
     parser.add_option("-a", "--min_pep_length", dest="min_pep_length", action="store",
                       help="minimum peptide length to keep, defaults to 33",
                       default="33", type="int")
-    parser.add_option("-z", "--debug", dest="debug", action="callback",
-                      help="turn debug on?  Defaults to F",
-                      default="F", callback=test_filter, type="string")
+    parser.add_option("-y", "--intergenics", dest="intergenics", action="callback",
+                      help="Incoporate intergenic regions? T or F; Defaults to F",
+                      default="F", type="string", callback=test_filter)
     options, args = parser.parse_args()
 
     mandatories = ["directory"]
@@ -491,4 +508,4 @@ if __name__ == "__main__":
 
     main(options.directory,options.id,options.filter,options.processors,options.genes,options.cluster_method,options.blast,
          options.length,options.max_plog,options.min_hlog,options.f_plog,options.keep,options.filter_peps,
-         options.filter_scaffolds,options.prefix,options.min_pep_length,options.debug)
+         options.filter_scaffolds,options.prefix,options.min_pep_length,options.intergenics)

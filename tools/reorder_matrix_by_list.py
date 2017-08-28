@@ -24,7 +24,7 @@ def main(matrix, genomes):
         fields = newline.split()
         names.append(fields)
     reorder_matrix("tmp.matrix",names)
-    os.system("rm tmp.matrix")
+    #os.system("rm tmp.matrix")
 
 if __name__ == "__main__":
     usage="usage: %prog [options]"

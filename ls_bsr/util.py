@@ -14,12 +14,20 @@ import random
 import collections
 try:
     from Bio.SeqRecord import SeqRecord
+    import Bio
     from Bio import SeqIO
     from Bio import Phylo
 except:
     print("BioPython is not in your PATH, but needs to be")
     sys.exit()
-import igs_logging as logging
+try:
+    from igs.utils import functional as func
+    from igs.utils import logging
+    from igs.threading import functional as p_func
+    """test code"""
+except:
+    print("Your environment is not set correctly.  Please add LS-BSR to your PYTHONPATH and try again")
+    sys.exit()
 import errno
 import threading
 import types
@@ -74,7 +82,7 @@ def divide_values(file, ref_scores):
         outdata.append(values)
     if len(errors)>0:
         nr=[x for i, x in enumerate(errors) if x not in errors[i+1:]]
-        logging.logPrint("The following genes had no hits in datasets or are too short, values changed to 0, check names and output: %s" % "\n".join(nr))
+        logging.logPrint("The following genes had no hits in datasets or are too short, values changed to 0, check names and output:%s" % "\n".join(nr))
     outfile.close()
     return outdata
 
@@ -411,6 +419,7 @@ def filter_matrix(to_keep, in_matrix, prefix):
         deque((list.pop(fields, i) for i in sorted(to_remove, reverse=True)), maxlen=0)
         outfile.write("\t".join(fields)+"\n")
         outdata.append(fields)
+    matrix.close()
     outfile.close()
     return outdata
 
@@ -441,10 +450,7 @@ def get_core_gene_stats(matrix, threshold, lower):
 
     print("# of conserved genes = %s" % len(positives))
     print("# of unique genes = %s" % len(singles))
-    try:
-        ratio = int(len(singles))/int(totals)
-    except:
-        ratio = 0
+    ratio = int(len(singles))/int(totals)
     outfile.write("\n".join(positives)+"\n")
     singletons.write("\n".join(singles)+"\n")
     print("# of unique genes per genome = %s" % ratio)
@@ -781,7 +787,7 @@ def transpose_matrix(matrix):
         out_matrix.write("\t".join(x)+"\n")
     out_matrix.close()
 
-def reorder_matrix(in_matrix,names):
+def reorder_matrix(in_matrix, names):
     my_matrix = open(in_matrix, "U")
     outfile = open("reordered_matrix.txt", "w")
     firstLine = my_matrix.readline()
@@ -791,8 +797,9 @@ def reorder_matrix(in_matrix,names):
         for line in open(in_matrix, "U"):
             newline = line.strip("\n")
             fields = newline.split()
-            if "".join(name) == fields[0]:
-                outfile.write(line)
+            if fields[0] in name:
+                outfile.write(line,)
+    my_matrix.close()
     outfile.close()
 
 def parse_tree(tree):
@@ -853,22 +860,22 @@ def create_bsr_matrix_dev(master_list):
         new_matrix.write("\t".join(y)+"\n")
     new_matrix.close()
 
-def new_loop(to_iterate, processors, clusters, debug):
-    names = []
-    table_list = []
-    def _perform_workflow(data):
-        tn, f = data
-        name,values=make_table_dev(f, "F", clusters)
-        names.append(name)
-        table_list.append(values)
-        if debug == "T":
-            logging.logPrint("sample %s processed" % f)
-        else:
-            pass
-    set(p_func.pmap(_perform_workflow,
-                    to_iterate,
-                    num_workers=processors))
-    return names,table_list
+#def new_loop(to_iterate, processors, clusters, debug):
+#    names = []
+#    table_list = []
+#    def _perform_workflow(data):
+#        tn, f = data
+#        name,values=make_table_dev(f, "F", clusters)
+#        names.append(name)
+#        table_list.append(values)
+#        if debug == "T":
+#            logging.logPrint("sample %s processed" % f)
+#        else:
+#            pass
+#    set(p_func.pmap(_perform_workflow,
+#                    to_iterate,
+#                    num_workers=processors))
+#    return names,table_list
 
 def run_vsearch(id, processors):
     devnull = open("/dev/null", "w")
@@ -965,33 +972,31 @@ def run_usearch_dev(id,processors):
     # Put all files that start with 'x' in list
     files_and_temp_names = []
     for file in glob.glob(os.path.join(curr_dir, "x*")):
-	    files_and_temp_names.append([file,id])
+	       files_and_temp_names.append([file,id])
     mp_shell(_usearch_workflow, files_and_temp_names, processors)
 
-def sum_seq_length(fasta_in):
-    numbers = []
-    for record in SeqIO.parse(open(fasta_in), "fasta"):
-	    numbers.append(len(record.seq))
-    totals = sum(int(x) for x in numbers)
-    return totals
-
-def _prodigal_workflow(data):
+def _prodigal_workflow_def(data):
     tn, f = data
-    length = sum_seq_length(f)
-    if length > 20000:
-        subprocess.check_call("prodigal -i %s -d %s_genes.seqs -a %s_genes.pep > /dev/null 2>&1" % (f, f, f), shell=True)
-    else:
-        subprocess.check_call("prodigal -i %s -d %s_genes.seqs -p meta -a %s_genes.pep > /dev/null 2>&1" % (f, f, f), shell=True)
+    subprocess.check_call("prodigal -i %s -d %s_genes.seqs -a %s_genes.pep > /dev/null 2>&1" % (f, f, f), shell=True)
 
-def predict_genes(fastadir, processors):
+def _prodigal_workflow_inter(data):
+    tn, f = data
+    name = f.replace(".fasta.new","")
+    subprocess.check_call("prodigal -i %s -d %s_genes.seqs -a %s_genes.pep -f gff -o %s.prodigal > /dev/null 2>&1" % (f, f, f, name), shell=True)
+    inverse_coding_regions("%s.prodigal" % name, name)
+    parse_ranges_file(f,"%s.ranges" % name,name)
+
+def predict_genes(fastadir, processors, intergenics):
     """simple gene prediction using Prodigal in order
     to find coding regions from a genome sequence"""
     os.chdir("%s" % fastadir)
     files = os.listdir(fastadir)
     files_and_temp_names = [(str(idx), os.path.join(fastadir, f))
                             for idx, f in enumerate(files)]
-
-    mp_shell(_prodigal_workflow, files_and_temp_names, processors)
+    if intergenics == "F":
+        mp_shell(_prodigal_workflow_def, files_and_temp_names, processors)
+    else:
+        mp_shell(_prodigal_workflow_inter, files_and_temp_names, processors)
 
 def _perform_workflow_blat_genome(data):
     tn = data[0]
@@ -1194,7 +1199,6 @@ def find_dups_dev(ref_scores, length, max_plog, min_hlog, clusters, processors):
                     else:
                         duplicate_IDs.append(fields[0])
     duplicate_file.write("\n".join(duplicate_IDs))
-
     duplicate_file.close()
     return duplicate_IDs
 
@@ -1203,15 +1207,15 @@ def _perform_workflow_nl(data):
      clusters = data[1]
      names = data[2]
      table_list = data[3]
-     debug = data[4]
+     #debug = data[4]
 
      name,values=make_table_test(f, "F", clusters)
      names.append(name)
      table_list.append(values)
-     if debug == "T":
-        logging.logPrint("sample %s processed" % f)
+     #if debug == "T":
+     #   logging.logPrint("sample %s processed" % f)
 
-def new_loop_dev(to_iterate, processors, clusters, debug):
+def new_loop_dev(to_iterate, processors, clusters):
     from multiprocessing import Manager
 
     manager = Manager()
@@ -1220,7 +1224,7 @@ def new_loop_dev(to_iterate, processors, clusters, debug):
 
     files_and_temp_names_nl = []
     for file in to_iterate:
-        files_and_temp_names_nl.append([file, clusters, names, table_list, debug])
+        files_and_temp_names_nl.append([file, clusters, names, table_list])
 
     mp_shell(_perform_workflow_nl, files_and_temp_names_nl, processors)
 
@@ -1260,5 +1264,72 @@ def make_table_test(infile, test, clusters):
     values += od.values()
     if "T" in test:
         return sorted(outdata)
-
     return names, values
+
+def inverse_coding_regions(infile,ID):
+    # Key = name of genome
+    # Value = list of tuples, where each tuple is (start_range, stop_range)
+    ranges = {}
+    f = open(infile, "rU")
+    # Get all ranges in input file
+    for line in f:
+        # Ignore metadata
+        if line.startswith("#"):
+            continue
+        fields = line.split()
+        try:
+            name = fields[0]
+            start = int(fields[3])
+            stop = int(fields[4])
+        # Not enough fields
+        except IndexError as e:
+            print("Error - unrecognized format in .gff file")
+            print()
+            print(e)
+        # Trying to convert non-int to int
+        except ValueError as e:
+            print("Error - unrecognized format in .gff file")
+            print()
+            print(e)
+        if name not in ranges:
+            ranges[name] = [(start, stop)]
+        else:
+            ranges[name].append((start, stop))
+    f.close()
+    outfile = open("%s.ranges" % ID, "w")
+    # Sort the ranges based on the start range
+    for name in ranges:
+        ranges[name].sort(key=lambda tup: tup[0])
+    for name in ranges:
+        # Include range from 1 - (first start range) if first start range != 1
+        if ranges[name][0][0] != 1:
+            outfile.write("%s\t%s\t%s\n" % (name, str(1), str(ranges[name][0][0]-1)))
+        for i in range(1, len(ranges[name])):
+            previous_stop = ranges[name][i-1][1]
+            current_start = ranges[name][i][0]
+            # Ignore nested ranges
+            if previous_stop+1 >= current_start:
+                continue
+            # Print (previous stop range + 1) - (current start range 1)
+            outfile.write("%s\t%s\t%s\n" % (name, str(previous_stop+1), str(current_start-1)))
+    outfile.close()
+
+def parse_ranges_file(genome,ranges_file,name):
+    """Make tuple of ranges file"""
+    ranges_tuple = ()
+    if "/" in name:
+        name_fields = name.split("/")
+        reduced_name = name_fields[-1]
+    outfile = open("%s.intergenics.seqs" % name, "w")
+    for line in open(ranges_file,"rU"):
+        newline = line.strip()
+        fields = newline.split()
+        ranges_tuple=((fields[0],fields[1],fields[2]),)+ranges_tuple
+    for record in SeqIO.parse(open(genome, "rU"),"fasta"):
+        for range_tuple in ranges_tuple:
+            if record.id == range_tuple[0]:
+                if len(str(record.seq[int(range_tuple[1]):int(range_tuple[2])]))>50:
+                    """This ignores regions shorter than 50 nucleotides"""
+                    outfile.write(">%s_ig_" % reduced_name +str(autoIncrement())+"\n")
+                    outfile.write(str(record.seq[int(range_tuple[1]):int(range_tuple[2])])+"\n")
+    outfile.close()
