@@ -20,6 +20,7 @@ try:
 except:
     print("BioPython is not in your PATH, but needs to be")
     sys.exit()
+import igs_logging as logging
 import errno
 import threading
 import types
