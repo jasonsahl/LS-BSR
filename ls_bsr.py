@@ -107,6 +107,13 @@ def main(directory,id,filter,processors,genes,cluster_method,blast,length,
         else:
             print("blastn isn't in your path, but needs to be!")
             sys.exit()
+    if blast=="blat":
+        ac = subprocess.call(['which', 'blat'])
+        if ac == 0:
+            print("citation: W.James Kent. 2002. BLAT - The BLAST-Like Alignment Tool.  Genome Research 12:656-664")
+        else:
+            print("You have requested blat, but it is not in your PATH")
+            sys.exit()
     if "NULL" in prefix:
         if os.path.exists("%s/tmp" % ap):
             print("old temp directory exists (%s/tmp).  Delete and run again" % ap)
@@ -124,7 +131,8 @@ def main(directory,id,filter,processors,genes,cluster_method,blast,length,
     for infile in glob.glob(os.path.join(dir_path, '*.fasta')):
         name=get_seq_name(infile)
         try:
-            os.link("%s" % infile, "%s/%s.new" % (fastadir,name))
+            #os.link("%s" % infile, "%s/%s.new" % (fastadir,name))
+            os.symlink("%s" % infile, os.path.join(dir_path, os.path.dirname(dir_path)))
         except:
             copyfile("%s" % infile, "%s/%s.new" % (fastadir,name))
     if "null" in genes:
@@ -141,13 +149,7 @@ def main(directory,id,filter,processors,genes,cluster_method,blast,length,
             print("citation: Li, W., Godzik, A. 2006. Cd-hit: a fast program for clustering and comparing large sets of protein or nuceltodie sequences. Bioinformatics 22(13):1658-1659")
         elif "vsearch" in cluster_method:
             print("citation: Rognes, T., Flouri, T., Nichols, B., Qunice, C., Mahe, Frederic. 2016. VSEARCH: a versatile open source tool for metagenomics. PeerJ Preprints. DOI: https://doi.org/10.7287/peerj.preprints.2409v1")
-        if blast=="blat":
-            ac = subprocess.call(['which', 'blat'])
-            if ac == 0:
-                print("citation: W.James Kent. 2002. BLAT - The BLAST-Like Alignment Tool.  Genome Research 12:656-664")
-            else:
-                print("You have requested blat, but it is not in your PATH")
-                sys.exit()
+
         logging.logPrint("predicting genes with Prodigal")
         """Added intergenics here"""
         predict_genes(fastadir, processors, intergenics)
