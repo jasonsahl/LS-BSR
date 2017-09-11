@@ -1289,6 +1289,7 @@ def inverse_coding_regions(infile,ID):
         else:
             ranges[name].append((start, stop))
     f.close()
+    #ID is the name of the file, not the contig/chromosome
     outfile = open("%s.ranges" % ID, "w")
     # Sort the ranges based on the start range
     for name in ranges:
@@ -1313,7 +1314,8 @@ def parse_ranges_file(genome,ranges_file,name):
     if "/" in name:
         name_fields = name.split("/")
         reduced_name = name_fields[-1]
-    outfile = open("%s.intergenics.seqs" % name, "w")
+    #outfile = open("%s.intergenics.seqs" % name, "w")
+    outfile = open("%s.intergenics.seqs" % reduced_name, "w")
     for line in open(ranges_file,"rU"):
         newline = line.strip()
         fields = newline.split()
@@ -1322,7 +1324,9 @@ def parse_ranges_file(genome,ranges_file,name):
         for range_tuple in ranges_tuple:
             if record.id == range_tuple[0]:
                 if len(str(record.seq[int(range_tuple[1]):int(range_tuple[2])]))>50:
-                    """This ignores regions shorter than 50 nucleotides"""
-                    outfile.write(">%s_ig_" % reduced_name +str(autoIncrement())+"\n")
+                    """This ignores regions shorter than 50 nucleotides, I think that these
+                    should be renamed based on start and end of each range"""
+                    #outfile.write(">%s_ig_%s_%s" % (reduced_name,range_tuple[1],range_tuple[2]) +"\n")
+                    outfile.write(">%s_%s_%s" % (range_tuple[0],range_tuple[1],range_tuple[2]) +"\n")
                     outfile.write(str(record.seq[int(range_tuple[1]):int(range_tuple[2])])+"\n")
     outfile.close()
