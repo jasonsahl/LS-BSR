@@ -855,6 +855,23 @@ class Test24(unittest.TestCase):
         np.write("ATGAAGAAATCAATATTATTTATTTTTCTTTCTGTATTGTCTTTT")
         np.close()
         self.assertEqual(get_cluster_ids(npath), ['bfp-B','LT_X','ST#%$'])
+
+class Test25(unittest.TestCase):
+    def test_intergenics_basic_function(self):
+        tdir = tempfile.mkdtemp(prefix="filetest_",)
+        npath = os.path.join(tdir,"fasta")
+        np = open(npath, "w")
+        np.write(">test\n")
+        np.write("ATGAAACTTGGCAGGTATTCACTTTTCTTATTGATGAAACTTGGCAGGTATTCACTTTTCTTATTGATGAAACTTGGCAGGTATTCACTTTTCTTATTG\n")
+        np.close()
+        npath2 = os.path.join(tdir,"ranges")
+        np = open(npath2, "w")
+        np.write("test\t2\t54\n")
+        np.close()
+        self.assertEqual(parse_ranges_file(npath,npath2,"test","true"), ['TGAAACTTGGCAGGTATTCACTTTTCTTATTGATGAAACTTGGCAGGTATTCA'])
+        os.system("rm test.intergenics.seqs")
+        shutil.rmtree(tdir)
+
 if __name__ == "__main__":
     unittest.main()
     main()

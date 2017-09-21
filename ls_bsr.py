@@ -115,12 +115,16 @@ def main(directory,id,filter,processors,genes,cluster_method,blast,length,
             print("You have requested blat, but it is not in your PATH")
             sys.exit()
     if "NULL" in prefix:
-        if os.path.exists("%s/tmp" % ap):
-            print("old temp directory exists (%s/tmp).  Delete and run again" % ap)
+        import datetime
+        timestamp = datetime.datetime.now()
+        tmp_rename = str(timestamp.year), str(timestamp.month), str(timestamp.day), str(timestamp.hour), str(timestamp.minute), str(timestamp.second)
+        rename = "".join(tmp_rename)
+        if os.path.exists("%s/%s" % (ap,rename)):
+            print("old temp directory exists (%s/%s).  Delete and run again" % (ap,rename))
             sys.exit()
         else:
-            os.makedirs("%s/tmp" % ap)
-            fastadir = "%s/tmp" % ap
+            os.makedirs("%s/%s" % (ap,rename))
+            fastadir = ("%s/%s" % (ap,rename))
     else:
         if os.path.exists("%s/%s" % (ap,prefix)):
             print("old temp directory exists (%s/%s).  Delete and run again" % (ap,prefix))
@@ -131,7 +135,6 @@ def main(directory,id,filter,processors,genes,cluster_method,blast,length,
     for infile in glob.glob(os.path.join(dir_path, '*.fasta')):
         name=get_seq_name(infile)
         try:
-            #os.link("%s" % infile, "%s/%s.new" % (fastadir,name))
             os.symlink("%s" % infile, os.path.join(dir_path, os.path.dirname(dir_path)))
         except:
             copyfile("%s" % infile, "%s/%s.new" % (fastadir,name))
@@ -386,10 +389,6 @@ def main(directory,id,filter,processors,genes,cluster_method,blast,length,
         subprocess.check_call("cp dup_matrix.txt names.txt consensus.pep duplicate_ids.txt consensus.fasta %s" % ap, shell=True, stderr=open(os.devnull, 'w'))
     except:
         sys.exc_clear()
-    """new code to rename files according to a prefix"""
-    import datetime
-    timestamp = datetime.datetime.now()
-    rename = str(timestamp.year), str(timestamp.month), str(timestamp.day), str(timestamp.hour), str(timestamp.minute), str(timestamp.second)
     if "T" in f_plog and "T" in find_dups:
         filter_paralogs("%s/bsr_matrix_values.txt" % start_dir, "duplicate_ids.txt")
         if "NULL" in prefix:
@@ -435,7 +434,6 @@ def main(directory,id,filter,processors,genes,cluster_method,blast,length,
     outfile.write("-e %s \\\n" % filter_scaffolds)
     outfile.write("-x %s \\\n" % prefix)
     outfile.write("-y %s\n" % intergenics)
-    #outfile.write("-z %s\n" % debug)
     outfile.write("temp data stored here if kept: %s" % fastadir)
     outfile.close()
     logging.logPrint("all Done")

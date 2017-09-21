@@ -977,7 +977,7 @@ def _prodigal_workflow_inter(data):
     name = f.replace(".fasta.new","")
     subprocess.check_call("prodigal -i %s -d %s_genes.seqs -a %s_genes.pep -f gff -o %s.prodigal > /dev/null 2>&1" % (f, f, f, name), shell=True)
     inverse_coding_regions("%s.prodigal" % name, name)
-    parse_ranges_file(f,"%s.ranges" % name,name)
+    parse_ranges_file(f,"%s.ranges" % name,name,test="false")
 
 def predict_genes(fastadir, processors, intergenics):
     """simple gene prediction using Prodigal in order
@@ -1308,13 +1308,15 @@ def inverse_coding_regions(infile,ID):
             outfile.write("%s\t%s\t%s\n" % (name, str(previous_stop+1), str(current_start-1)))
     outfile.close()
 
-def parse_ranges_file(genome,ranges_file,name):
+def parse_ranges_file(genome,ranges_file,name,test):
     """Make tuple of ranges file"""
     ranges_tuple = ()
+    sequence = []
     if "/" in name:
         name_fields = name.split("/")
         reduced_name = name_fields[-1]
-    #outfile = open("%s.intergenics.seqs" % name, "w")
+    else:
+        reduced_name = name
     outfile = open("%s.intergenics.seqs" % reduced_name, "w")
     for line in open(ranges_file,"rU"):
         newline = line.strip()
@@ -1323,10 +1325,14 @@ def parse_ranges_file(genome,ranges_file,name):
     for record in SeqIO.parse(open(genome, "rU"),"fasta"):
         for range_tuple in ranges_tuple:
             if record.id == range_tuple[0]:
-                if len(str(record.seq[int(range_tuple[1]):int(range_tuple[2])]))>50:
+                start = int(range_tuple[1])-1
+                end = int(range_tuple[2])
+                if len(str(record.seq[int(start):int(end)]))>50:
                     """This ignores regions shorter than 50 nucleotides, I think that these
                     should be renamed based on start and end of each range"""
-                    #outfile.write(">%s_ig_%s_%s" % (reduced_name,range_tuple[1],range_tuple[2]) +"\n")
-                    outfile.write(">%s_%s_%s" % (range_tuple[0],range_tuple[1],range_tuple[2]) +"\n")
-                    outfile.write(str(record.seq[int(range_tuple[1]):int(range_tuple[2])])+"\n")
+                    outfile.write(">%s_%s_%s" % (range_tuple[0],start,end) +"\n")
+                    outfile.write(str(record.seq[start:end])+"\n")
+                    if "true" in test:
+                        sequence.append(str(record.seq[start:end]))
     outfile.close()
+    return sequence
