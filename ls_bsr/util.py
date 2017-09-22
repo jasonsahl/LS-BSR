@@ -853,23 +853,6 @@ def create_bsr_matrix_dev(master_list):
         new_matrix.write("\t".join(y)+"\n")
     new_matrix.close()
 
-#def new_loop(to_iterate, processors, clusters, debug):
-#    names = []
-#    table_list = []
-#    def _perform_workflow(data):
-#        tn, f = data
-#        name,values=make_table_dev(f, "F", clusters)
-#        names.append(name)
-#        table_list.append(values)
-#        if debug == "T":
-#            logging.logPrint("sample %s processed" % f)
-#        else:
-#            pass
-#    set(p_func.pmap(_perform_workflow,
-#                    to_iterate,
-#                    num_workers=processors))
-#    return names,table_list
-
 def run_vsearch(id, processors):
     devnull = open("/dev/null", "w")
     cmd = ["vsearch",
@@ -1200,13 +1183,9 @@ def _perform_workflow_nl(data):
      clusters = data[1]
      names = data[2]
      table_list = data[3]
-     #debug = data[4]
-
      name,values=make_table_test(f, "F", clusters)
      names.append(name)
      table_list.append(values)
-     #if debug == "T":
-     #   logging.logPrint("sample %s processed" % f)
 
 def new_loop_dev(to_iterate, processors, clusters):
     from multiprocessing import Manager

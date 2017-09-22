@@ -6,6 +6,7 @@ and build an alignment ready
 for phylogenetics"""
 
 from __future__ import division
+from __future__ import print_function
 import optparse
 import subprocess
 import os
@@ -15,31 +16,23 @@ try:
     from Bio.Blast import NCBIXML
     from Bio.Seq import Seq
 except:
-    print "BioPython is not in your PATH, but needs to be"
+    print("BioPython is not in your PATH, but needs to be")
     sys.exit()
 import glob
 import collections
-try:
-    from igs.utils import functional as func
-    from igs.utils import logging
-    from igs.threading import functional as p_func
-except:
-    "you need to add LS-BSR to your PYTHONPATH!"
-    sys.exit()
-
 """errors for input start"""
 def test_dir(option, opt_str, value, parser):
     if os.path.exists(value):
         setattr(parser.values, option.dest, value)
     else:
-        print "directory of fastas cannot be found"
+        print("directory of fastas cannot be found")
         sys.exit()
 
 def test_file(option, opt_str, value, parser):
     try:
         with open(value): setattr(parser.values, option.dest, value)
     except IOError:
-        print 'genes file cannot be opened'
+        print('genes file cannot be opened')
         sys.exit()
 
 def test_blast(option, opt_str, value, parser):
@@ -48,9 +41,16 @@ def test_blast(option, opt_str, value, parser):
     elif "blastn" in value:
         setattr(parser.values, option.dest, value)
     else:
-        print "Blast option not supported.  Only select from tblastn, blat, or blastn"
+        print("Blast option not supported.  Only select from tblastn, blat, or blastn")
         sys.exit()
 """end, code starts now"""
+
+def mp_shell(func, params, numProc):
+    from multiprocessing import Pool
+    p = Pool(numProc)
+    out = p.map(func, params)
+    p.terminate()
+    return out
 
 def get_seq_name(fasta_in):
     name = os.path.basename(fasta_in)
@@ -68,9 +68,9 @@ def combined_seqs(dir_path):
     for infile in glob.glob(os.path.join(dir_path, '*.fasta')):
         names = get_seq_name(infile)
         reduced = names.replace('.fasta','')
-        print >> handle, ">"+str(reduced)
+        handle.write(">"+str(reduced)+"\n")
         for record in SeqIO.parse(open(infile), "fasta"):
-            print >> handle, record.seq
+            handle.write(str(record.seq)+"\n")
     handle.close()
     for record in SeqIO.parse("combined.seqs", "fasta"):
         num_genomes.append(record.id)
@@ -83,12 +83,12 @@ def run_blast(infile, blast):
         try:
             os.system('blastn -task blastn -query "%s" -db combined.seqs -out "%s".blast.out -dust no -num_alignments 2000 -outfmt "7 std sseq"' % (infile,reduced))
         except:
-            print "blast failed on %s" % infile
+            print("blast failed on %s" % infile)
     else:
         try:
             os.system('tblastn -query "%s" -db combined.seqs -out "%s".blast.out -seg no -comp_based_stats F -num_alignments 2000 -outfmt "7 std sseq"' % (infile,reduced))
         except:
-            print "blast failed on %s" % infile
+            print("blast failed on %s" % infile)
     return reduced
 
 def parsed_blast_to_seqs(infile):
@@ -100,8 +100,8 @@ def parsed_blast_to_seqs(infile):
             pass
         else:
             fields = line.split()
-            print >> outfile, ">"+str(fields[1])
-            print >> outfile, fields[12]
+            outfile.write(">"+str(fields[1])+"\n")
+            outfile.write(str(fields[12])+"\n")
     outfile.close()
 
 def check_and_align_seqs(infile, num_genomes):
@@ -118,7 +118,7 @@ def check_and_align_seqs(infile, num_genomes):
             try:
                 os.system("muscle -in '%s' -out '%s_aln.seqs' > /dev/null 2>&1" % (infile,reduced))
             except:
-                print "problem with %s" % infile
+                print("problem with %s" % infile)
         else:
             pass
     except:
@@ -131,8 +131,8 @@ def pull_seqs(names):
             handle = open("%s_aln_final.seqs" % name, "a")
             for record in SeqIO.parse(open(infile), "fasta"):
                 if name == record.id:
-                    print >> handle, ">"+str(record.id)
-                    print >> handle, record.seq
+                    handle.write(">"+str(record.id)+"\n")
+                    handle.write(str(record.seq)+"\n")
             handle.close()
 
 def concatenate():
@@ -141,18 +141,19 @@ def concatenate():
         names = get_seq_name(infile)
         reduced = names.replace("_aln_final.seqs", "")
         handle = open("%s.concat" % reduced, "w")
-        print >> handle, "\n", ">"+str(reduced)
+        handle.write("\n"+">"+str(reduced)+"\n")
         for record in SeqIO.parse(open(infile), "fasta"):
             seqs = []
             seqs.append(record.seq)
-            print >> handle, "".join([str(x) for x in seqs]),
+            handle.write("".join([str(x) for x in seqs]))
+            #handle.write("\n")
         handle.close()
 
 def fasta_to_tab(infile):
     my_file = open(infile, "rU")
     outfile = open("out.tab", "w")
     for record in SeqIO.parse(my_file, "fasta"):
-        print >> outfile, record.id, record.seq
+        outfile.write(str(record.id)+"\t"+str(record.seq)+"\n")
     my_file.close()
     outfile.close()
 
@@ -168,7 +169,8 @@ def tab_to_matrix(tab):
         reduced.append(tmp_list)
     test=map(list, zip(*reduced))
     for x in test:
-        print >> out_matrix, "\t".join(x)
+        out_matrix.write("\t".join(x))
+        out_matrix.write("\n")
     out_matrix.close()
 
 def filter_alignment(tab):
@@ -176,14 +178,14 @@ def filter_alignment(tab):
     outfile = open("tab.filtered", "w")
     infile = open(tab, "U")
     firstLine = infile.readline()
-    print >> outfile, firstLine,
+    outfile.write(firstLine)
     for line in infile:
         valid_fields = []
         fields = line.split()
         if "-" in fields:
             pass
         else:
-            print >> outfile, line,
+            outfile.write(line)
     outfile.close()
     infile.close()
 
@@ -196,9 +198,24 @@ def file_to_fasta(matrix):
         reduced.append(fields)
     test=map(list, zip(*reduced))
     for x in test:
-        print >> out_matrix, ">"+str(x[0])
-        print >> out_matrix, "".join(x[1:])
+        out_matrix.write(">"+str(x[0])+"\n")
+        out_matrix.write("".join(x[1:]))
+        out_matrix.write("\n")
     out_matrix.close()
+
+def _perform_workflow_loop(data):
+    tn = data[0]
+    f = data[1]
+    blast = data[2]
+    num_genomes = data[3]
+    name = run_blast(f, blast)
+    os.system("sort -u -k 2,2 '%s.blast.out' > '%s.blast.unique'" % (name,name))
+    parsed_blast_to_seqs("%s.blast.unique" % name)
+    check_and_align_seqs("%s.extracted.seqs" % name, num_genomes)
+    os.system("rm '%s.blast.out' '%s.extracted.seqs'" % (name,name))
+
+def run_loop(files,blast,num_genomes,processors):
+    mp_shell(_perform_workflow_loop,files,processors)
 
 def remove_gaps(infile):
     fasta_to_tab(infile)
@@ -216,7 +233,7 @@ def main(directory, genes, blast, processors, remove_gap, keep):
         if ra == 0:
             pass
         else:
-            print "%s is not in your path, but needs to be!" % dependency
+            print("%s is not in your path, but needs to be!" % dependency)
             sys.exit()
     start_dir = os.getcwd()
     ap=os.path.abspath("%s" % start_dir)
@@ -239,19 +256,11 @@ def main(directory, genes, blast, processors, remove_gap, keep):
     num_genomes, names = combined_seqs(dir_path)
     os.system("makeblastdb -in combined.seqs -dbtype nucl > /dev/null 2>&1")
     table_files = glob.glob(os.path.join("%s/to_extract_xxx" % ap, "*.fasta"))
-    files_and_temp_names = [(str(idx), os.path.join("%s/to_extract_xxx" % ap, f))
-                            for idx, f in enumerate(table_files)]
-    def _perform_workflow(data):
-        tn, f = data
-        name = run_blast(f, blast)
-        """This makes sure that there is only one sequence per genome"""
-        os.system("sort -u -k 2,2 '%s.blast.out' > '%s.blast.unique'" % (name,name))
-        parsed_blast_to_seqs("%s.blast.unique" % name)
-        check_and_align_seqs("%s.extracted.seqs" % name, num_genomes)
-        os.system("rm '%s.blast.out' '%s.extracted.seqs'" % (name,name))
-    set(p_func.pmap(_perform_workflow,
-                    files_and_temp_names,
-                    num_workers=processors))
+    files_and_temp_names = []
+    for idx,f in enumerate(table_files):
+        files_and_temp_names.append([str(idx), os.path.join("%s/to_extract_xxx" % ap, f), blast, num_genomes])
+    """This section will need to not use IGS"""
+    run_loop(files_and_temp_names,blast,num_genomes,processors)
     pull_seqs(names)
     concatenate()
     os.system("cat *.concat > all.concat")
@@ -263,7 +272,7 @@ def main(directory, genes, blast, processors, remove_gap, keep):
     elif remove_gap == "F":
         os.system("cp all.concat %s/final_alignment.fasta" % ap)
     else:
-        print "You have chosen an incorrect option for gap removal, choose from T or F"
+        print("You have chosen an incorrect option for gap removal, choose from T or F")
         sys.exit()
     """finish up"""
     os.chdir("%s" % ap)
@@ -272,7 +281,7 @@ def main(directory, genes, blast, processors, remove_gap, keep):
     elif keep == "F":
         os.system("rm -rf %s/to_extract_xxx %s/work_xxx" % (ap,ap))
     else:
-        print "Illegal keep value selected, not doing anything"
+        print("Illegal keep value selected, not doing anything")
         pass
 
 if __name__ == "__main__":
@@ -300,7 +309,7 @@ if __name__ == "__main__":
     mandatories = ["directory","genes"]
     for m in mandatories:
         if not getattr(options, m, None):
-            print "\nMust provide %s.\n" %m
+            print("\nMust provide %s.\n" %m)
             parser.print_help()
             exit(-1)
 
