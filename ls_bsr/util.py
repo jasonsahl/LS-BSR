@@ -170,6 +170,9 @@ def _perform_workflow_pbr(data):
     if "true" in test:
         return outdata
 
+#def blastp_against_self(blast_type,genes_pep,genes_nt,output,filter,processors):
+#    devnull
+
 def blast_against_self_blastn(blast_type, genes_pep, genes_nt, output, filter, processors):
     devnull = open('/dev/null', 'w')
     if "F" in filter:
@@ -1032,6 +1035,46 @@ def blast_against_each_genome_tblastn_dev(processors, peptides, filter):
     for idx, f in enumerate(files):
         files_and_temp_names.append([str(idx), os.path.join(curr_dir, f), my_seg, peptides])
     mp_shell(_perform_workflow_tblastn, files_and_temp_names, processors)
+
+def blastp_against_each_annotation(peptides,processors,filter):
+    curr_dir=os.getcwd()
+    files_and_temp_names = []
+    annotation_files = []
+    if "T" in filter:
+        my_seg = "yes"
+    else:
+        my_seg = "no"
+    for files in os.listdir(curr_dir):
+        if "new_genes.pep" in files:
+            annotation_files.append(files)
+    #print(annotation_files)
+    for idx, f in enumerate(annotation_files):
+        files_and_temp_names.append([str(idx), os.path.join(curr_dir, f), my_seg, peptides])
+    mp_shell(_perform_workflow_blastp, files_and_temp_names, processors)
+
+def _perform_workflow_blastp(data):
+    tn = data[0]
+    f = data[1]
+    my_seg = data[2]
+    peptides = data[3]
+    """Makes the name consistent with other analyses"""
+    name = f.replace(".new_genes.pep",".new")
+    try:
+        subprocess.check_call("makeblastdb -in %s -dbtype prot > /dev/null 2>&1" % f, shell=True)
+    except:
+        print("problem found in formatting annotation %s" % f)
+    devnull = open('/dev/null', 'w')
+    cmd = ["blastp",
+           "-query", peptides,
+           "-db", f,
+           "-seg", my_seg,
+           "-comp_based_stats", "F",
+           "-num_threads", "1",
+           "-evalue", "0.1",
+           "-outfmt", "6",
+           "-out", "%s_blast.out" % name]
+    subprocess.call(cmd, stdout=devnull, stderr=devnull)
+    devnull.close()
 
 def _perform_workflow_blastn(data):
     tn = data[0]

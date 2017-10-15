@@ -54,7 +54,7 @@ def test_blast(option, opt_str, value, parser):
         setattr(parser.values, option.dest, value)
     elif "blat" in value:
         setattr(parser.values, option.dest, value)
-    elif "blastall" in value:
+    elif "blastp" in value:
         setattr(parser.values, option.dest, value)
     else:
         print("Blast option not supported.  Only select from tblastn, blat, or blastn")
@@ -99,13 +99,16 @@ def main(directory,id,filter,processors,genes,cluster_method,blast,length,
     if intergenics=="T" and blast=="tblastn":
         logging.logPrint("Incompatible choices: if incorporating intergenics, choose a nucleotide alignment method")
         sys.exit()
+    elif intergenics == "T" and blast=="blastp":
+        logging.logPrint("Incompatible choices: if incorporating intergenics, choose a nucleotide alignment method")
+        sys.exit()
     logging.logPrint("Testing paths of dependencies")
-    if blast=="blastn" or blast=="tblastn":
+    if blast=="blastn" or blast=="tblastn" or blast=="blastp":
         ab = subprocess.call(['which', 'blastn'])
         if ab == 0:
             print("citation: Altschul SF, Madden TL, Schaffer AA, Zhang J, Zhang Z, Miller W, and Lipman DJ. 1997. Gapped BLAST and PSI-BLAST: a new generation of protein database search programs. Nucleic Acids Res 25:3389-3402")
         else:
-            print("blastn isn't in your path, but needs to be!")
+            print("blast isn't in your path, but needs to be!")
             sys.exit()
     if blast=="blat":
         ac = subprocess.call(['which', 'blat'])
@@ -152,9 +155,7 @@ def main(directory,id,filter,processors,genes,cluster_method,blast,length,
             print("citation: Li, W., Godzik, A. 2006. Cd-hit: a fast program for clustering and comparing large sets of protein or nuceltodie sequences. Bioinformatics 22(13):1658-1659")
         elif "vsearch" in cluster_method:
             print("citation: Rognes, T., Flouri, T., Nichols, B., Qunice, C., Mahe, Frederic. 2016. VSEARCH: a versatile open source tool for metagenomics. PeerJ Preprints. DOI: https://doi.org/10.7287/peerj.preprints.2409v1")
-
         logging.logPrint("predicting genes with Prodigal")
-        """Added intergenics here"""
         predict_genes(fastadir, processors, intergenics)
         logging.logPrint("Prodigal done")
         """This function produces locus tags"""
@@ -164,13 +165,19 @@ def main(directory,id,filter,processors,genes,cluster_method,blast,length,
                 os.system("cat *genes.seqs > all_gene_seqs.out")
             elif intergenics == "T":
                 os.system("cat *genes.seqs *intergenics.seqs > all_gene_seqs.out")
+            else:
+                pass
             if filter_scaffolds == "T":
                 filter_scaffolds("all_gene_seqs.out")
                 os.system("mv tmp.out all_gene_seqs.out")
             else:
                 pass
+            """New routine to just compare peptide annotations"""
+            if blast == "blastp":
+                os.system("cat *new_genes.pep > all_gene_seqs.pep")
         else:
             logging.logPrint("Converting genbank files")
+            #Need to add in support for blastp
             """First combine all of the prodigal files into one file"""
             if intergenics == "F":
                 os.system("cat *genes.seqs > all_gene_seqs.out")
@@ -195,7 +202,11 @@ def main(directory,id,filter,processors,genes,cluster_method,blast,length,
             ac = subprocess.call(['which', 'usearch'])
             if ac == 0:
                 os.system("mkdir split_files")
-                os.system("cp all_gene_seqs.out split_files/all_sorted.txt")
+                if blast == "blastp":
+                    os.system("cat *new_genes.pep > split_files/all_sorted.txt")
+                    #os.system("cp all_gene_seqs.pep split_files/all_sorted.txt")
+                else:
+                    os.system("cp all_gene_seqs.out split_files/all_sorted.txt")
                 os.chdir("split_files/")
                 logging.logPrint("Splitting FASTA file for use with USEARCH")
                 split_files("all_sorted.txt")
@@ -254,14 +265,16 @@ def main(directory,id,filter,processors,genes,cluster_method,blast,length,
         elif "blat" == blast:
             blat_against_self("consensus.fasta", "consensus.fasta", "tmp_blast.out", processors)
             clusters = get_cluster_ids("consensus.fasta")
-        else:
-            pass
+        elif "blastp" == blast:
+            subprocess.check_call("makeblastdb -in consensus.fasta -dbtype prot > /dev/null 2>&1", shell=True)
+            blast_against_self_tblastn("blastp", "consensus.fasta", "consensus.fasta", "tmp_blast.out", processors, filter)
+            clusters = get_cluster_ids("consensus.fasta")
         subprocess.check_call("sort -u -k 1,1 tmp_blast.out > self_blast.out", shell=True)
         ref_scores=parse_self_blast(open("self_blast.out", "U"))
         os.system("cp tmp_blast.out ref.scores")
         subprocess.check_call("rm tmp_blast.out self_blast.out", shell=True)
-        os.system("rm *new_genes.*")
-        if blast == "tblastn" or blast == "blastn":
+        #os.system("rm *new_genes.*")
+        if blast == "tblastn" or blast == "blastn" or blast == "blastp":
             logging.logPrint("starting BLAST")
         else:
             logging.logPrint("starting BLAT")
@@ -271,6 +284,8 @@ def main(directory,id,filter,processors,genes,cluster_method,blast,length,
             blast_against_each_genome_blastn_dev(processors, filter, "consensus.fasta")
         elif "blat" == blast:
             blat_against_each_genome_dev("consensus.fasta",processors)
+        elif "blastp" == blast:
+            blastp_against_each_annotation("consensus.fasta",processors,filter)
         else:
             pass
     else:
@@ -465,7 +480,7 @@ if __name__ == "__main__":
                       help="Clustering method to use: choose from usearch, vsearch, cd-hit",
                       type="string", default="null")
     parser.add_option("-b", "--blast", dest="blast", action="callback", callback=test_blast,
-                      help="use tblastn, blastn, or blat (nucleotide search only), default is tblastn",
+                      help="use tblastn, blastn, blastp, or blat (nucleotide search only), default is tblastn",
                       default="tblastn", type="string")
     parser.add_option("-l", "--length", dest="length", action="store",
                       help="minimum BSR value to be called a duplicate, defaults to 0.7",
