@@ -189,8 +189,10 @@ def main(directory,id,filter,processors,genes,cluster_method,blast,length,
             else:
                 pass
             """This combines the locus tags with the Prodigal prediction"""
+            #I need to do this on a per genbank file basis
             os.system("cat *locus_tags.fasta all_gene_seqs.out > tmp.out")
             os.system("mv tmp.out all_gene_seqs.out")
+            translate_genes("all_gene_seqs.out","all_genes.pep",30)
             """I also need to convert the GenBank file to a FASTA file"""
             for hit in genbank_hits:
                 reduced_hit = hit.replace(".gbk","")
@@ -203,8 +205,10 @@ def main(directory,id,filter,processors,genes,cluster_method,blast,length,
             if ac == 0:
                 os.system("mkdir split_files")
                 if blast == "blastp":
-                    os.system("cat *new_genes.pep > split_files/all_sorted.txt")
-                    #os.system("cp all_gene_seqs.pep split_files/all_sorted.txt")
+                    if genbank_hits == None or len(genbank_hits) == 0:
+                        os.system("cat *new_genes.pep > split_files/all_sorted.txt")
+                    else:
+                        os.system("cp all_genes.pep split_files/all_sorted.txt")
                 else:
                     os.system("cp all_gene_seqs.out split_files/all_sorted.txt")
                 os.chdir("split_files/")
@@ -223,21 +227,34 @@ def main(directory,id,filter,processors,genes,cluster_method,blast,length,
         elif "vsearch" in cluster_method:
             ac = subprocess.call(['which', 'vsearch'])
             if ac == 0:
-                logging.logPrint("clustering with VSEARCH at an ID of %s, using %s processors" % (id,processors))
-                run_vsearch(id, processors)
-                os.system("mv vsearch.out consensus.fasta")
-                logging.logPrint("VSEARCH clustering finished")
+                if blast == "blastp":
+                    print('vsearch not compatible with blastp...exiting')
+                    sys.exit()
+                else:
+                    logging.logPrint("clustering with VSEARCH at an ID of %s, using %s processors" % (id,processors))
+                    run_vsearch(id, processors, "all_gene_seqs.out")
+                    os.system("mv vsearch.out consensus.fasta")
+                    logging.logPrint("VSEARCH clustering finished")
             else:
                 print("vsearch must be in your path as vsearch...exiting")
                 sys.exit()
         elif "cd-hit" in cluster_method:
-            ac = subprocess.call(['which', 'cd-hit-est'])
-            if ac == 0:
-                logging.logPrint("clustering with cd-hit at an ID of %s, using %s processors" % (id,processors))
-                subprocess.check_call("cd-hit-est -i all_gene_seqs.out -o consensus.fasta -M 0 -T %s -c %s > /dev/null 2>&1" % (processors, id), shell=True)
+            logging.logPrint("clustering with cd-hit at an ID of %s, using %s processors" % (id,processors))
+            if blast == "blastp":
+                ac = subprocess.call(['which', 'cd-hit'])
+                if ac == 0:
+                    os.system("cat *new_genes.pep > all_gene_seqs.pep")
+                    subprocess.check_call("cd-hit -i all_gene_seqs.pep -o consensus.fasta -M 0 -T %s -c %s > /dev/null 2>&1" % (processors, id), shell=True)
+                else:
+                    print("For proteins, cd-hit must be in your path as cd-hit...exiting")
+                    sys.exit()
             else:
-                print("cd-hit must be in your path as cd-hit-est...exiting")
-                sys.exit()
+                ac = subprocess.call(['which', 'cd-hit-est'])
+                if ac == 0:
+                    subprocess.check_call("cd-hit-est -i all_gene_seqs.out -o consensus.fasta -M 0 -T %s -c %s > /dev/null 2>&1" % (processors, id), shell=True)
+                else:
+                    print("for nucleotides, cd-hit must be in your path as cd-hit-est...exiting")
+                    sys.exit()
         """need to check for dups here"""
         dup_ids = test_duplicate_header_ids("consensus.fasta")
         if dup_ids == "True":

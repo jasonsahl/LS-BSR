@@ -856,15 +856,14 @@ def create_bsr_matrix_dev(master_list):
         new_matrix.write("\t".join(y)+"\n")
     new_matrix.close()
 
-def run_vsearch(id, processors):
+def run_vsearch(id, processors, infile):
     devnull = open("/dev/null", "w")
     cmd = ["vsearch",
-           "-cluster_fast", "all_gene_seqs.out",
+           "-cluster_fast", infile,
            "-id", str(id),
            "-uc", "results.uc",
            "-threads", "%s" % processors,
            "-centroids", "vsearch.out"]
-
     subprocess.call(cmd,stdout=devnull,stderr=devnull)
     devnull.close()
 
