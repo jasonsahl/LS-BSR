@@ -341,10 +341,11 @@ def main(directory,id,filter,processors,genes,cluster_method,blast,length,
             print("duplicate headers identified, exiting..")
             sys.exit()
         clusters = get_cluster_ids(gene_path)
-        os.system("cp %s %s" % (gene_path,fastadir))
+        #os.system("cp %s %s" % (gene_path,fastadir))
         os.chdir("%s" % fastadir)
-        os.system("cp %s %s/genes.pep" % (gene_path,fastadir))
+        #os.system("cp %s %s/genes.pep" % (gene_path,fastadir))
         if gene_path.endswith(".pep"):
+            os.system("cp %s %s/genes.pep" % (gene_path,fastadir))
             if blast=="tblastn" or blast=="blastp":
                 logging.logPrint("using %s on peptides" % blast)
                 try:
@@ -360,10 +361,9 @@ def main(directory,id,filter,processors,genes,cluster_method,blast,length,
                 except:
                     logging.logPrint("problem encountered formatting DIAMOND database")
                 subprocess.check_call("diamond blastp -p 4 -d self -f 6 -q %s -o tmp_blast.out > /dev/null 2>&1" % gene_path, shell=True)
-            #subprocess.check_call("sort -u -k 1,1 tmp_blast.out > self_blast.out", shell=True)
-            #ref_scores=parse_self_blast(open("self_blast.out", "U"))
-            #os.system("cp self_blast.out ref.scores")
-            #subprocess.check_call("rm self_blast.out tmp_blast.out", shell=True)
+            elif blast=="blat" or blast=="blastn":
+                print("Nucleotide aligner not compatible with protein sequences...exiting")
+                sys.exit()
             if blast=="blastp" or blast=="tblastn":
                 logging.logPrint("starting BLAST")
             else:
@@ -387,9 +387,15 @@ def main(directory,id,filter,processors,genes,cluster_method,blast,length,
                         os.symlink("%s" % infile, os.path.join(dir_path, os.path.dirname(dir_path)))
                     except:
                         copyfile("%s" % infile, "%s/%s.new" % (fastadir,name))
+                logging.logPrint("Predicting genes with Prodigal")
                 predict_genes(fastadir, processors, intergenics)
+                logging.logPrint("Prodigal finished")
                 diamond_against_each_annotation(gene_path,processors)
         elif gene_path.endswith(".fasta"):
+            os.system("cp %s %s" % (gene_path,fastadir))
+            if blast == "diamond" or blast == "blastp":
+                print("protein alignment not compatible with nucleotide input..exiting")
+                sys.exit()
             if "tblastn" == blast:
                 logging.logPrint("using tblastn")
                 translate_genes(gene_path,"genes.pep",min_pep_length)
