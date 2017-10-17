@@ -170,9 +170,6 @@ def _perform_workflow_pbr(data):
     if "true" in test:
         return outdata
 
-#def blastp_against_self(blast_type,genes_pep,genes_nt,output,filter,processors):
-#    devnull
-
 def blast_against_self_blastn(blast_type, genes_pep, genes_nt, output, filter, processors):
     devnull = open('/dev/null', 'w')
     if "F" in filter:
@@ -968,7 +965,10 @@ def predict_genes(fastadir, processors, intergenics):
     """simple gene prediction using Prodigal in order
     to find coding regions from a genome sequence"""
     os.chdir("%s" % fastadir)
-    files = os.listdir(fastadir)
+    files = []
+    for file in os.listdir(fastadir):
+        if file.endswith(".fasta.new"):
+            files.append(file)
     files_and_temp_names = [(str(idx), os.path.join(fastadir, f))
                             for idx, f in enumerate(files)]
     if intergenics == "F":
@@ -989,7 +989,10 @@ def _perform_workflow_blat_genome(data):
 def blat_against_each_genome_dev(database,processors):
     """BLAT all genes against each genome"""
     curr_dir=os.getcwd()
-    files = os.listdir(curr_dir)
+    files = []
+    for file in os.listdir(curr_dir):
+        if file.endswith(".fasta.new"):
+            files.append(file)
     files_and_temp_names = []
     for idx,f in enumerate(files):
         files_and_temp_names.append([str(idx), os.path.join(curr_dir, f), database])
@@ -1000,7 +1003,7 @@ def _perform_workflow_tblastn(data):
     f = data[1]
     my_seg = data[2]
     peptides = data[3]
-    if ".fasta.new" in f:
+    if f.endswith(".fasta.new"):
         try:
             subprocess.check_call("makeblastdb -in %s -dbtype nucl > /dev/null 2>&1" % f, shell=True)
         except:
@@ -1025,7 +1028,10 @@ def _perform_workflow_tblastn(data):
 def blast_against_each_genome_tblastn_dev(processors, peptides, filter):
     """BLAST all peptides against each genome"""
     curr_dir=os.getcwd()
-    files = os.listdir(curr_dir)
+    files = []
+    for file in os.listdir(curr_dir):
+        if file.endswith(".fasta.new"):
+            files.append(file)
     if "T" in filter:
         my_seg = "yes"
     else:
@@ -1034,6 +1040,37 @@ def blast_against_each_genome_tblastn_dev(processors, peptides, filter):
     for idx, f in enumerate(files):
         files_and_temp_names.append([str(idx), os.path.join(curr_dir, f), my_seg, peptides])
     mp_shell(_perform_workflow_tblastn, files_and_temp_names, processors)
+
+def _perform_workflow_diamond(data):
+    tn = data[0]
+    f = data[1]
+    peptides = data[2]
+    name = f.replace(".new_genes.pep",".new")
+    try:
+        subprocess.check_call("diamond makedb --in %s -d %s > /dev/null 2>&1" % (f,name), shell=True)
+    except:
+        print("problem found in formatting annotation %s" % f)
+    devnull = open('/dev/null', 'w')
+    cmd = ["diamond",
+           "blastp",
+           "-p", "1",
+           "-d", name,
+           "-f", "6",
+           "-q", peptides,
+           "-o", "%s_blast.out" % name]
+    subprocess.call(cmd, stdout=devnull, stderr=devnull)
+    devnull.close()
+
+def diamond_against_each_annotation(peptides,processors):
+    curr_dir=os.getcwd()
+    files_and_temp_names = []
+    annotation_files = []
+    for files in os.listdir(curr_dir):
+        if "new_genes.pep" in files:
+            annotation_files.append(files)
+    for idx, f in enumerate(annotation_files):
+        files_and_temp_names.append([str(idx), os.path.join(curr_dir, f), peptides])
+    mp_shell(_perform_workflow_diamond, files_and_temp_names, processors)
 
 def blastp_against_each_annotation(peptides,processors,filter):
     curr_dir=os.getcwd()
@@ -1046,7 +1083,6 @@ def blastp_against_each_annotation(peptides,processors,filter):
     for files in os.listdir(curr_dir):
         if "new_genes.pep" in files:
             annotation_files.append(files)
-    #print(annotation_files)
     for idx, f in enumerate(annotation_files):
         files_and_temp_names.append([str(idx), os.path.join(curr_dir, f), my_seg, peptides])
     mp_shell(_perform_workflow_blastp, files_and_temp_names, processors)
@@ -1109,7 +1145,11 @@ def blast_against_each_genome_blastn_dev(processors, filter, peptides):
     else:
         my_seg = "no"
     curr_dir=os.getcwd()
-    files = os.listdir(curr_dir)
+    files = []
+    for file in os.listdir(curr_dir):
+        if file.endswith(".fasta.new"):
+            files.append(file)
+    #files = os.listdir(curr_dir)
     files_and_temp_names = []
     for idx, f in enumerate(files):
         files_and_temp_names.append([str(idx), os.path.join(curr_dir,f), my_seg, peptides])
