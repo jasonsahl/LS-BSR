@@ -416,7 +416,7 @@ def filter_matrix(to_keep, in_matrix, prefix):
     outfile.close()
     return outdata
 
-def get_core_gene_stats(matrix, threshold, lower):
+def get_core_gene_stats(matrix, threshold, lower, missing):
     in_matrix=open(matrix, "U")
     outfile = open("core_gene_ids.txt", "w")
     singletons = open("unique_gene_ids.txt", "w")
@@ -434,13 +434,12 @@ def get_core_gene_stats(matrix, threshold, lower):
                     presents.append(fields[0])
                 if float(x)>=float(lower):
                     uniques.append(fields[0])
-            if int(len(presents))/int(totals)>=1:
+            if int(len(presents)+missing)/int(totals)>=1:
                 positives.append(fields[0])
             if int(len(uniques))==1:
                 singles.append(fields[0])
         except:
             raise TypeError("problem in input file found")
-
     print("# of conserved genes = %s" % len(positives))
     print("# of unique genes = %s" % len(singles))
     ratio = int(len(singles))/int(totals)

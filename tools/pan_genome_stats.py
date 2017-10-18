@@ -16,8 +16,8 @@ def test_file(option, opt_str, value, parser):
         print('%s file cannot be opened' % option)
         sys.exit()
 
-def main(matrix, upper, lower):
-    get_core_gene_stats(matrix, upper, lower)
+def main(matrix, upper, lower, missing):
+    get_core_gene_stats(matrix, upper, lower, missing)
     get_frequencies(matrix, upper)
 
 if __name__ == "__main__":
@@ -32,6 +32,9 @@ if __name__ == "__main__":
     parser.add_option("-l", "--lower", dest="lower",
                       help="lower threshold for ORF presence, defaults to 0.4",
                       action="store", default="0.4", type="float")
+    parser.add_option("-m", "--missing", dest="missing",
+                      help="Allow X number of genomes to be missing for core genome calculations, defaults to 0",
+                      action="store", default="0", type="int")
     options, args = parser.parse_args()
 
     mandatories = ["matrix"]
@@ -41,4 +44,4 @@ if __name__ == "__main__":
             parser.print_help()
             exit(-1)
 
-    main(options.matrix, options.upper, options.lower)
+    main(options.matrix, options.upper, options.lower, options.missing)

@@ -538,7 +538,7 @@ class Test17(unittest.TestCase):
         fp.write("bfpB    1.00    0.00    0.00    0.00\n")
         fp.write("stx2a   0.07    0.08    0.98    0.07\n")
         fp.close()
-        self.assertEqual(get_core_gene_stats(fpath, 0.8, 0.4), (1, 4))
+        self.assertEqual(get_core_gene_stats(fpath, 0.8, 0.4, 0), (1, 4))
         shutil.rmtree(tdir)
         os.system("rm core_gene_ids.txt unique_gene_ids.txt")
     def test_get_core_gene_stats_empty_line(self):
@@ -553,7 +553,7 @@ class Test17(unittest.TestCase):
         fp.write("bfpB    1.00    0.00    0.00    0.00\n")
         fp.write("stx2a")
         fp.close()
-        self.assertRaises(TypeError, get_core_gene_stats, fpath, 0.8, 0.4)
+        self.assertRaises(TypeError, get_core_gene_stats, fpath, 0.8, 0.4, 0)
         shutil.rmtree(tdir)
         os.system("rm core_gene_ids.txt unique_gene_ids.txt")
 
