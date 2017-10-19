@@ -188,31 +188,31 @@ def main(directory,id,filter,processors,genes,cluster_method,blast,length,
                 os.system("mv tmp.out all_gene_seqs.out")
             else:
                 pass
-            """New routine to just compare peptide annotations"""
-            if blast == "blastp":
-                os.system("cat *new_genes.pep > all_gene_seqs.pep")
         else:
             logging.logPrint("Converting genbank files")
-            #Need to add in support for blastp
             """First combine all of the prodigal files into one file"""
             if intergenics == "F":
-                os.system("cat *genes.seqs > all_gene_seqs.out")
+                os.system("cat *genes.seqs > all_gene_seqs.out.tmp")
             elif intergenics == "T":
-                os.system("cat *genes.seqs *intergenics.seqs > all_gene_seqs.out")
+                os.system("cat *genes.seqs *intergenics.seqs > all_gene_seqs.out.tmp")
             if filter_scaffolds == "T":
-                filter_scaffolds("all_gene_seqs.out")
-                os.system("mv tmp.out all_gene_seqs.out")
+                filter_scaffolds("all_gene_seqs.out.tmp")
+                os.system("mv tmp.out all_gene_seqs.out.tmp")
             else:
                 pass
             """This combines the locus tags with the Prodigal prediction"""
-            #I need to do this on a per genbank file basis
-            os.system("cat *locus_tags.fasta all_gene_seqs.out > tmp.out")
-            os.system("mv tmp.out all_gene_seqs.out")
-            translate_genes("all_gene_seqs.out","all_genes.pep",30)
-            """I also need to convert the GenBank file to a FASTA file"""
-            for hit in genbank_hits:
-                reduced_hit = hit.replace(".gbk","")
-                SeqIO.convert("%s/%s" % (dir_path, hit), "genbank", "%s.fasta.new" % reduced_hit, "fasta")
+            os.system("cat *locus_tags.fasta all_gene_seqs.out.tmp > all_gene_seqs.out")
+            if blast=="blastp" or blast=="diamond":
+                """Need to convert the locus tags into peptides here"""
+                translate_genes("all_gene_seqs.out","all_genes.pep",30)
+                for infile in glob.glob(os.path.join(fastadir, "*locus_tags.fasta")):
+                    base = os.path.basename(infile)
+                    name = base.replace(".locus_tags.fasta","")
+                    translate_genes(base,"%s.fasta.new_genes.pep" % name,30)
+            else:
+                for hit in genbank_hits:
+                    reduced_hit = hit.replace(".gbk","")
+                    SeqIO.convert("%s/%s" % (dir_path, hit), "genbank", "%s.fasta.new" % reduced_hit, "fasta")
         if "NULL" in cluster_method:
             print("Clustering chosen, but no method selected...exiting")
             sys.exit()
@@ -306,7 +306,6 @@ def main(directory,id,filter,processors,genes,cluster_method,blast,length,
         ref_scores=parse_self_blast(open("self_blast.out", "U"))
         os.system("cp tmp_blast.out ref.scores")
         subprocess.check_call("rm tmp_blast.out self_blast.out", shell=True)
-        #os.system("rm *new_genes.*")
         if blast == "tblastn" or blast == "blastn" or blast == "blastp":
             logging.logPrint("starting BLAST")
         elif blast == "diamond":
@@ -341,9 +340,7 @@ def main(directory,id,filter,processors,genes,cluster_method,blast,length,
             print("duplicate headers identified, exiting..")
             sys.exit()
         clusters = get_cluster_ids(gene_path)
-        #os.system("cp %s %s" % (gene_path,fastadir))
         os.chdir("%s" % fastadir)
-        #os.system("cp %s %s/genes.pep" % (gene_path,fastadir))
         if gene_path.endswith(".pep"):
             os.system("cp %s %s/genes.pep" % (gene_path,fastadir))
             if blast=="tblastn" or blast=="blastp":
@@ -364,11 +361,8 @@ def main(directory,id,filter,processors,genes,cluster_method,blast,length,
             elif blast=="blat" or blast=="blastn":
                 print("Nucleotide aligner not compatible with protein sequences...exiting")
                 sys.exit()
-            if blast=="blastp" or blast=="tblastn":
-                logging.logPrint("starting BLAST")
-            else:
-                logging.logPrint("starting Diamond")
             if blast == "tblastn":
+                logging.logPrint("starting TBLASTN")
                 blast_against_each_genome_tblastn_dev(processors,gene_path,filter)
             elif blast == "blastp":
                 """I will need to first do gene prediction for each genome"""
@@ -378,7 +372,9 @@ def main(directory,id,filter,processors,genes,cluster_method,blast,length,
                         os.symlink("%s" % infile, os.path.join(dir_path, os.path.dirname(dir_path)))
                     except:
                         copyfile("%s" % infile, "%s/%s.new" % (fastadir,name))
+                logging.logPrint("Predicting genes with Prodigal")
                 predict_genes(fastadir, processors, intergenics)
+                logging.logPrint("BlastP starting")
                 blastp_against_each_annotation("genes.pep",processors,filter)
             elif blast == "diamond":
                 for infile in glob.glob(os.path.join(dir_path, '*.fasta')):
@@ -389,7 +385,7 @@ def main(directory,id,filter,processors,genes,cluster_method,blast,length,
                         copyfile("%s" % infile, "%s/%s.new" % (fastadir,name))
                 logging.logPrint("Predicting genes with Prodigal")
                 predict_genes(fastadir, processors, intergenics)
-                logging.logPrint("Prodigal finished")
+                logging.logPrint("Diamond starting")
                 diamond_against_each_annotation(gene_path,processors)
         elif gene_path.endswith(".fasta"):
             os.system("cp %s %s" % (gene_path,fastadir))
@@ -442,9 +438,9 @@ def main(directory,id,filter,processors,genes,cluster_method,blast,length,
         subprocess.check_call("rm tmp_blast.out self_blast.out", shell=True)
         """testing block complete"""
     if blast=="blat":
-        logging.logPrint("BLAT done")
+        logging.logPrint("BLAT complete")
     elif blast=="diamond":
-        logging.logPrint("Diamond done")
+        logging.logPrint("Diamond complete")
     else:
         logging.logPrint("BLAST done")
     logging.logPrint("Finding duplicates")
