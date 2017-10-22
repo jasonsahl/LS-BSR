@@ -156,21 +156,38 @@ def main(directory,id,filter,processors,genes,cluster_method,blast,length,
     if "null" in genes:
         rc = subprocess.call(['which', 'prodigal'])
         if rc == 0:
-            pass
+            print("citation: Hyatt D, Chen GL, Locascio PF, Land ML, Larimer FW, and Hauser LJ. 2010. Prodigal: prokaryotic gene recognition and translation initiation site identification. BMC Bioinformatics 11:119")
         else:
             print("prodigal is not in your path, but needs to be!")
             sys.exit()
-        print("citation: Hyatt D, Chen GL, Locascio PF, Land ML, Larimer FW, and Hauser LJ. 2010. Prodigal: prokaryotic gene recognition and translation initiation site identification. BMC Bioinformatics 11:119")
         if "usearch" in cluster_method:
-            print("citation: Edgar RC. 2010. Search and clustering orders of magnitude faster than BLAST. Bioinformatics 26:2460-2461")
+            rc = subprocess.call(['which', 'usearch'])
+            if rc == 0:
+                print("citation: Edgar RC. 2010. Search and clustering orders of magnitude faster than BLAST. Bioinformatics 26:2460-2461")
+            else:
+                print("usearch is not in your path, but needs to be!")
+                sys.exit()
         elif "cd-hit" in cluster_method:
-            print("citation: Li, W., Godzik, A. 2006. Cd-hit: a fast program for clustering and comparing large sets of protein or nuceltodie sequences. Bioinformatics 22(13):1658-1659")
+            if blast == "blastp" or blast == "diamond":
+                rc = subprocess.call(['which', 'cd-hit'])
+            else:
+                rc = subprocess.call(['which', 'cd-hit-est'])
+            if rc == 0:
+                print("citation: Li, W., Godzik, A. 2006. Cd-hit: a fast program for clustering and comparing large sets of protein or nuceltodie sequences. Bioinformatics 22(13):1658-1659")
+            else:
+                print("cd-hit is not in your path, but needs to be!")
+                sys.exit()
         elif "vsearch" in cluster_method:
             if blast == "blastp" or blast == "diamond":
                 print("vsearch not compatible with proteins, exiting...")
                 sys.exit()
             else:
-                print("citation: Rognes, T., Flouri, T., Nichols, B., Qunice, C., Mahe, Frederic. 2016. VSEARCH: a versatile open source tool for metagenomics. PeerJ Preprints. DOI: https://doi.org/10.7287/peerj.preprints.2409v1")
+                rc = subprocess.call(['which', 'vsearch'])
+                if rc == 0:
+                    print("citation: Rognes, T., Flouri, T., Nichols, B., Qunice, C., Mahe, Frederic. 2016. VSEARCH: a versatile open source tool for metagenomics. PeerJ Preprints. DOI: https://doi.org/10.7287/peerj.preprints.2409v1")
+                else:
+                    print("vsearch is not in your path, but needs to be!")
+                    sys.exit()
         logging.logPrint("predicting genes with Prodigal")
         predict_genes(fastadir, processors, intergenics)
         logging.logPrint("Prodigal done")
@@ -217,56 +234,37 @@ def main(directory,id,filter,processors,genes,cluster_method,blast,length,
             print("Clustering chosen, but no method selected...exiting")
             sys.exit()
         elif "usearch" in cluster_method:
-            ac = subprocess.call(['which', 'usearch'])
-            if ac == 0:
-                os.system("mkdir split_files")
-                if blast == "blastp" or blast == "diamond":
-                    if genbank_hits == None or len(genbank_hits) == 0:
-                        os.system("cat *new_genes.pep > split_files/all_sorted.txt")
-                    else:
-                        os.system("cp all_genes.pep split_files/all_sorted.txt")
+            os.system("mkdir split_files")
+            if blast == "blastp" or blast == "diamond":
+                if genbank_hits == None or len(genbank_hits) == 0:
+                    os.system("cat *new_genes.pep > split_files/all_sorted.txt")
                 else:
-                    os.system("cp all_gene_seqs.out split_files/all_sorted.txt")
-                os.chdir("split_files/")
-                logging.logPrint("Splitting FASTA file for use with USEARCH")
-                split_files("all_sorted.txt")
-                logging.logPrint("clustering with USEARCH at an ID of %s" % id)
-                run_usearch_dev(id,4)
-                os.system("cat *.usearch.out > all_sorted.txt")
-                os.system("mv all_sorted.txt %s" % fastadir)
-                os.chdir("%s" % fastadir)
-                uclust_cluster(id)
-                logging.logPrint("USEARCH clustering finished")
+                    os.system("cp all_genes.pep split_files/all_sorted.txt")
             else:
-                print("usearch must be in your path as usearch...exiting")
-                sys.exit()
+                os.system("cp all_gene_seqs.out split_files/all_sorted.txt")
+            os.chdir("split_files/")
+            logging.logPrint("Splitting FASTA file for use with USEARCH")
+            split_files("all_sorted.txt")
+            logging.logPrint("clustering with USEARCH at an ID of %s" % id)
+            run_usearch_dev(id,4)
+            os.system("cat *.usearch.out > all_sorted.txt")
+            os.system("mv all_sorted.txt %s" % fastadir)
+            os.chdir("%s" % fastadir)
+            uclust_cluster(id)
+            logging.logPrint("USEARCH clustering finished")
         elif "vsearch" in cluster_method:
-            ac = subprocess.call(['which', 'vsearch'])
-            if ac == 0:
-                logging.logPrint("clustering with VSEARCH at an ID of %s, using %s processors" % (id,processors))
-                run_vsearch(id, processors, "all_gene_seqs.out")
-                os.system("mv vsearch.out consensus.fasta")
-                logging.logPrint("VSEARCH clustering finished")
-            else:
-                print("vsearch must be in your path as vsearch...exiting")
-                sys.exit()
+            logging.logPrint("clustering with VSEARCH at an ID of %s, using %s processors" % (id,processors))
+            run_vsearch(id, processors, "all_gene_seqs.out")
+            os.system("mv vsearch.out consensus.fasta")
+            logging.logPrint("VSEARCH clustering finished")
         elif "cd-hit" in cluster_method:
             logging.logPrint("clustering with cd-hit at an ID of %s, using %s processors" % (id,processors))
             if blast == "blastp" or blast == "diamond":
                 ac = subprocess.call(['which', 'cd-hit'])
-                if ac == 0:
-                    os.system("cat *new_genes.pep > all_gene_seqs.pep")
-                    subprocess.check_call("cd-hit -i all_gene_seqs.pep -o consensus.fasta -M 0 -T %s -c %s > /dev/null 2>&1" % (processors, id), shell=True)
-                else:
-                    print("For proteins, cd-hit must be in your path as cd-hit...exiting")
-                    sys.exit()
+                os.system("cat *new_genes.pep > all_gene_seqs.pep")
+                subprocess.check_call("cd-hit -i all_gene_seqs.pep -o consensus.fasta -M 0 -T %s -c %s > /dev/null 2>&1" % (processors, id), shell=True)
             else:
-                ac = subprocess.call(['which', 'cd-hit-est'])
-                if ac == 0:
-                    subprocess.check_call("cd-hit-est -i all_gene_seqs.out -o consensus.fasta -M 0 -T %s -c %s > /dev/null 2>&1" % (processors, id), shell=True)
-                else:
-                    print("for nucleotides, cd-hit must be in your path as cd-hit-est...exiting")
-                    sys.exit()
+                subprocess.check_call("cd-hit-est -i all_gene_seqs.out -o consensus.fasta -M 0 -T %s -c %s > /dev/null 2>&1" % (processors, id), shell=True)
         """need to check for dups here"""
         dup_ids = test_duplicate_header_ids("consensus.fasta")
         if dup_ids == "True":
