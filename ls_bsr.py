@@ -477,7 +477,7 @@ def main(directory,id,filter,processors,genes,cluster_method,blast,length,
         subprocess.check_call("cp dup_matrix.txt names.txt consensus.pep duplicate_ids.txt consensus.fasta %s" % ap, shell=True, stderr=open(os.devnull, 'w'))
     except:
         sys.exc_clear()
-    if "T" in f_plog and "T" in find_dups:
+    if "T" in f_plog:
         filter_paralogs("%s/bsr_matrix_values.txt" % start_dir, "duplicate_ids.txt")
         if "NULL" in prefix:
             os.system("cp bsr_matrix_values_filtered.txt %s/%s_paralogs_filtered_bsr_matrix_values.txt" % (start_dir,"".join(rename)))
