@@ -201,7 +201,7 @@ def main(directory,id,filter,processors,genes,cluster_method,blast,length,
             else:
                 pass
             if filter_scaffolds == "T":
-                filter_scaffolds("all_gene_seqs.out")
+                filter_scaffolds_fun("all_gene_seqs.out")
                 os.system("mv tmp.out all_gene_seqs.out")
             else:
                 pass
@@ -213,7 +213,7 @@ def main(directory,id,filter,processors,genes,cluster_method,blast,length,
             elif intergenics == "T":
                 os.system("cat *genes.seqs *intergenics.seqs > all_gene_seqs.out.tmp")
             if filter_scaffolds == "T":
-                filter_scaffolds("all_gene_seqs.out.tmp")
+                filter_scaffolds_fun("all_gene_seqs.out.tmp")
                 os.system("mv tmp.out all_gene_seqs.out.tmp")
             else:
                 pass
