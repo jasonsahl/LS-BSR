@@ -108,11 +108,12 @@ def process_consensus(in_fasta,new_dict,out_fasta_prefix):
     outfile.close()
 
 
-def update_dict(ref_scores, query_file, all_clusters, threshold):
+def update_dict(ref_scores,query_file,all_clusters,threshold):
     new_dict = {}
     for line in open(query_file, "U"):
         newline = line.strip()
         fields = newline.split()
+        """Orders by cluster"""
         for cluster in all_clusters:
             if cluster == fields[1]:
                 try:
@@ -121,13 +122,15 @@ def update_dict(ref_scores, query_file, all_clusters, threshold):
                 except:
                     print("couldn't process", fields[2], ref_scores.get(fields[0]), fields[1], fields[0])
     """Returns centroid:associated_gene"""
-    return new_dict
+    return new_dict,len(new_dict)
 
 def main(peptides,consensus,processors,threshold,out_fasta_prefix):
     devnull = open("/dev/null", "w")
+    """These are your reference peptides"""
     pep_path=os.path.abspath("%s" % peptides)
     consensus_path=os.path.abspath("%s" % consensus)
     if consensus_path.endswith(".pep"):
+        blast_type = "blastp"
         ab = subprocess.call(['which', 'blastp'])
         if ab == 0:
             pass
@@ -135,29 +138,55 @@ def main(peptides,consensus,processors,threshold,out_fasta_prefix):
             print("blastp must be in your path to use peptides")
             sys.exit()
     elif consensus_path.endswith(".fasta"):
+        blast_type = "blastx"
         ab = subprocess.call(['which', 'blastx'])
         if ab == 0:
             pass
         else:
             print("blastx must be in your path to use nucleotides")
             sys.exit()
-    """"removes empty white space from your input file"""
-    os.system("sed 's/ /_/g' %s > query.peptides.xyx" % pep_path)
+    """"This causes problems"""
+    #os.system("sed 's/ /_/g' %s > query.peptides.xyx" % pep_path)
+    os.system("cp %s query.peptides.xyx" % pep_path)
     subprocess.check_call("makeblastdb -in query.peptides.xyx -dbtype prot > /dev/null 2>&1", shell=True)
-    #only supports transfer of annotation against peptides, currently
-    blast_against_self("blastp", "query.peptides.xyx", "query.peptides.xyx", "xyx.blast.out", processors)
+    if blast_type == "blastp":
+        blast_against_self("blastp", "query.peptides.xyx", "query.peptides.xyx", "xyx.blast.out", processors)
+    else:
+        blast_against_self("blastx", "query.peptides.xyx", "query.peptides.xyx", "xyx.blast.out", processors)
     os.system("sort -u -k 1,1 xyx.blast.out > xyx.blast.unique.xyx")
     ref_scores=parse_self_blast(open("xyx.blast.unique.xyx", "U"))
+    ref_score_file = open("ref.scores", "w")
+    for k,v in ref_scores.iteritems():
+        ref_score_file.write(str(k)+"\t"+str(v)+"\n")
+    ref_score_file.close()
     os.system("rm xyx.blast.out xyx.blast.unique.xyx")
-    if consensus_path.endswith(".pep"):
+    if blast_type == "blastp":
         blast_against_self("blastp", consensus_path, "query.peptides.xyx", "xyx.blast.out", processors)
-    elif consensus_path.endswith(".fasta"):
+    elif blast_type == "blastx":
         blast_against_self("blastx", consensus_path, "query.peptides.xyx", "xyx.blast.out", processors)
     parse_blast_report("xyx.blast.out")
     get_unique_lines("query_blast.filtered")
+    """These are reference clusters"""
     clusters = get_cluster_ids(pep_path)
-    new_dict = update_dict(ref_scores, "query.filtered.unique", clusters, threshold)
+    """these are query clusters"""
+    ref_clusters = get_cluster_ids(consensus_path)
+    """new dict should only include those pairs were annotation was transferred"""
+    new_dict, dict_len = update_dict(ref_scores, "query.filtered.unique", clusters, threshold)
     process_consensus(consensus_path,new_dict,out_fasta_prefix)
+    missing = []
+    #print(new_dict)
+    for ref_cluster in ref_clusters:
+        if ref_cluster not in new_dict:
+            missing.append(ref_cluster)
+    #for k,v in new_dict.iteritems():
+        #print(v)
+    #    if k not in ref_clusters:
+    #        missing.append(k)
+    print("Total number of query peptides = %s" % len(ref_clusters))
+    print("Number of query peptides with transferred annotation = %s" % dict_len)
+    if len(missing)>0:
+        print("Number of query peptides with no transferred annotation = %s" % len(missing))
+        print(missing)
     os.system("rm query.peptides.xyx* xyx.blast.out query_blast.filtered query.filtered.unique")
 
 if __name__ == "__main__":
