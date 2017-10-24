@@ -865,12 +865,12 @@ def run_usearch_dev(id,processors):
 
 def _prodigal_workflow_def(data):
     tn, f = data
-    subprocess.check_call("prodigal -i %s -d %s_genes.seqs -a %s_genes.pep > /dev/null 2>&1" % (f, f, f), shell=True)
+    subprocess.check_call("prodigal -i %s -d %s_genes.seqs -m -a %s_genes.pep > /dev/null 2>&1" % (f, f, f), shell=True)
 
 def _prodigal_workflow_inter(data):
     tn, f = data
     name = f.replace(".fasta.new","")
-    subprocess.check_call("prodigal -i %s -d %s_genes.seqs -a %s_genes.pep -f gff -o %s.prodigal > /dev/null 2>&1" % (f, f, f, name), shell=True)
+    subprocess.check_call("prodigal -i %s -d %s_genes.seqs -a %s_genes.pep -f gff -m -o %s.prodigal > /dev/null 2>&1" % (f, f, f, name), shell=True)
     inverse_coding_regions("%s.prodigal" % name, name)
     parse_ranges_file(f,"%s.ranges" % name,name,test="false")
 
