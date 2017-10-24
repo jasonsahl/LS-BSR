@@ -260,7 +260,6 @@ def main(directory,id,filter,processors,genes,cluster_method,blast,length,
         elif "cd-hit" in cluster_method:
             logging.logPrint("clustering with cd-hit at an ID of %s, using %s processors" % (id,processors))
             if blast == "blastp" or blast == "diamond":
-                ac = subprocess.call(['which', 'cd-hit'])
                 os.system("cat *new_genes.pep > all_gene_seqs.pep")
                 subprocess.check_call("cd-hit -i all_gene_seqs.pep -o consensus.fasta -M 0 -T %s -c %s > /dev/null 2>&1" % (processors, id), shell=True)
             else:

@@ -358,11 +358,10 @@ def compare_values(pruned_1,pruned_2,upper,lower):
     return group1_presents, group2_presents, group1_mean
 
 def find_uniques(combined,fasta):
-    infile = open(combined, "U")
     group1_unique_ids = [ ]
     seqrecords=[ ]
     testids = [ ]
-    for line in infile:
+    for line in open(combined, "rU"):
         fields=line.split()
         if int(fields[2])/int(fields[3])==1 and int(fields[8])==0:
             group1_unique_ids.append(fields[0])
@@ -375,8 +374,7 @@ def find_uniques(combined,fasta):
     output_handle.close()
     group2_unique_ids = [ ]
     seqrecords2 = [ ]
-    #infile = open(combined, "rU")
-    for line in infile:
+    for line in open(combined, "rU"):
         fields=line.split()
         if int(fields[6])/int(fields[7])==1 and int(fields[4])==0:
             group2_unique_ids.append(fields[0])
@@ -386,7 +384,6 @@ def find_uniques(combined,fasta):
     output_handle2 = open("group2_unique_seqs.fasta", "w")
     SeqIO.write(seqrecords2, output_handle2, "fasta")
     output_handle2.close()
-    infile.close()
     return group1_unique_ids, group2_unique_ids, testids
 
 def filter_genomes(genomes, in_matrix):
@@ -1123,6 +1120,55 @@ def _perform_workflow_fdd(q, my_dict_o, data):
                 outfile.write(str("0")+"\n")
         outfile.close()
         return genome_specific_dict
+
+def find_dups_tmp(ref_scores, length, max_plog, min_hlog, clusters, processors):
+    from multiprocessing import Manager, Pool
+    m = Manager()
+    q = m.Queue()
+    my_dict_o = m.dict()
+    p = Pool(processors)
+    curr_dir=os.getcwd()
+    dup_dict = {}
+    duplicate_file = open("duplicate_ids.txt", "w")
+    ref_file = open("dup_refs.txt", "a")
+    genome_specific_list_of_lists = []
+    files = os.listdir(curr_dir)
+    files_and_temp_names = []
+    for idx, f in enumerate(files):
+        files_and_temp_names.append([str(idx), os.path.join(curr_dir, f), ref_scores, length, max_plog, min_hlog, clusters, processors])
+    # Multiprocessing here (mp_shell for Ctrl+F)
+    """How to test this function???"""
+    for process in files_and_temp_names:
+        p.apply(_perform_workflow_fdd, args=(q,my_dict_o,process))
+    # Get rid of any duplicate values in queue
+    unique = set()
+    while q.empty() == False:
+        unique.add(q.get())
+    """This generates the list of all possible CDSs"""
+    ref_file.write("ID"+"\n")
+    ref_file.write("\n".join(clusters)+"\n")
+    ref_file.close()
+    try:
+        generate_dup_matrix()
+        os.system("paste dup_refs.txt dup_values > dup_matrix.txt")
+    except:
+        print("problem generating duplicate matrix")
+    """new way to report duplicates"""
+    duplicate_IDs = []
+    for line in open("dup_matrix.txt","rU"):
+        fields = line.split()
+        if fields[0] == "ID":
+            pass
+        else:
+            for field in fields[1:]:
+                if float(field)>1:
+                    if fields[0] in duplicate_IDs:
+                        pass
+                    else:
+                        duplicate_IDs.append(fields[0])
+    duplicate_file.write("\n".join(duplicate_IDs))
+    duplicate_file.close()
+    return duplicate_IDs
 
 def find_dups_dev(ref_scores, length, max_plog, min_hlog, clusters, processors):
     from multiprocessing import Manager, Pool
