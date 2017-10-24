@@ -36,7 +36,7 @@ def mp_shell(func, params, numProc):
 
 def get_cluster_ids(in_fasta):
     clusters = []
-    infile = open(in_fasta, "U")
+    infile = open(in_fasta, "rU")
     for record in SeqIO.parse(infile, "fasta"):
         clusters.append(record.id)
     nr = list(OrderedDict.fromkeys(clusters))
@@ -45,6 +45,7 @@ def get_cluster_ids(in_fasta):
     else:
         print("Problem with gene list.  Are there duplicate headers in your file?")
         sys.exit()
+    infile.close()
 
 def divide_values(file, ref_scores):
     """divide each BSR value in a row by that row's maximum value"""
@@ -76,6 +77,7 @@ def divide_values(file, ref_scores):
     if len(errors)>0:
         nr=[x for i, x in enumerate(errors) if x not in errors[i+1:]]
         logging.logPrint("The following genes had no hits in datasets or are too short, values changed to 0, check names and output:%s" % "\n".join(nr))
+    infile.close()
     outfile.close()
     return outdata
 
@@ -123,6 +125,7 @@ def filter_seqs(input_pep):
             long_sequences.append(record)
             outdata.append(len(record.seq))
     SeqIO.write(long_sequences, outfile, "fasta")
+    infile.close()
     outfile.close()
     return outdata
 
@@ -295,6 +298,7 @@ def prune_matrix(matrix, group1, group2):
         name = fields[0]
         deque((list.pop(fields, i) for i in sorted(group1_idx, reverse=True)), maxlen=0)
         group1_out.write("".join(name)+"\t"+"\t".join(fields)+"\n")
+    group1_out.close()
     in_matrix = open(matrix, "U")
     firstLine = in_matrix.readline()
     fields = firstLine.split()
@@ -309,8 +313,10 @@ def prune_matrix(matrix, group1, group2):
         name = fields[0]
         deque((list.pop(fields, i) for i in sorted(group2_idx, reverse=True)), maxlen=0)
         group2_out.write("".join(name)+"\t"+"\t".join(fields)+"\n")
-    return group1_ids, group2_ids, group1_idx, group2_idx
     in_matrix.close()
+    group2_out.close()
+    return group1_ids, group2_ids, group1_idx, group2_idx
+
 
 def compare_values(pruned_1,pruned_2,upper,lower):
     group1 = open(pruned_1, "U")
@@ -369,7 +375,7 @@ def find_uniques(combined,fasta):
     output_handle.close()
     group2_unique_ids = [ ]
     seqrecords2 = [ ]
-    infile = open(combined, "rU")
+    #infile = open(combined, "rU")
     for line in infile:
         fields=line.split()
         if int(fields[6])/int(fields[7])==1 and int(fields[4])==0:
@@ -380,6 +386,7 @@ def find_uniques(combined,fasta):
     output_handle2 = open("group2_unique_seqs.fasta", "w")
     SeqIO.write(seqrecords2, output_handle2, "fasta")
     output_handle2.close()
+    infile.close()
     return group1_unique_ids, group2_unique_ids, testids
 
 def filter_genomes(genomes, in_matrix):
@@ -393,8 +400,8 @@ def filter_genomes(genomes, in_matrix):
     for x in all_genomes:
         if x in genomes_file:
             to_keep.append(all_genomes.index(x))
-    return to_keep
     in_matrix.close()
+    return to_keep
 
 def filter_matrix(to_keep, in_matrix, prefix):
     matrix = open(in_matrix, "rU")
@@ -485,102 +492,6 @@ def get_frequencies(matrix, threshold):
     outfile.close()
     return out_data
 
-def find_dups(ref_scores, length, max_plog, min_hlog, clusters, processors):
-    curr_dir=os.getcwd()
-    my_dict_o = {}
-    dup_dict = {}
-    paralogs = [ ]
-    duplicate_file = open("duplicate_ids.txt", "w")
-    paralog_file = open("paralog_ids.txt", "w")
-    ref_file = open("dup_refs.txt", "w")
-    genome_specific_list_of_lists = []
-    target_list = []
-    ordered_target_list = []
-    files = os.listdir(curr_dir)
-    files_and_temp_names = [(str(idx), os.path.join(curr_dir, f))
-                            for idx, f in enumerate(files)]
-    def _perform_workflow(data):
-        tn, f = data
-        if "_blast.out" in f:
-            genome_specific_dict = {}
-            name = get_seq_name(f)
-            reduced_name = name.replace(".fasta.new_blast.out","")
-            genome_specific_dict.update({"ID":reduced_name})
-            outfile = open("%s.counts.txt" % reduced_name, "w")
-            try:
-                for line in open(f, "U"):
-                    newline = line.strip()
-                    fields = newline.split()
-                    """Each blast query should be in the reference blast file"""
-                    if fields[0] not in ref_scores:
-                        print("potential problem found with BLAST File..")
-                        sys.exit()
-                    elif float(fields[2])>=int(min_hlog) and (float(fields[11])/float(ref_scores.get(fields[0])))>=float(length):
-                        try:
-                            my_dict_o[fields[0]].append(fields[11])
-                            genome_specific_dict[fields[0]].append(fields[11])
-                        except KeyError:
-                            my_dict_o[fields[0]] = [fields[11]]
-                            genome_specific_dict[fields[0]] = [fields[11]]
-                    else:
-                        continue
-            except:
-                raise TypeError("problem parsing %s" % f)
-            new_dict = {}
-            for k,v in genome_specific_dict.iteritems():
-                for cluster in clusters:
-                    if k == "ID":
-                        pass
-                    elif k == cluster:
-                        try:
-                            new_dict.update({k:len(v)})
-                        except:
-                            new_dict.update({k:"0"})
-            for cluster in clusters:
-                if cluster not in genome_specific_dict:
-                    new_dict.update({cluster:"0"})
-            """this is our ordered dictionary"""
-            od = collections.OrderedDict(sorted(new_dict.items()))
-            ids = OrderedDict({"ID":reduced_name})
-            both =OrderedDict(list(ids.items())+list(new_dict.items()))
-            for k,v in both.iteritems():
-                if k == "ID":
-                    outfile.write(str(v)+"\n")
-            for cluster in clusters:
-                for k,v in both.iteritems():
-                    if k == cluster:
-                        outfile.write(str(v)+"\n")
-            outfile.close()
-    results = set(p_func.pmap(_perform_workflow,
-                              files_and_temp_names,
-                              num_workers=processors))
-    """Here's where I write to the reference file, which is the first column of dup_matrix.txt"""
-    ref_file.write("ID"+"\n")
-    ref_file.write("\n".join(clusters)+"\n")
-    ref_file.close()
-    try:
-        generate_dup_matrix()
-        os.system("paste dup_refs.txt dup_values > dup_matrix.txt")
-    except:
-        print("problem generating duplicate matrix, but we'll continue")
-    for k,v in my_dict_o.iteritems():
-        if int(len(v))>=2:
-            dup_dict.update({k:v})
-    for k,v in dup_dict.iteritems():
-        max_value = max(v)
-        for x in v:
-            if float(x)/float(max_value)<=max_plog:
-                paralogs.append(k)
-            else:
-                continue
-    for k, v in dup_dict.iteritems():
-        duplicate_file.write(k+"\n")
-    nr=[x for i, x in enumerate(paralogs) if x not in paralogs[i+1:]]
-    paralog_file.write("\n".join(nr)+"\n")
-    duplicate_file.close()
-    paralog_file.close()
-    return nr, dup_dict
-
 def filter_paralogs(matrix, ids):
     in_matrix = open(matrix, "U")
     outfile = open("bsr_matrix_values_filtered.txt", "w")
@@ -595,9 +506,9 @@ def filter_paralogs(matrix, ids):
             outdata.append(fields[0])
         else:
             pass
-    return outdata
     in_matrix.close()
     outfile.close()
+    return outdata
 
 def filter_variome(matrix, threshold, step):
     in_matrix = open(matrix, "U")
@@ -622,7 +533,7 @@ def filter_variome(matrix, threshold, step):
     outfile.close()
     return outdata
 
-def filter_scaffolds(in_fasta):
+def filter_scaffolds_fun(in_fasta):
     """If an N is present in any scaffold, the entire contig will
     be entire filtered, probably too harsh"""
     infile = open(in_fasta, "U")
@@ -635,6 +546,7 @@ def filter_scaffolds(in_fasta):
         print("no usable fasta records were found or all contain scaffolds")
         sys.exit()
     SeqIO.write(outrecords, output_handle, "fasta")
+    infile.close()
     output_handle.close()
 
 def uclust_sort(usearch):
@@ -902,13 +814,15 @@ def test_duplicate_header_ids(fasta_file):
 def split_files(fasta_file):
     """This next section removes line wraps, so I can
     split the file without interrupting a gene"""
-    from Bio.SeqIO.FastaIO import FastaWriter
+    #from Bio.SeqIO.FastaIO import FastaWriter
     output_handle = open("nowrap.fasta", "w")
-    seqrecords=[ ]
-    writer = FastaWriter(output_handle, wrap=0)
+    #seqrecords=[ ]
+    #writer = FastaWriter(output_handle, wrap=0)
     for record in SeqIO.parse(open(fasta_file), "fasta"):
-        seqrecords.append(record)
-    writer.write_file(seqrecords)
+        output_handle.write(">"+str(record.id)+"\n")
+        output_handle.write(str(record.seq)+"\n")
+        #seqrecords.append(record)
+    #writer.write_file(seqrecords)
     output_handle.close()
     """I can always make the number of lines an alterable field"""
     subprocess.check_call("split -l 200000 nowrap.fasta", shell=True)
@@ -951,12 +865,12 @@ def run_usearch_dev(id,processors):
 
 def _prodigal_workflow_def(data):
     tn, f = data
-    subprocess.check_call("prodigal -i %s -d %s_genes.seqs -a %s_genes.pep > /dev/null 2>&1" % (f, f, f), shell=True)
+    subprocess.check_call("prodigal -i %s -d %s_genes.seqs -m -a %s_genes.pep > /dev/null 2>&1" % (f, f, f), shell=True)
 
 def _prodigal_workflow_inter(data):
     tn, f = data
     name = f.replace(".fasta.new","")
-    subprocess.check_call("prodigal -i %s -d %s_genes.seqs -a %s_genes.pep -f gff -o %s.prodigal > /dev/null 2>&1" % (f, f, f, name), shell=True)
+    subprocess.check_call("prodigal -i %s -d %s_genes.seqs -a %s_genes.pep -f gff -m -o %s.prodigal > /dev/null 2>&1" % (f, f, f, name), shell=True)
     inverse_coding_regions("%s.prodigal" % name, name)
     parse_ranges_file(f,"%s.ranges" % name,name,test="false")
 
