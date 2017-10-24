@@ -1,9 +1,12 @@
-###Changes made on 8/30/2017
+###Changes made on 10/23/2017###
+1. Support for both blastp and diamond. These alignments are protein/protein and will be performed back against the gene predictions
+
+###Changes made on 8/30/2017###
 1. intergenic sequences can now be compared using nucleotide aligners by using the "-y T" flag
 2. The debug option ("-z") has been removed
 3. A script has been included to convert LS-BSR output to Scoary (https://github.com/AdmiralenOla/Scoary) input
 
-###Changes made on 2/9/2016
+###Changes made on 2/9/2016###
 1. BLASTN was changed to use BLASTN as the "task", instead of megablast. Using megablast can result in no alignments for more distant alignments, which would result in a BSR value of 0, even though significant alignments likely exist. This problem would only affect runs using BLASTN as the alignment method.
 2. Because of the changes to BLASTN, the "penalty" and "reward" arguments have been removed and replaced with the defaults.
 
