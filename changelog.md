@@ -1,5 +1,6 @@
 ###Changes made on 10/23/2017###
 1. Support for both blastp and diamond. These alignments are protein/protein and will be performed back against the gene predictions
+2. I added the "-m" flag to Prodigal so that coding regions are not called through stretches of Ns.
 
 ###Changes made on 8/30/2017###
 1. intergenic sequences can now be compared using nucleotide aligners by using the "-y T" flag
