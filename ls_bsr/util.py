@@ -714,45 +714,6 @@ def parse_tree(tree):
 def blat_against_self(query,reference,output,processors):
     subprocess.check_call("blat -out=blast8 -minIdentity=75 %s %s %s > /dev/null 2>&1" % (reference,query,output), shell=True)
 
-def make_table_dev(infile, test, clusters):
-    """make the BSR matrix table"""
-    values = [ ]
-    names = [ ]
-    outdata = [ ]
-    name=[ ]
-    out=get_seq_name(infile)
-    name.append(out)
-    reduced=[ ]
-    """remove the junk at the end of the file"""
-    #for x in name:reduced.append(x.replace('.fasta.new_blast.out.filtered.filtered.unique',''))
-    for x in name:reduced.append(x.replace('.fasta.new_blast.out.filtered.unique',''))
-    names.append(reduced)
-    my_dict={}
-    my_file=open(infile, "rU")
-    """make a dictionary of all clusters and values"""
-    try:
-        for line in my_file:
-            fields=line.split()
-            my_dict.update({fields[0]:fields[1]})
-    except:
-        raise TypeError("abnormal number of fields")
-    my_file.close()
-    """add in values, including any potentially missing ones"""
-    for x in clusters:
-        if x not in my_dict.keys():my_dict.update({x:0})
-    for x in reduced:
-        values.append(x)
-    """sort keys to get the same order between samples"""
-    od = collections.OrderedDict(sorted(my_dict.items()))
-    values_2 = od.values()
-    values_3 = values+values_2
-    if "T" in test:
-        myout=[x for i, x in enumerate(outdata) if x not in outdata[i+1:]]
-        return sorted(outdata)
-    else:
-        pass
-    return names, values_3
-
 def create_bsr_matrix_dev(master_list):
     new_matrix = open("bsr_matrix", "w")
     test = map(list, zip(*master_list))
@@ -862,12 +823,12 @@ def run_usearch_dev(id,processors):
 
 def _prodigal_workflow_def(data):
     tn, f = data
-    subprocess.check_call("prodigal -i %s -d %s_genes.seqs -m -a %s_genes.pep > /dev/null 2>&1" % (f, f, f), shell=True)
+    subprocess.check_call("prodigal -i %s -d %s_genes.seqs -m -c -a %s_genes.pep > /dev/null 2>&1" % (f, f, f), shell=True)
 
 def _prodigal_workflow_inter(data):
     tn, f = data
     name = f.replace(".fasta.new","")
-    subprocess.check_call("prodigal -i %s -d %s_genes.seqs -a %s_genes.pep -f gff -m -o %s.prodigal > /dev/null 2>&1" % (f, f, f, name), shell=True)
+    subprocess.check_call("prodigal -i %s -d %s_genes.seqs -a %s_genes.pep -f gff -m -c -o %s.prodigal > /dev/null 2>&1" % (f, f, f, name), shell=True)
     inverse_coding_regions("%s.prodigal" % name, name)
     parse_ranges_file(f,"%s.ranges" % name,name,test="false")
 

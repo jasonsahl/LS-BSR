@@ -124,19 +124,28 @@ def update_dict(ref_scores,query_file,all_clusters,threshold):
     """Returns centroid:associated_gene"""
     return new_dict,len(new_dict)
 
-def main(peptides,consensus,processors,threshold,out_fasta_prefix):
+def main(aligner,peptides,consensus,processors,threshold,out_fasta_prefix):
     devnull = open("/dev/null", "w")
     """These are your reference peptides"""
     pep_path=os.path.abspath("%s" % peptides)
     consensus_path=os.path.abspath("%s" % consensus)
     if consensus_path.endswith(".pep"):
-        blast_type = "blastp"
-        ab = subprocess.call(['which', 'blastp'])
-        if ab == 0:
-            pass
-        else:
-            print("blastp must be in your path to use peptides")
-            sys.exit()
+        if aligner == "blastp":
+            blast_type = "blastp"
+            ab = subprocess.call(['which', 'blastp'])
+            if ab == 0:
+                pass
+            else:
+                print("blastp must be in your path to use peptides")
+                sys.exit()
+        elif aligner == "diamond":
+            blast_type = "diamond"
+            ab = subprocess.call(['which', 'diamond'])
+            if ab == 0:
+                pass
+            else:
+                print("diamond is not in your path but needs to be")
+                sys.exit()
     elif consensus_path.endswith(".fasta"):
         blast_type = "blastx"
         ab = subprocess.call(['which', 'blastx'])
@@ -148,9 +157,14 @@ def main(peptides,consensus,processors,threshold,out_fasta_prefix):
     """"This causes problems"""
     #os.system("sed 's/ /_/g' %s > query.peptides.xyx" % pep_path)
     os.system("cp %s query.peptides.xyx" % pep_path)
-    subprocess.check_call("makeblastdb -in query.peptides.xyx -dbtype prot > /dev/null 2>&1", shell=True)
+    if blast_type == "diamond":
+        subprocess.check_call("diamond makedb --in query.peptides.xyx -d DB > /dev/null 2>&1", shell=True)
+    else:
+        subprocess.check_call("makeblastdb -in query.peptides.xyx -dbtype prot > /dev/null 2>&1", shell=True)
     if blast_type == "blastp":
         blast_against_self("blastp", "query.peptides.xyx", "query.peptides.xyx", "xyx.blast.out", processors)
+    elif blast_type == "diamond":
+        subprocess.check_call("diamond blastp -p %s -d DB -f 6 -q query.peptides.xyx -o xyx.blast.out > /dev/null 2>&1" % processors, shell=True)
     else:
         blast_against_self("blastx", "query.peptides.xyx", "query.peptides.xyx", "xyx.blast.out", processors)
     os.system("sort -u -k 1,1 xyx.blast.out > xyx.blast.unique.xyx")
@@ -164,6 +178,8 @@ def main(peptides,consensus,processors,threshold,out_fasta_prefix):
         blast_against_self("blastp", consensus_path, "query.peptides.xyx", "xyx.blast.out", processors)
     elif blast_type == "blastx":
         blast_against_self("blastx", consensus_path, "query.peptides.xyx", "xyx.blast.out", processors)
+    elif blast_type == "diamond":
+        subprocess.check_call("diamond blastp -p %s -d DB -f 6 -q %s -o xyx.blast.out > /dev/null 2>&1" % (processors,consensus_path), shell=True)
     parse_blast_report("xyx.blast.out")
     get_unique_lines("query_blast.filtered")
     """These are reference clusters"""
@@ -174,26 +190,27 @@ def main(peptides,consensus,processors,threshold,out_fasta_prefix):
     new_dict, dict_len = update_dict(ref_scores, "query.filtered.unique", clusters, threshold)
     process_consensus(consensus_path,new_dict,out_fasta_prefix)
     missing = []
-    #print(new_dict)
     for ref_cluster in ref_clusters:
         if ref_cluster not in new_dict:
             missing.append(ref_cluster)
-    #for k,v in new_dict.iteritems():
-        #print(v)
-    #    if k not in ref_clusters:
-    #        missing.append(k)
     print("Total number of query peptides = %s" % len(ref_clusters))
     print("Number of query peptides with transferred annotation = %s" % dict_len)
     if len(missing)>0:
+        outfile = open("missing_ids.txt", "w")
         print("Number of query peptides with no transferred annotation = %s" % len(missing))
-        print(missing)
+        for loci in missing:
+            outfile.write(str(loci)+"\n")
+        outfile.close()
     os.system("rm query.peptides.xyx* xyx.blast.out query_blast.filtered query.filtered.unique")
 
 if __name__ == "__main__":
     usage="usage: %prog [options]"
     parser = optparse.OptionParser(usage=usage)
+    parser.add_option("-a", "--aligner", dest="aligner",
+                      help="aligner to use; choose from blastp or diamond (default)",
+                      type="string", action="store", default="diamond")
     parser.add_option("-p", "--peptides", dest="peptides",
-                      help="/path/to/annotated peptides [REQUIRED]",
+                      help="/path/to/annotated peptides (reference) [REQUIRED]",
                       type="string", action="callback", callback=test_file)
     parser.add_option("-c", "--consensus", dest="consensus", action="callback", callback=test_file,
                       help="/path/to/consensus file, can be nucleotide or peptide [REQUIRED]",
@@ -216,4 +233,4 @@ if __name__ == "__main__":
             parser.print_help()
             exit(-1)
 
-    main(options.peptides,options.consensus,options.processors,options.threshold,options.out_fasta_prefix)
+    main(options.aligner,options.peptides,options.consensus,options.processors,options.threshold,options.out_fasta_prefix)
