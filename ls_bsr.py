@@ -147,13 +147,23 @@ def main(directory,id,filter,processors,genes,cluster_method,blast,length,
         else:
             os.makedirs("%s/%s" % (ap,prefix))
             fastadir = "%s/%s" % (ap,prefix)
+    samples = []
     for infile in glob.glob(os.path.join(dir_path, '*.fasta')):
         name=get_seq_name(infile)
+        samples.append(name)
         try:
             os.symlink("%s" % infile, os.path.join(dir_path, os.path.dirname(dir_path)))
         except:
             copyfile("%s" % infile, "%s/%s.new" % (fastadir,name))
+    if len(samples) == 0:
+        print("no usable genome files found, exiting...")
+        sys.exit()
     if "null" in genes:
+        if "null" in cluster_method:
+            print("Clustering method needed if genes aren't provided...exiting")
+            sys.exit()
+        else:
+            pass
         rc = subprocess.call(['which', 'prodigal'])
         if rc == 0:
             print("citation: Hyatt D, Chen GL, Locascio PF, Land ML, Larimer FW, and Hauser LJ. 2010. Prodigal: prokaryotic gene recognition and translation initiation site identification. BMC Bioinformatics 11:119")
