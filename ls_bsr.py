@@ -89,7 +89,7 @@ def test_fplog(option, opt_str, value, parser):
 
 def main(directory,id,filter,processors,genes,cluster_method,blast,length,
          max_plog,min_hlog,f_plog,keep,filter_peps,filter_scaffolds,prefix,min_pep_length,
-         intergenics):
+         intergenics,dup_toggle):
     start_dir = os.getcwd()
     ap=os.path.abspath("%s" % start_dir)
     dir_path=os.path.abspath("%s" % directory)
@@ -450,9 +450,12 @@ def main(directory,id,filter,processors,genes,cluster_method,blast,length,
         logging.logPrint("Diamond complete")
     else:
         logging.logPrint("BLAST done")
-    logging.logPrint("Finding duplicates")
-    find_dups_dev(ref_scores, length, max_plog, min_hlog, clusters, processors)
-    logging.logPrint("Finding duplicates complete")
+    if dup_toggle == "T":
+        logging.logPrint("Finding duplicates")
+        find_dups_dev(ref_scores, length, max_plog, min_hlog, clusters, processors)
+        logging.logPrint("Finding duplicates complete")
+    else:
+        logging.logPrint("Duplicate searching turned off")
     parse_blast_report_dev("false",4)
     curr_dir=os.getcwd()
     table_files = glob.glob(os.path.join(curr_dir, "*.filtered.unique"))
@@ -481,7 +484,10 @@ def main(directory,id,filter,processors,genes,cluster_method,blast,length,
     subprocess.check_call("paste ref.list BSR_matrix_values.txt > %s/bsr_matrix_values.txt" % start_dir, shell=True)
     logging.logPrint("matrix built")
     try:
-        subprocess.check_call("cp dup_matrix.txt names.txt consensus.pep duplicate_ids.txt consensus.fasta %s" % ap, shell=True, stderr=open(os.devnull, 'w'))
+        if dup_toggle == "T":
+            subprocess.check_call("cp dup_matrix.txt names.txt consensus.pep duplicate_ids.txt consensus.fasta %s" % ap, shell=True, stderr=open(os.devnull, 'w'))
+        else:
+            subprocess.check_call("cp names.txt consensus.pep consensus.fasta %s" % ap, shell=True, stderr=open(os.devnull, 'w'))
     except:
         sys.exc_clear()
     if "T" in f_plog:
@@ -492,8 +498,11 @@ def main(directory,id,filter,processors,genes,cluster_method,blast,length,
             os.system("cp bsr_matrix_values_filtered.txt %s/%s_paralogs_filtered_bsr_matrix_values.txt" % (start_dir,prefix))
     os.chdir("%s" % ap)
     if "NULL" in prefix:
-        os.system("mv dup_matrix.txt %s_dup_matrix.txt" % "".join(rename))
-        os.system("mv duplicate_ids.txt %s_duplicate_ids.txt" % "".join(rename))
+        if dup_toggle == "T":
+            os.system("mv dup_matrix.txt %s_dup_matrix.txt" % "".join(rename))
+            os.system("mv duplicate_ids.txt %s_duplicate_ids.txt" % "".join(rename))
+        else:
+            pass
         os.system("mv names.txt %s_names.txt" % "".join(rename))
         os.system("mv bsr_matrix_values.txt %s_bsr_matrix.txt" % "".join(rename))
         if os.path.isfile("consensus.fasta"):
@@ -501,8 +510,11 @@ def main(directory,id,filter,processors,genes,cluster_method,blast,length,
         if os.path.isfile("consensus.pep"):
             os.system("mv consensus.pep %s_consensus.pep" % "".join(rename))
     else:
-        os.system("mv dup_matrix.txt %s_dup_matrix.txt" % prefix)
-        os.system("mv duplicate_ids.txt %s_duplicate_ids.txt" % prefix)
+        if dup_toggle == "T":
+            os.system("mv dup_matrix.txt %s_dup_matrix.txt" % prefix)
+            os.system("mv duplicate_ids.txt %s_duplicate_ids.txt" % prefix)
+        else:
+            pass
         os.system("mv names.txt %s_names.txt" % prefix)
         os.system("mv bsr_matrix_values.txt %s_bsr_matrix.txt" % prefix)
         if os.path.isfile("consensus.fasta"):
@@ -528,7 +540,8 @@ def main(directory,id,filter,processors,genes,cluster_method,blast,length,
     outfile.write("-s %s \\\n" % filter_peps)
     outfile.write("-e %s \\\n" % filter_scaffolds)
     outfile.write("-x %s \\\n" % prefix)
-    outfile.write("-y %s\n" % intergenics)
+    outfile.write("-y %s \\\n" % intergenics)
+    outfile.write("-z %s\n" % dup_toggle)
     outfile.write("temp data stored here if kept: %s" % fastadir)
     outfile.close()
     logging.logPrint("all Done")
@@ -592,6 +605,9 @@ if __name__ == "__main__":
     parser.add_option("-y", "--intergenics", dest="intergenics", action="callback",
                       help="Incoporate intergenic regions? T or F; Defaults to F",
                       default="F", type="string", callback=test_filter)
+    parser.add_option("-z", "--dup_toggle", dest="dup_toggle", action="callback",
+                      help="Perform duplicate searching? T or F; Defaults to T",
+                      default="T", type="string", callback=test_filter)
     options, args = parser.parse_args()
 
     mandatories = ["directory"]
@@ -603,4 +619,4 @@ if __name__ == "__main__":
 
     main(options.directory,options.id,options.filter,options.processors,options.genes,options.cluster_method,options.blast,
          options.length,options.max_plog,options.min_hlog,options.f_plog,options.keep,options.filter_peps,
-         options.filter_scaffolds,options.prefix,options.min_pep_length,options.intergenics)
+         options.filter_scaffolds,options.prefix,options.min_pep_length,options.intergenics,options.dup_toggle)

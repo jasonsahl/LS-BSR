@@ -19,17 +19,26 @@ def main(matrix,lower):
     firstLine = my_matrix.readline()
     first_fields = firstLine.split()
     """Need to insert three blank fields, all comma separated"""
-    first_fields.insert(0,"")
-    first_fields.insert(1,"")
-    first_fields.insert(2,"")
+    first_fields.insert(0,"Gene")
+    first_fields.insert(1,"Non-unique Gene name")
+    first_fields.insert(2,"Annotation")
+    first_fields.insert(3,"No. isolates")
+    first_fields.insert(4,"No. sequences")
+    first_fields.insert(5,"Avg sequences per isolate")
+    first_fields.insert(6,"Genome Fragment")
+    first_fields.insert(7,"Order within Fragment")
+    first_fields.insert(8,"Accessory Fragment")
+    first_fields.insert(9,"Accessory Order with Fragment")
+    first_fields.insert(10,"QC")
+    first_fields.insert(11,"Min group size nuc")
+    first_fields.insert(12,"Max group size nuc")
+    first_fields.insert(13,"Avg group size nuc")
     outfile.write(",".join(first_fields)+"\n")
     for line in my_matrix:
         new_fields = []
         fields = line.split()
-        new_fields.append(fields[0])
-        """Adding in two blank fields"""
-        new_fields.append("")
-        new_fields.append("")
+        new_fields[0:13] = ["","","","","","","","","","","","",""]
+        new_fields.insert(0,fields[0])
         for x in fields[1:]:
             if float(x)>=float(lower):
                 new_fields.append("1")
