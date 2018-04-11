@@ -11,8 +11,8 @@ have not been observed.
 
 contact: jasonsahl at gmail dot com
 
-##Minimum requirements, see manual for version information##
-1. Python >2.7 and <3
+Minimum requirements, see manual for version information
+1. Python >2.7 and <=3.5
 2. BioPython
 3. Prodigal - Required for de novo gene prediction only
 4. VSEARCH - Optional
@@ -20,7 +20,7 @@ contact: jasonsahl at gmail dot com
 6. CD-HIT - Optional
 7. Blast+ - Optional
 8. Blat - Optional
+9. Diamond - Optional
 
-###See changelog.md for a list of changes###
-
-###See manual for run directions###
+*See changelog.md for a list of changes
+*See manual for run directions
