@@ -10,6 +10,7 @@ import os
 import subprocess
 from collections import OrderedDict
 from Bio import SeqIO
+from ls_bsr.util import find_data_type
 
 def test_file(option, opt_str, value, parser):
     try:
@@ -34,47 +35,50 @@ def blast_against_self(blast_type, query, database, output, processors):
 def transfer_annotation(consensus, blast_in):
     blast_dict = {}
     outfile = open("genes.associated.fasta", "w")
-    for line in open(blast_in, "U"):
-        fields = line.split()
-        blast_dict.update({fields[0]:fields[1]})
-    for record in SeqIO.parse(consensus, "fasta"):
-        if record.id in blast_dict:
-            outfile.write(">"+str(blast_dict.get(record.id))+"\n")
-            outfile.write(str(record.seq)+"\n")
-        else:
-            if int(len(record.seq))>10:
-                outfile.write(">"+record.id+"\n")
+    with open(blast_in) as infile:
+        for line in infile:
+            fields = line.split()
+            blast_dict.update({fields[0]:fields[1]})
+    with open(consensus) as in_fasta:
+        for record in SeqIO.parse(in_fasta, "fasta"):
+            if record.id in blast_dict:
+                outfile.write(">"+str(blast_dict.get(record.id))+"\n")
                 outfile.write(str(record.seq)+"\n")
+            else:
+                if int(len(record.seq))>10:
+                    outfile.write(">"+record.id+"\n")
+                    outfile.write(str(record.seq)+"\n")
     outfile.close()
 
 def parse_blast_report(infile):
     """parse out only the name and bit score from the blast report"""
     outfile = open("query_blast.filtered", "w")
-    for line in open(infile, "rU"):
-        try:
-            fields = line.split("\t")
-            outfile.write(fields[0]+"\t"+fields[1]+"\t"+fields[11])
-        except:
-            raise TypeError("malformed blast line found")
+    with open(infile) as my_file:
+        for line in my_file:
+            try:
+                fields = line.split("\t")
+                outfile.write(fields[0]+"\t"+fields[1]+"\t"+fields[11])
+            except:
+                raise TypeError("malformed blast line found")
     outfile.close()
 
 def get_unique_lines(infile):
     """only return the top hit for each query"""
     outfile = open("query.filtered.unique", "w")
     d = {}
-    input = file(infile)
-    for line in input:
-        unique = line.split("\t",1)[0]
-        if unique not in d:
-            d[unique] = 1
-            outfile.write(line,)
+    with open(infile) as my_file:
+        for line in my_file:
+            unique = line.split("\t",1)[0]
+            if unique not in d:
+                d[unique] = 1
+                outfile.write(line,)
     outfile.close()
 
 def get_cluster_ids(in_fasta):
     clusters = []
-    infile = open(in_fasta, "U")
-    for record in SeqIO.parse(infile, "fasta"):
-        clusters.append(record.id)
+    with open(in_fasta) as infile:
+        for record in SeqIO.parse(infile, "fasta"):
+            clusters.append(record.id)
     nr = list(OrderedDict.fromkeys(clusters))
     if len(clusters) == len(nr):
         return clusters
@@ -97,30 +101,32 @@ def parse_self_blast(lines):
 def process_consensus(in_fasta,new_dict,out_fasta_prefix):
     my_lists = []
     outfile = open("%s.annotated.fasta" % out_fasta_prefix, "w")
-    for record in SeqIO.parse(open(in_fasta, "U"), "fasta"):
-        if record.id not in new_dict:
-            outfile.write(">"+str(record.id)+"\n")
-            outfile.write(str(record.seq)+"\n")
-        else:
-            new_id = record.id.replace(record.id, new_dict.get(record.id))
-            outfile.write(">"+str(new_id)+"::"+record.id+"\n")
-            outfile.write(str(record.seq)+"\n")
+    with open(in_fasta) as my_fasta:
+        for record in SeqIO.parse(my_fasta, "fasta"):
+            if record.id not in new_dict:
+                outfile.write(">"+str(record.id)+"\n")
+                outfile.write(str(record.seq)+"\n")
+            else:
+                new_id = record.id.replace(record.id, new_dict.get(record.id))
+                outfile.write(">"+str(new_id)+"::"+record.id+"\n")
+                outfile.write(str(record.seq)+"\n")
     outfile.close()
 
 
 def update_dict(ref_scores,query_file,all_clusters,threshold):
     new_dict = {}
-    for line in open(query_file, "U"):
-        newline = line.strip()
-        fields = newline.split()
-        """Orders by cluster"""
-        for cluster in all_clusters:
-            if cluster == fields[1]:
-                try:
-                    if (float(fields[2])/float(ref_scores.get(fields[1]))*100)>int(threshold):
-                        new_dict.update({fields[0]:fields[1]})
-                except:
-                    print("couldn't process", fields[2], ref_scores.get(fields[0]), fields[1], fields[0])
+    with open(query_file) as my_file:
+        for line in my_file:
+            newline = line.strip()
+            fields = newline.split()
+            """Orders by cluster"""
+            for cluster in all_clusters:
+                if cluster == fields[1]:
+                    try:
+                        if (float(fields[2])/float(ref_scores.get(fields[1]))*100)>int(threshold):
+                            new_dict.update({fields[0]:fields[1]})
+                    except:
+                        print("couldn't process", fields[2], ref_scores.get(fields[0]), fields[1], fields[0])
     """Returns centroid:associated_gene"""
     return new_dict,len(new_dict)
 
@@ -129,7 +135,14 @@ def main(aligner,peptides,consensus,processors,threshold,out_fasta_prefix):
     """These are your reference peptides"""
     pep_path=os.path.abspath("%s" % peptides)
     consensus_path=os.path.abspath("%s" % consensus)
+    data_type = find_data_type(consensus_path)
+    #data_type is either aa pr mt
     if consensus_path.endswith(".pep"):
+        if data_type == "aa":
+            pass
+        else:
+            print("Make sure that nucleotide data ends in 'fasta'")
+            sys.exit()
         if aligner == "blastp":
             blast_type = "blastp"
             ab = subprocess.call(['which', 'blastp'])
@@ -138,7 +151,7 @@ def main(aligner,peptides,consensus,processors,threshold,out_fasta_prefix):
             else:
                 print("blastp must be in your path to use peptides")
                 sys.exit()
-        elif aligner == "diamond":
+        else:
             blast_type = "diamond"
             ab = subprocess.call(['which', 'diamond'])
             if ab == 0:
@@ -147,6 +160,12 @@ def main(aligner,peptides,consensus,processors,threshold,out_fasta_prefix):
                 print("diamond is not in your path but needs to be")
                 sys.exit()
     elif consensus_path.endswith(".fasta"):
+        """Need to check to make sure that this is a nucleotide file"""
+        if data_type == "nt":
+            pass
+        else:
+            print("Make sure that peptide data ends with 'pep'")
+            sys.exit()
         blast_type = "blastx"
         ab = subprocess.call(['which', 'blastx'])
         if ab == 0:
@@ -155,7 +174,6 @@ def main(aligner,peptides,consensus,processors,threshold,out_fasta_prefix):
             print("blastx must be in your path to use nucleotides")
             sys.exit()
     """"This causes problems"""
-    #os.system("sed 's/ /_/g' %s > query.peptides.xyx" % pep_path)
     os.system("cp %s query.peptides.xyx" % pep_path)
     if blast_type == "diamond":
         subprocess.check_call("diamond makedb --in query.peptides.xyx -d DB > /dev/null 2>&1", shell=True)
@@ -170,7 +188,7 @@ def main(aligner,peptides,consensus,processors,threshold,out_fasta_prefix):
     os.system("sort -u -k 1,1 xyx.blast.out > xyx.blast.unique.xyx")
     ref_scores=parse_self_blast(open("xyx.blast.unique.xyx", "U"))
     ref_score_file = open("ref.scores", "w")
-    for k,v in ref_scores.iteritems():
+    for k,v in ref_scores.items():
         ref_score_file.write(str(k)+"\t"+str(v)+"\n")
     ref_score_file.close()
     os.system("rm xyx.blast.out xyx.blast.unique.xyx")

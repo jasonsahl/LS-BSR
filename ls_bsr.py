@@ -158,6 +158,7 @@ def main(directory,id,filter,processors,genes,cluster_method,blast,length,
     if len(samples) == 0:
         print("no usable genome files found, exiting...")
         sys.exit()
+    """This is the section on de novo clustering"""
     if "null" in genes:
         if "null" in cluster_method:
             print("Clustering method needed if genes aren't provided...exiting")
@@ -256,11 +257,13 @@ def main(directory,id,filter,processors,genes,cluster_method,blast,length,
             logging.logPrint("Splitting FASTA file for use with USEARCH")
             split_files("all_sorted.txt")
             logging.logPrint("clustering with USEARCH at an ID of %s" % id)
-            run_usearch_dev(id,4)
+            run_usearch_dev(id,processors)
             os.system("cat *.usearch.out > all_sorted.txt")
             os.system("mv all_sorted.txt %s" % fastadir)
             os.chdir("%s" % fastadir)
-            uclust_cluster(id)
+            """Need to make output either FASTA or PEP"""
+            data_type = find_data_type("all_sorted.txt")
+            uclust_cluster(id,data_type)
             logging.logPrint("USEARCH clustering finished")
         elif "vsearch" in cluster_method:
             logging.logPrint("clustering with VSEARCH at an ID of %s, using %s processors" % (id,processors))
@@ -271,24 +274,31 @@ def main(directory,id,filter,processors,genes,cluster_method,blast,length,
             logging.logPrint("clustering with cd-hit at an ID of %s, using %s processors" % (id,processors))
             if blast == "blastp" or blast == "diamond":
                 os.system("cat *new_genes.pep > all_gene_seqs.pep")
-                subprocess.check_call("cd-hit -i all_gene_seqs.pep -o consensus.fasta -M 0 -T %s -c %s > /dev/null 2>&1" % (processors, id), shell=True)
+                subprocess.check_call("cd-hit -i all_gene_seqs.pep -o consensus.pep -M 0 -T %s -c %s > /dev/null 2>&1" % (processors, id), shell=True)
             else:
                 subprocess.check_call("cd-hit-est -i all_gene_seqs.out -o consensus.fasta -M 0 -T %s -c %s > /dev/null 2>&1" % (processors, id), shell=True)
         """need to check for dups here"""
-        dup_ids = test_duplicate_header_ids("consensus.fasta")
+        if os.path.exists("consensus.fasta"):
+            dup_ids = test_duplicate_header_ids("consensus.fasta")
+        else:
+            dup_ids = test_duplicate_header_ids("consensus.pep")
         if dup_ids == "True":
             pass
         elif dup_ids == "False":
             print("duplicate headers identified, renaming..")
-            rename_fasta_header("consensus.fasta", "tmp.txt")
-            os.system("mv tmp.txt consensus.fasta")
+            try:
+                rename_fasta_header("consensus.fasta", "tmp.txt")
+                os.system("mv tmp.txt consensus.fasta")
+            except:
+                rename_fasta_header("consensus.pep", "tmp.txt")
+                os.system("mv tmp.txt consensus.pep")
         else:
             pass
         if "tblastn" == blast:
             subprocess.check_call("makeblastdb -in consensus.fasta -dbtype nucl > /dev/null 2>&1", shell=True)
             translate_genes("consensus.fasta","tmp.pep",min_pep_length)
             if filter_peps == "T":
-                filter_seqs("tmp.pep")
+                filter_seqs("tmp.pep","consensus.pep")
                 os.system("rm tmp.pep")
             else:
                 os.system("mv tmp.pep consensus.pep")
@@ -302,15 +312,21 @@ def main(directory,id,filter,processors,genes,cluster_method,blast,length,
             blat_against_self("consensus.fasta", "consensus.fasta", "tmp_blast.out", processors)
             clusters = get_cluster_ids("consensus.fasta")
         elif "blastp" == blast:
-            subprocess.check_call("makeblastdb -in consensus.fasta -dbtype prot > /dev/null 2>&1", shell=True)
-            blast_against_self_tblastn("blastp", "consensus.fasta", "consensus.fasta", "tmp_blast.out", processors, filter)
-            clusters = get_cluster_ids("consensus.fasta")
+            subprocess.check_call("makeblastdb -in consensus.pep -dbtype prot > /dev/null 2>&1", shell=True)
+            blast_against_self_tblastn("blastp", "consensus.pep", "consensus.pep", "tmp_blast.out", processors, filter)
+            clusters = get_cluster_ids("consensus.pep")
         elif "diamond" == blast:
-            subprocess.check_call("diamond makedb --in consensus.fasta -d consensus > /dev/null 2>&1", shell=True)
-            subprocess.check_call("diamond blastp -p 4 -d consensus -f 6 -q consensus.fasta -o tmp_blast.out > /dev/null 2>&1", shell=True)
-            clusters = get_cluster_ids("consensus.fasta")
+            """Check this"""
+            if filter_peps == "T":
+                filter_seqs("consensus.pep","tmp.pep")
+                os.system("mv tmp.pep consensus.pep")
+            else:
+                pass
+            subprocess.check_call("diamond makedb --in consensus.pep -d consensus > /dev/null 2>&1", shell=True)
+            subprocess.check_call("diamond blastp -p 4 -d consensus -f 6 -q consensus.pep -o tmp_blast.out > /dev/null 2>&1", shell=True)
+            clusters = get_cluster_ids("consensus.pep")
         subprocess.check_call("sort -u -k 1,1 tmp_blast.out > self_blast.out", shell=True)
-        ref_scores=parse_self_blast(open("self_blast.out", "U"))
+        ref_scores=parse_self_blast("self_blast.out")
         os.system("cp tmp_blast.out ref.scores")
         subprocess.check_call("rm tmp_blast.out self_blast.out", shell=True)
         if blast == "tblastn" or blast == "blastn" or blast == "blastp":
@@ -326,9 +342,9 @@ def main(directory,id,filter,processors,genes,cluster_method,blast,length,
         elif "blat" == blast:
             blat_against_each_genome_dev("consensus.fasta",processors)
         elif "blastp" == blast:
-            blastp_against_each_annotation("consensus.fasta",processors,filter)
+            blastp_against_each_annotation("consensus.pep",processors,filter)
         elif "diamond" == blast:
-            diamond_against_each_annotation("consensus.fasta",processors)
+            diamond_against_each_annotation("consensus.pep",processors)
         else:
             pass
     else:
@@ -340,6 +356,9 @@ def main(directory,id,filter,processors,genes,cluster_method,blast,length,
         else:
             pass
         gene_path=os.path.abspath("%s" % genes)
+        """new method: aa,nt,unknown"""
+        data_type = find_data_type(gene_path)
+        print(data_type)
         dup_ids = test_duplicate_header_ids(gene_path)
         if dup_ids == "True":
             pass
@@ -349,6 +368,11 @@ def main(directory,id,filter,processors,genes,cluster_method,blast,length,
         clusters = get_cluster_ids(gene_path)
         os.chdir("%s" % fastadir)
         if gene_path.endswith(".pep"):
+            if data_type == "aa":
+                pass
+            else:
+                print("File is supposed to contain proteins, but doesn't look correct..exiting")
+                sys.exit()
             os.system("cp %s %s/genes.pep" % (gene_path,fastadir))
             if blast=="tblastn" or blast=="blastp":
                 logging.logPrint("using %s on peptides" % blast)
@@ -395,6 +419,11 @@ def main(directory,id,filter,processors,genes,cluster_method,blast,length,
                 logging.logPrint("Diamond starting")
                 diamond_against_each_annotation(gene_path,processors)
         elif gene_path.endswith(".fasta"):
+            if data_type == "nt":
+                pass
+            else:
+                print("File is supposed to contain nucleotides, but doesn't look correct..exiting ")
+                sys.exit()
             os.system("cp %s %s" % (gene_path,fastadir))
             if blast == "diamond" or blast == "blastp":
                 print("protein alignment not compatible with nucleotide input..exiting")
@@ -441,7 +470,7 @@ def main(directory,id,filter,processors,genes,cluster_method,blast,length,
             sys.exit()
         subprocess.check_call("sort -u -k 1,1 tmp_blast.out > self_blast.out", shell=True)
         os.system("cp self_blast.out ref.scores")
-        ref_scores=parse_self_blast(open("self_blast.out", "U"))
+        ref_scores=parse_self_blast("self_blast.out")
         subprocess.check_call("rm tmp_blast.out self_blast.out", shell=True)
         """testing block complete"""
     if blast=="blat":
@@ -482,21 +511,23 @@ def main(directory,id,filter,processors,genes,cluster_method,blast,length,
     create_bsr_matrix_dev(new_table_list)
     divide_values("bsr_matrix", ref_scores)
     subprocess.check_call("paste ref.list BSR_matrix_values.txt > %s/bsr_matrix_values.txt" % start_dir, shell=True)
-    logging.logPrint("matrix built")
     try:
         if dup_toggle == "T":
             subprocess.check_call("cp dup_matrix.txt names.txt consensus.pep duplicate_ids.txt consensus.fasta %s" % ap, shell=True, stderr=open(os.devnull, 'w'))
         else:
             subprocess.check_call("cp names.txt consensus.pep consensus.fasta %s" % ap, shell=True, stderr=open(os.devnull, 'w'))
     except:
-        sys.exc_clear()
+        pass
     if "T" in f_plog:
-        filter_paralogs("%s/bsr_matrix_values.txt" % start_dir, "duplicate_ids.txt")
+        logging.logPrint("filtering duplicates")
+        num_filtered = filter_paralogs("%s/bsr_matrix_values.txt" % start_dir, "duplicate_ids.txt")
+        logging.logPrint("%s duplicates filtered" % str(num_filtered))
         if "NULL" in prefix:
             os.system("cp bsr_matrix_values_filtered.txt %s/%s_paralogs_filtered_bsr_matrix_values.txt" % (start_dir,"".join(rename)))
         else:
             os.system("cp bsr_matrix_values_filtered.txt %s/%s_paralogs_filtered_bsr_matrix_values.txt" % (start_dir,prefix))
     os.chdir("%s" % ap)
+    logging.logPrint("matrix built")
     if "NULL" in prefix:
         if dup_toggle == "T":
             os.system("mv dup_matrix.txt %s_dup_matrix.txt" % "".join(rename))

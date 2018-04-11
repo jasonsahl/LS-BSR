@@ -49,13 +49,14 @@ def get_unique_lines(infile):
     """only return the top hit for each query"""
     outfile = open("query.filtered.unique", "w")
     d = {}
-    input = file(infile)
+    input = open(infile)
     for line in input:
         unique = line.split("\t",1)[0]
         if unique not in d:
             d[unique] = 1
             outfile.write(line)
     outfile.close()
+    input.close()
 
 def get_cluster_ids(in_fasta):
     clusters = []
@@ -113,7 +114,7 @@ def process_consensus(consensus,new_dict,output_prefix):
     outfile = open("%s.consensus_annotated.fasta" % output_prefix, "w")
     for record in SeqIO.parse(open(consensus, "U"), "fasta"):
         changed_id = []
-        for k,v in new_dict.iteritems():
+        for k,v in new_dict.items():
             if k == record.id:
                 new_id = record.id.replace("%s" % k, "%s" % v)
                 changed_id.append(new_id)

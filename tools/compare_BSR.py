@@ -16,7 +16,7 @@ def test_file(option, opt_str, value, parser):
     try:
         with open(value): setattr(parser.values, option.dest, value)
     except IOError:
-        print '%s file cannot be opened' % option
+        print('%s file cannot be opened' % option)
         sys.exit()
 
 def add_headers(infile, outfile, lower, upper):
@@ -61,7 +61,7 @@ if __name__ == "__main__":
     mandatories = ["matrix", "group1", "group2", "fasta"]
     for m in mandatories:
         if not options.__dict__[m]:
-            print "\nMust provide %s.\n" %m
+            print("\nMust provide %s.\n" %m)
             parser.print_help()
             exit(-1)
 

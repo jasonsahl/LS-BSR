@@ -1,3 +1,10 @@
+
+###Changes made on 4/11/2018###
+1. LS-BSR is now Python3.5 compatible. Any Errors in testing shouldn't affect performance
+2. LS-BSR now checks "-g" input to see if it is protein or nucleotide and catches errors accordingly
+3. Duplicate searching can now be turned off with the "-z" flag
+4. Changes to several of the external scripts for improved functionality
+
 ###Changes made on 10/23/2017###
 1. Support for both blastp and diamond. These alignments are protein/protein and will be performed back against the gene predictions
 2. I added the "-m" flag to Prodigal so that coding regions are not called through stretches of Ns. I also added the "-c" flag, which should prevent the creation of truncated coding regions that could inflate the pan-genome in some cases.

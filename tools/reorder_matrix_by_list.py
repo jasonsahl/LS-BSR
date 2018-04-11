@@ -13,7 +13,7 @@ def test_file(option, opt_str, value, parser):
     try:
         with open(value): setattr(parser.values, option.dest, value)
     except IOError:
-        print '%s file cannot be opened' % option
+        print('%s file cannot be opened' % option)
         sys.exit()
 
 def main(matrix, genomes):
@@ -24,7 +24,7 @@ def main(matrix, genomes):
         fields = newline.split()
         names.append(fields)
     reorder_matrix("tmp.matrix",names)
-    #os.system("rm tmp.matrix")
+    os.system("rm tmp.matrix")
 
 if __name__ == "__main__":
     usage="usage: %prog [options]"
@@ -41,7 +41,7 @@ if __name__ == "__main__":
     mandatories = ["matrix","genomes"]
     for m in mandatories:
         if not getattr(options, m, None):
-            print "\nMust provide %s.\n" %m
+            print("\nMust provide %s.\n" %m)
             parser.print_help()
             exit(-1)
 

@@ -13,7 +13,7 @@ def test_file(option, opt_str, value, parser):
     try:
         with open(value): setattr(parser.values, option.dest, value)
     except IOError:
-        print '%s file cannot be opened' % option
+        print('%s file cannot be opened' % option)
         sys.exit()
 
 def get_uniques(matrix, threshold):
@@ -37,12 +37,12 @@ def get_uniques(matrix, threshold):
                         my_dict[firstFields[fields.index(x)-1]].append(fields[0])
                     except:
                         my_dict[firstFields[fields.index(x)-1]] = [fields[0]]
-    for k,v in my_dict.iteritems():
-        print >> outfile, k, len(v)
+    for k,v in my_dict.items():
+        outfile.write(k+"\t"+str(len(v))+"\n")
     for firstField in firstFields:
         if firstField not in my_dict:
-            print >> outfile, firstField, "0"
-        
+            outfile.write(firstField+"\t"+"0"+"\n")
+
 def sort_uniques_by_tree(summary, tree):
     outfile = open("uniques_sorted_by_tree.txt", "w")
     mytree = Phylo.read(tree, 'newick')
@@ -54,15 +54,15 @@ def sort_uniques_by_tree(summary, tree):
         for line in open(summary, "U"):
             fields = line.split()
             if fields[0] == tree_name:
-                print >> outfile, line,
+                outfile.write(line)
             else:
                 pass
-    
+
 def main(matrix, tree, threshold):
     get_uniques(matrix, threshold)
     sort_uniques_by_tree("summary_stats.tmp.txt", tree)
     os.system("rm summary_stats.tmp.txt")
-    
+
 if __name__ == "__main__":
     usage="usage: %prog [options]"
     parser = OptionParser(usage=usage)
@@ -75,13 +75,13 @@ if __name__ == "__main__":
     parser.add_option("-t", "--threshold", dest="threshold",
                       help="lower threshold for ORF presence, defaults to 0.8",
                       action="store", default="0.8", type="float")
-   
+
     options, args = parser.parse_args()
-    
+
     mandatories = ["matrix","tree"]
     for m in mandatories:
         if not options.__dict__[m]:
-            print "\nMust provide %s.\n" %m
+            print("\nMust provide %s.\n" %m)
             parser.print_help()
             exit(-1)
 
