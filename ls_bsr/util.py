@@ -796,6 +796,14 @@ def test_duplicate_header_ids(fasta_file):
             else:
                 pass
     nr=[x for i, x in enumerate(IDs) if x not in IDs[i+1:]]
+    my_dict = {}
+    for id in IDs:
+        try:
+            my_dict[id].append("1")
+        except KeyError:
+            my_dict[id] = ["1"]
+    for k,v in my_dict.items():
+        if len(v)>1: print(k)
     if len(IDs) == len(nr):
         return "True"
     else:

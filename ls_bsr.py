@@ -358,7 +358,6 @@ def main(directory,id,filter,processors,genes,cluster_method,blast,length,
         gene_path=os.path.abspath("%s" % genes)
         """new method: aa,nt,unknown"""
         data_type = find_data_type(gene_path)
-        print(data_type)
         dup_ids = test_duplicate_header_ids(gene_path)
         if dup_ids == "True":
             pass
