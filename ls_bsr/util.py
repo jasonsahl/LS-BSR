@@ -802,8 +802,10 @@ def test_duplicate_header_ids(fasta_file):
             my_dict[id].append("1")
         except KeyError:
             my_dict[id] = ["1"]
-    for k,v in my_dict.items():
-        if len(v)>1: print(k)
+    if len(my_dict)>0:
+        print("Duplicate header IDs:")
+        for k,v in my_dict.items():
+            if len(v)>1: print(k)
     if len(IDs) == len(nr):
         return "True"
     else:

@@ -274,9 +274,9 @@ def main(directory,id,filter,processors,genes,cluster_method,blast,length,
             logging.logPrint("clustering with cd-hit at an ID of %s, using %s processors" % (id,processors))
             if blast == "blastp" or blast == "diamond":
                 os.system("cat *new_genes.pep > all_gene_seqs.pep")
-                subprocess.check_call("cd-hit -i all_gene_seqs.pep -o consensus.pep -M 0 -T %s -c %s > /dev/null 2>&1" % (processors, id), shell=True)
+                subprocess.check_call("cd-hit -i all_gene_seqs.pep -o consensus.pep -M 0 -T %s -c %s -s %s > /dev/null 2>&1" % (processors,id,id), shell=True)
             else:
-                subprocess.check_call("cd-hit-est -i all_gene_seqs.out -o consensus.fasta -M 0 -T %s -c %s > /dev/null 2>&1" % (processors, id), shell=True)
+                subprocess.check_call("cd-hit-est -i all_gene_seqs.out -o consensus.fasta -M 0 -T %s -c %s -s %s > /dev/null 2>&1" % (processors,id,id), shell=True)
         """need to check for dups here"""
         if os.path.exists("consensus.fasta"):
             dup_ids = test_duplicate_header_ids("consensus.fasta")
