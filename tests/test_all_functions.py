@@ -37,8 +37,8 @@ class Test3(unittest.TestCase):
         """empty lines won't throw an error, but will get filtered out"""
         fp.write(" ")
         fp.close()
-        self.assertEqual(filter_seqs(fpath),[50])
-        os.system("rm consensus.pep")
+        self.assertEqual(filter_seqs(fpath,"tmp.pep"),[50])
+        os.system("rm tmp.pep")
         shutil.rmtree(tdir)
     def test_filter_seqs_non_nucleotide(self):
         """tests condition where you have non nucleotide
@@ -50,8 +50,8 @@ class Test3(unittest.TestCase):
         fp.write(">Cluster0\n")
         fp.write("12344423432343")
         fp.close()
-        self.assertEqual(filter_seqs(fpath),[])
-        os.system("rm consensus.pep")
+        self.assertEqual(filter_seqs(fpath,"tmp.pep"),[])
+        os.system("rm tmp.pep")
         shutil.rmtree(tdir)
 
 class Test4(unittest.TestCase):
@@ -65,7 +65,7 @@ class Test4(unittest.TestCase):
         fp.write("Cluster1	Cluster1	100.00	15	0	0	1	15	1	15	1e-07	40.5\n")
         fp.write("Cluster2	Cluster2	100.00	15	0	0	1	15	1	15	1e-07	60.6")
         fp.close()
-        self.assertEqual(parse_self_blast(open(fpath,"U")), {'Cluster2': '60.6', 'Cluster0': '30.2', 'Cluster1': '40.5'})
+        self.assertEqual(parse_self_blast(fpath), {'Cluster2': '60.6', 'Cluster0': '30.2', 'Cluster1': '40.5'})
         shutil.rmtree(tdir)
     def test_parse_self_blast_missing_fields(self):
         """tests the condition where too few fields are observed in the blast report.
@@ -76,7 +76,7 @@ class Test4(unittest.TestCase):
         """this file has too few fields"""
         fp.write("Cluster0	Cluster0	100.00	15	0	0	1	15	1	15	1e-07")
         fp.close()
-        self.assertRaises(TypeError, parse_self_blast, open(fpath, "U"))
+        self.assertRaises(TypeError, parse_self_blast, fpath)
         shutil.rmtree(tdir)
     def test_parse_self_blast_empty_file(self):
         """tests the condition where the file is empty
@@ -86,7 +86,7 @@ class Test4(unittest.TestCase):
         fp = open(fpath, "w")
         fp.write("")
         fp.close()
-        self.assertEqual(parse_self_blast(open(fpath,"U")),{})
+        self.assertEqual(parse_self_blast(fpath),{})
         shutil.rmtree(tdir)
 
 #class Test5(unittest.TestCase):
@@ -570,7 +570,7 @@ class Test18(unittest.TestCase):
         fp.write("bfpB    1.00    0.00    0.00    0.00\n")
         fp.write("stx2a   0.07    0.08    0.98    0.07\n")
         fp.close()
-        self.assertEqual(get_frequencies(fpath, 0.8), [1, 4, 4, 1])
+        self.assertEqual(get_frequencies(fpath, 0.8), {1:4,4:1})
         shutil.rmtree(tdir)
     def test_get_frequencies_borders(self):
         """test the border case"""
@@ -584,7 +584,7 @@ class Test18(unittest.TestCase):
         fp.write("bfpB    1.00    0.00    0.00    0.00\n")
         fp.write("stx2a   0.07    0.08    0.98    0.07\n")
         fp.close()
-        self.assertEqual(get_frequencies(fpath, 0.8), [1, 4, 4, 1])
+        self.assertEqual(get_frequencies(fpath, 0.8), {1:4,4:1})
         shutil.rmtree(tdir)
         os.system("rm frequency_data.txt")
 
@@ -655,7 +655,8 @@ class Test20(unittest.TestCase):
         np.write("LT\n")
         np.write("stx2a")
         np.close()
-        self.assertEqual(filter_paralogs(fpath, npath), ['IpaH3', 'ST1', 'bfpB'])
+        #self.assertEqual(filter_paralogs(fpath, npath), ['IpaH3', 'ST1', 'bfpB'])
+        self.assertEqual(filter_paralogs(fpath, npath), 2)
         shutil.rmtree(tdir)
         os.system("rm bsr_matrix_values_filtered.txt")
     def test_filter_paralogs_no_matches(self):
@@ -674,7 +675,8 @@ class Test20(unittest.TestCase):
         np = open(npath, "w")
         np.write("no_match")
         np.close()
-        self.assertEqual(filter_paralogs(fpath, npath), ['IpaH3', 'LT', 'ST1', 'bfpB', 'stx2a'])
+        #self.assertEqual(filter_paralogs(fpath, npath), ['IpaH3', 'LT', 'ST1', 'bfpB', 'stx2a'])
+        self.assertEqual(filter_paralogs(fpath, npath), 0)
         shutil.rmtree(tdir)
         os.system("rm bsr_matrix_values_filtered.txt")
 

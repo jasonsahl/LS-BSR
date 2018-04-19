@@ -89,7 +89,7 @@ def test_fplog(option, opt_str, value, parser):
 
 def main(directory,id,filter,processors,genes,cluster_method,blast,length,
          max_plog,min_hlog,f_plog,keep,filter_peps,filter_scaffolds,prefix,min_pep_length,
-         intergenics,dup_toggle):
+         intergenics,min_len,dup_toggle):
     start_dir = os.getcwd()
     ap=os.path.abspath("%s" % start_dir)
     dir_path=os.path.abspath("%s" % directory)
@@ -271,12 +271,12 @@ def main(directory,id,filter,processors,genes,cluster_method,blast,length,
             os.system("mv vsearch.out consensus.fasta")
             logging.logPrint("VSEARCH clustering finished")
         elif "cd-hit" in cluster_method:
-            logging.logPrint("clustering with cd-hit at an ID of %s, using %s processors" % (id,processors))
+            logging.logPrint("clustering with cd-hit at an ID of %s, length percentage of %s, using %s processors" % (id,min_len,processors))
             if blast == "blastp" or blast == "diamond":
                 os.system("cat *new_genes.pep > all_gene_seqs.pep")
-                subprocess.check_call("cd-hit -i all_gene_seqs.pep -o consensus.pep -M 0 -T %s -c %s -s %s > /dev/null 2>&1" % (processors,id,id), shell=True)
+                subprocess.check_call("cd-hit -i all_gene_seqs.pep -o consensus.pep -M 0 -T %s -c %s -s %s > cdhit.cluster 2>&1" % (processors,id,min_len), shell=True)
             else:
-                subprocess.check_call("cd-hit-est -i all_gene_seqs.out -o consensus.fasta -M 0 -T %s -c %s -s %s > /dev/null 2>&1" % (processors,id,id), shell=True)
+                subprocess.check_call("cd-hit-est -i all_gene_seqs.out -o consensus.fasta -M 0 -T %s -c %s -s %s > cdhit.cluster 2>&1" % (processors,id,min_len), shell=True)
         """need to check for dups here"""
         if os.path.exists("consensus.fasta"):
             dup_ids = test_duplicate_header_ids("consensus.fasta")
@@ -571,6 +571,7 @@ def main(directory,id,filter,processors,genes,cluster_method,blast,length,
     outfile.write("-e %s \\\n" % filter_scaffolds)
     outfile.write("-x %s \\\n" % prefix)
     outfile.write("-y %s \\\n" % intergenics)
+    outfile.write("-ml %s \\\n" % min_len)
     outfile.write("-z %s\n" % dup_toggle)
     outfile.write("temp data stored here if kept: %s" % fastadir)
     outfile.close()
@@ -635,6 +636,9 @@ if __name__ == "__main__":
     parser.add_option("-y", "--intergenics", dest="intergenics", action="callback",
                       help="Incoporate intergenic regions? T or F; Defaults to F",
                       default="F", type="string", callback=test_filter)
+    parser.add_option("--ml", "--min_len", dest="min_len", action="store",
+                      help="value for 's' flag in cd-hit, defaults to '-i' flag in LS-BSR (float)",
+                      default="0.9", type="float")
     parser.add_option("-z", "--dup_toggle", dest="dup_toggle", action="callback",
                       help="Perform duplicate searching? T or F; Defaults to T",
                       default="T", type="string", callback=test_filter)
@@ -649,4 +653,4 @@ if __name__ == "__main__":
 
     main(options.directory,options.id,options.filter,options.processors,options.genes,options.cluster_method,options.blast,
          options.length,options.max_plog,options.min_hlog,options.f_plog,options.keep,options.filter_peps,
-         options.filter_scaffolds,options.prefix,options.min_pep_length,options.intergenics,options.dup_toggle)
+         options.filter_scaffolds,options.prefix,options.min_pep_length,options.intergenics,options.min_len,options.dup_toggle)
