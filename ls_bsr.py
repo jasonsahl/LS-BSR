@@ -70,9 +70,11 @@ def test_dir(option, opt_str, value, parser):
         sys.exit()
 
 def test_id(option, opt_str, value, parser):
-    if type(value) == types.IntType:
+    if type(value) == int:
+    #if type(value) == types.IntType:
         sys.exit()
-    elif type(value) == types.FloatType:
+    #elif type(value) == types.FloatType:
+    elif type(value) == float:
         setattr(parser.values, option.dest, value)
     else:
         print("id value needs to be a float")
