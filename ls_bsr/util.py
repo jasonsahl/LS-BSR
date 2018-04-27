@@ -848,6 +848,7 @@ def _usearch_workflow(infile):
     cmd = ["usearch",
            "-cluster_fast", "%s" % infile[0],
            "-id", str(infile[1]),
+           "-sort", "length",
            "-uc", "results.uc",
            "-centroids", "%s.usearch.out" % str(autoIncrement())]
     subprocess.call(cmd,stdout=devnull,stderr=devnull)
