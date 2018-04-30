@@ -1317,17 +1317,19 @@ def find_data_type(in_fasta):
     with open(in_fasta) as my_fasta:
         try:
             for record in SeqIO.parse(my_fasta, "fasta"):
-                if "M" in record.seq:
+                """None of these characters are IUPACs"""
+                if "F" in record.seq or "L" in record.seq or "I" in record.seq or "P" in record.seq or "Q" in record.seq or "E" in record.seq:
                     aa.append("1")
                 else:
                     pass
         except:
             print("file cannot be parsed, is it in FASTA format?")
             sys.exit()
-    if len(nt)==0 and len(aa)==0:
+    if len(aa)==0:
         data_type = "nt"
     elif len(aa)>0:
         data_type = "aa"
     else:
-        data_type = "unknown"
+        print("problem determining data type..exiting")
+        sys.exit()
     return data_type
