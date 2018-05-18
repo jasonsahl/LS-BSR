@@ -608,7 +608,9 @@ def process_pangenome(matrix, upper, lower, iterations, type, prefix):
             positives_acc = []
             positives_core = []
             positives_unis = []
+            """This selects the random set of genomes"""
             outseqs=random.sample(set(indexes), int(i))
+            """Changing the tabs for all of these genomes"""
             with open(matrix) as f:
                 next(f)
                 for line in f:
