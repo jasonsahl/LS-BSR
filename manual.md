@@ -116,7 +116,7 @@ end of contigs will not be included. Choose from T or F, defaults to (F)
 Choose from T or F, defaults to “T”**  
 
 #### Test data – give LS-BSR a whirl on small datasets  
-- Test data is present in the test_data directory. This data consists of:  
+Test data is present in the test_data directory. This data consists of:  
 1. Genomes (4 E.coli genomes from 4 different pathogenic variants). Genomes are:  
 * H10407 - enterotoxigenic E. coli (ETEC)  
 * E2348/69 - enteropathogenic E. coli (EPEC)  
@@ -135,7 +135,6 @@ Choose from T or F, defaults to “T”**
 *the output (test_bsr_matrix.txt) should show how each gene is only present in the correct
 pathovar  
 2. Test the gene screen method with BLASTN. Enter the test directory and run LS-BSR:  
-```python /Users/jsahl/LS-BSR/ls_bsr.py -d genomes -g genes/ecoli_markers.fasta -b
-blastn –x test```  
+```python /Users/jsahl/LS-BSR/ls_bsr.py -d genomes -g genes/ecoli_markers.fasta -b blastn –x test```  
 3. Test the de novo gene prediction method with USEARCH and TBLASTN for alignment:  
 ```python /Users/jsahl/LS-BSR/ls_bsr.py -d genomes –c usearch –x test```  
