@@ -138,3 +138,23 @@ pathovar
 ```python /Users/jsahl/LS-BSR/ls_bsr.py -d genomes -g genes/ecoli_markers.fasta -b blastn –x test```  
 3. Test the de novo gene prediction method with USEARCH and TBLASTN for alignment:  
 ```python /Users/jsahl/LS-BSR/ls_bsr.py -d genomes –c usearch –x test```  
+4. Test the diamond protein search method against annotations:  
+```python ls_bsr.py -d genomes/ -b diamond -g genes.pep -x diamond```  
+
+*Sample output for each method is shown in the test data directory:  
+1. $prefix_bsr_matrix.txt: This is the 2x2 matrix of the BSR value for each CDS in each genome
+queried  
+2. $prefix_names.txt: The names of all of your genomes. This file can be helpful for running the
+compare_BSR script described below  
+3. $prefix_duplicate_ids.txt: A list of sequence IDs that are duplicated in at least one genome  
+4. $prefix_consensus.fasta: A multi-fasta of all unique CDS sequences in the pan-genome  
+5. $prefix_consensus.pep (optional): A multi-fasta of protein sequences if TBLASTN is selected  
+6. $prefix_dup_matrix.txt: A 2x2 matrix showing how many copies of a CDS are present in each
+genome, if conserved above a given threshold  
+7. $prefix_run_parameters.txt: Documentation for the run that you performed  
+
+#### Visualization of output:
+1. The output of LS-BSR can be visualized in many different ways. One popular method to
+visualize the output as a heatmap is through integration with R. Many beginners find R to be
+intimidating, but this link by Kat Holt provides some excellent workflows on how to build
+heatmaps, and correlate the output with phylogenies: [link](http://bacpathgenomics.wordpress.com/2012/05/25/displaying-data-associated-withphylogenetic-trees/)  
