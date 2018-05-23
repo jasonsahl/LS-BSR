@@ -158,3 +158,28 @@ genome, if conserved above a given threshold
 visualize the output as a heatmap is through integration with R. Many beginners find R to be
 intimidating, but this link by Kat Holt provides some excellent workflows on how to build
 heatmaps, and correlate the output with phylogenies: [link](http://bacpathgenomics.wordpress.com/2012/05/25/displaying-data-associated-withphylogenetic-trees/)  
+2. The Interactive Tree of Life (iTOL) project has an interface that is very user-friendly and can
+directly take LS-BSR output and a phylogeny and create publication ready figures. iTOL can
+be found [here](http://itol.embl.de/)  
+3. MeV is designed as a way to visualize expression data, but can just as easily create
+heatmaps from LS-BSR output. MeV can also be used to cluster LS-BSR data. MeV is
+platform independent and can be found [here](http://www.tm4.org/)  
+4. As part of the manuscript, we demonstrate how clustering the pan-genome can be used to
+answer how genomes cluster by gene content. A new script shown below (BSR_to_cluster_dendrogram.py) can be used to quickly generate these cluster diagrams for further investigation.  
+
+#### Post-matrix scripts:  
+1. compare_BSR.py  
+-what does it do? Looks for CDS differences between two user-defined populations.
+Differences can be set by user-defined thresholds for presence and absence. The
+“names.txt” file contains the names as they should be listed in your separate groups file
+-what do you need for the script to run? Requirements include:  
+• BSR matrix  
+• Two new-line delimited group files, taken from “names.txt”  
+• FASTA file of all CDS sequences  
+-what does output look like? If there are unique sequences to either group, they will be
+stored in the “groupX_unique_seqs.fasta” file. If there are no unique sequences, the
+“groups_combined_header.txt” can be analyzed to look at the variable distribution of regions
+between groups.  
+```python compare_BSR.py -1 group1.txt -2 group2.txt –f $prefix_consensus.fasta –b $prefix_bsr_matrix.txt```  
+2. filter_BSR_variome.py  
+-what does it do? Filters out the conserved
