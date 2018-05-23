@@ -349,8 +349,7 @@ by locus tags if the BSR values are >80% similar.
 • A new BSR matrix (“bsr_matrix_annotated.txt”) ordered by the new annotation  
 • A new multi-FASTA (“$prefix.consensus_annotated.fasta”) that matches the new
 BSR matrix  
-```python annotate_matrix_by_locus_tags.py –b $prefix_bsr_matrix.txt -c
-$prefix_consensus.fasta –l test_data/NC_007779.fasta –p $prefix```  
+```python annotate_matrix_by_locus_tags.py –b $prefix_bsr_matrix.txt -c $prefix_consensus.fasta –l test_data/NC_007779.fasta –p $prefix```  
 17. extract_tree_names.py  
 -what does it do? Given a newick tree, this script extracts the tree IDs in a new line
 delimited text file. This can be useful for a number of applications, including for reordering
