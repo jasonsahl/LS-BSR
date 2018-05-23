@@ -35,3 +35,12 @@ aligner is chosen.
 3.6, although some additional testing is required.
 6. Added “-z” toggle that can turn off duplicate searching, which can speed up very large
 analyses.
+
+#### Installation:
+
+The code is kept [here](https://github.com/jasonsahl/LS-BSR.git)
+
+-You can clone the repository to your own system with git:
+`git clone https://github.com/jasonsahl/LS-BSR.git`
+
+-Enter
