@@ -60,7 +60,7 @@ The code is kept [here](https://github.com/jasonsahl/LS-BSR.git)
 one clustering method must be chosen if a set of genes is not supplied. 32-bit version
 should be sufficient for most applications, including the analysis of 1000 E. coli genomes.
 Tested successfully with versions v7.0.959, 7.0.1090, 8.1.1861, 9.0.2132, and v10.0.240. Can
-be freely obtained for academics/non-profits from [http://www.drive5.com/usearch/]. Very
+be freely obtained for academics/non-profits from (http://www.drive5.com/usearch/). Very
 different results have been observed with V8 compared to earlier versions.  
 3. VSEARCH (tested version is 1.1.3, but works with 2.0.4 and 2.5.0): must be in your $PATH as
 “vsearch” – At least one clustering method must be chosen if a set of genes is not
@@ -86,19 +86,13 @@ blat for your alignment method. Can be obtained from:
 diamond protein comparisons. Can be obtained from: [https://github.com/bbuchfink/diamond]  
 
 #### Command line options:
-**-d DIRECTORY: --directory=DIRECTORY**: the directory to your fasta files, all must end in ".fasta". Can either be complete genomes or draft assemblies. Scaffolds are discouraged. Genbank files are supported and must end in “*.gbk” [REQUIRED]
--i ID: de-replication clustering value, defaults to 0.9 (range from 0.0-1.0). Low values (<0.8) are not
-supported if CD-HIT is chosen as the clustering method
--f FILTER: whether to use BLAST filtering, default is "F" or filter, turn off with "T". Turning this to
-“T” should speed up the analysis, but may throw out highly repetitive sequences.
--p PROCESSORS: number of processors to use, defaults to 2.
--g GENES: if you have a list of genes to screen, supply a nucleotide fasta file (.fasta) or a peptide
-file (.pep). Each gene sequence must be in frame, or questionable results will be obtained (only
-true for TBLASTN). If this flag is not invoked, then the de novo gene prediction method is invoked
--c CLUSTER_METHOD: determines which clustering method to choose. You can choose from
-“usearch”, “vsearch”, or “cd-hit”. These must be in your path as “usearch”, “vsearch”, “cd-hit-est”, or
-“cd-hit” to use.
--b BLAST: which alignment method to use. Default is 'tblastn', can be changed to 'blastn', ‘blastp’,
-‘diamond’, or ‘blat’. Can be used with either a list of supplied genes or with the de novo method.
-Tblastn, blastp, and diamond are not compatible with “-y T” flag set below.
--l LENGTH: minimum BSR value to be called a duplicate, defaults to 0.7. The BSR of the
+**-d DIRECTORY: --directory=DIRECTORY**: the directory to your fasta files, all must end in ".fasta". Can either be complete genomes or draft assemblies. Scaffolds are discouraged. Genbank files are supported and must end in “*.gbk” [REQUIRED]  
+**-i ID**: de-replication clustering value, defaults to 0.9 (range from 0.0-1.0). Low values (<0.8) are not supported if CD-HIT is chosen as the clustering method  
+**-f FILTER**: whether to use BLAST filtering, default is "F" or filter, turn off with "T". Turning this to “T” should speed up the analysis, but may throw out highly repetitive sequences.  
+**-p PROCESSORS**: number of processors to use, defaults to 2.  
+**-g GENES**: if you have a list of genes to screen, supply a nucleotide fasta file (.fasta) or a peptide file (.pep). Each gene sequence must be in frame, or questionable results will be obtained (only true for TBLASTN). If this flag is not invoked, then the de novo gene prediction method is invoked  
+**-c CLUSTER_METHOD**: determines which clustering method to choose. You can choose from
+“usearch”, “vsearch”, or “cd-hit”. These must be in your path as “usearch”, “vsearch”, “cd-hit-est”, or “cd-hit” to use.  
+**-b BLAST**: which alignment method to use. Default is 'tblastn', can be changed to 'blastn', ‘blastp’, ‘diamond’, or ‘blat’. Can be used with either a list of supplied genes or with the de novo method. Tblastn, blastp, and diamond are not compatible with “-y T” flag set below.  
+**-l LENGTH**: minimum BSR value to be called a duplicate, defaults to 0.7. The BSR of the "duplicate" divided by the reference bit score must be greater than this value to be called a
+duplicate  
