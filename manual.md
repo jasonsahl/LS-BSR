@@ -41,6 +41,6 @@ analyses.
 The code is kept [here](https://github.com/jasonsahl/LS-BSR.git)
 
 -You can clone the repository to your own system with git:
-`git clone https://github.com/jasonsahl/LS-BSR.git`
+```git clone https://github.com/jasonsahl/LS-BSR.git```
 
 -Enter
