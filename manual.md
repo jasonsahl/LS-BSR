@@ -314,8 +314,8 @@ header: Y75_p3178::gi|47118301|dbj|BA000007.2|_4067 (original ID: annotation)
 • If annotation cannot be transferred, a new file “missing_ids.txt” contains all of those IDs
 that weren’t transferred  
 • If no close match is found, the original nomenclature is retained  
-```python transfer_annotation.py -p NC_017633.pep -c $prefix_consensus.pep -o out
-14. extract_locus_tags.py```  
+```python transfer_annotation.py -p NC_017633.pep -c $prefix_consensus.pep -o out```  
+14. extract_locus_tags.py  
 -What does it do? Given a GenBank file, this script will generate a multi-FASTA nucleotide
 file with all locus tags. Helpful for transferring annotation in script #13.  
 -What do you need for the script to run?  
