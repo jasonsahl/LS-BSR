@@ -240,8 +240,7 @@ easily graphed in Excel.
 • Output  
 -what does output look like? The mean for each sampling depth is printed to screen. The
 script can be run to output accumulation, core, uniques, or all (default).  
-```python BSR_to_gene_accumulation_scatter.py –b $prefix_bsr_matrix.txt –n 100 –p
-out```  
+```python BSR_to_gene_accumulation_scatter.py –b $prefix_bsr_matrix.txt –n 100 –p out```  
 8. quantify_BSR_uniques.py  
 -what does it do? Prints out the number of unique CDSs, sorted by a given tree. Nice way of
 annotating a tree with where unique CDSs are present  
