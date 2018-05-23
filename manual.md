@@ -96,3 +96,46 @@ diamond protein comparisons. Can be obtained from: [https://github.com/bbuchfink
 **-b BLAST**: which alignment method to use. Default is 'tblastn', can be changed to 'blastn', ‘blastp’, ‘diamond’, or ‘blat’. Can be used with either a list of supplied genes or with the de novo method. Tblastn, blastp, and diamond are not compatible with “-y T” flag set below.  
 **-l LENGTH**: minimum BSR value to be called a duplicate, defaults to 0.7. The BSR of the "duplicate" divided by the reference bit score must be greater than this value to be called a
 duplicate  
+**-m MAX_PLOG**: maximum value to be called a remote paralog, defaults to 0.85. If the BSR value
+is greater than this value, then it is considered to be a highly similar paralog  
+**-n MIN_HLOG**: minimum BLAST ID to be called a highly similar paralog, defaults to 75. If the
+BLAST ID is below this value, it is considered a remote paralog  
+**-t F_PLOG**: filter ORFs with a remote paralog from BSR matrix? Default is F (do not filter), values, can be T (filter paralogs) or F  
+**-k KEEP**: keep or remove temp files, choose from T or F, defaults to False (F), choose from T
+or F  
+**-s FILTER_PEPS**: filter out short peps < 50AA during TBLASTN? Defaults to True T), choose
+from T or F  
+**-e FILTER_SCAFFOLDS**: filter any contig that contains an N? Defaults to F, choose from T or
+F  
+**-x PREFIX**: prefix name for output files, defaults to time/date. If prefix is given, the temporary directory will be named after the prefix  
+**-a min_pep_length**: after translating sequences, peptides of a length smaller than this value
+will be discarded, defaults to 33 (integer)  
+**-y intergenics**: Include intergenic regions greater than 50nts in the analysis? Regions at the
+end of contigs will not be included. Choose from T or F, defaults to (F)    
+**-z DUP_TOGGLE: Performs duplicate searching, which can take a while in large datasets.
+Choose from T or F, defaults to “T”**  
+
+#### Test data – give LS-BSR a whirl on small datasets  
+- Test data is present in the test_data directory. This data consists of:  
+1. Genomes (4 E.coli genomes from 4 different pathogenic variants). Genomes are:  
+* H10407 - enterotoxigenic E. coli (ETEC)  
+* E2348/69 - enteropathogenic E. coli (EPEC)  
+* O157:H7 sakai - shiga toxin E. coli (STEC)  
+* SSON046 - Shigella sonnei  
+2. Genes (5 different markers that delineate between the variants). These include:
+* IpaH3 - Shigella invasion antigen. Mostly present in Shigella spp.  
+* LT - heat-labile toxin. Only present in ETEC (not all)  
+* ST2 - heat-stable toxin. Only present in ETEC (not all)  
+* bfpB - bundle forming pilus. Only present on plasmid in EPEC  
+* stx2a - shiga toxin. Present in STEC  
+
+-You can test out the LS-BSR functionality in 4 different ways:    
+1. Test the gene screen method with TBLASTN. Enter the test directory and run LS-BSR:  
+```python /Users/jsahl/LS-BSR/ls_bsr.py -d genomes -g genes/ecoli_markers.fasta –x test```  
+*the output (test_bsr_matrix.txt) should show how each gene is only present in the correct
+pathovar  
+2. Test the gene screen method with BLASTN. Enter the test directory and run LS-BSR:  
+```python /Users/jsahl/LS-BSR/ls_bsr.py -d genomes -g genes/ecoli_markers.fasta -b
+blastn –x test```  
+3. Test the de novo gene prediction method with USEARCH and TBLASTN for alignment:  
+```python /Users/jsahl/LS-BSR/ls_bsr.py -d genomes –c usearch –x test```  
