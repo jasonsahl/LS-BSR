@@ -45,3 +45,13 @@ The code is kept [here](https://github.com/jasonsahl/LS-BSR.git)
 
 -Enter the directory, then:  
 ```python setup.py install```
+
+-if your install directory is /Users/jsahl/LS-BSR, run:  
+```export PYTHONPATH=/Users/jsahl/LS-BSR:$PYTHONPATH```
+
+-You can add this to your .bashrc or .profile  
+-You can test your installation by running the tests:  
+```python /Users/jsahl/LS-BSR/tests/test_all_functions.py```  
+-If your installation is correct, all tests should pass  
+
+#### Dependencies:
