@@ -71,9 +71,7 @@ def test_dir(option, opt_str, value, parser):
 
 def test_id(option, opt_str, value, parser):
     if type(value) == int:
-    #if type(value) == types.IntType:
         sys.exit()
-    #elif type(value) == types.FloatType:
     elif type(value) == float:
         setattr(parser.values, option.dest, value)
     else:
@@ -157,7 +155,12 @@ def main(directory,id,filter,processors,genes,cluster_method,blast,length,
             os.symlink("%s" % infile, os.path.join(dir_path, os.path.dirname(dir_path)))
         except:
             copyfile("%s" % infile, "%s/%s.new" % (fastadir,name))
-    if len(samples) == 0:
+    genbank_files = []
+    for infile in glob.glob(os.path.join(dir_path, '*.gbk')):
+        name=get_seq_name(infile)
+        genbank_files.append("1")
+        """Do I need to add this to samples as well?"""
+    if len(samples) == 0 and len(genbank_files) == 0:
         print("no usable genome files found, exiting...")
         sys.exit()
     """This is the section on de novo clustering"""
@@ -201,11 +204,18 @@ def main(directory,id,filter,processors,genes,cluster_method,blast,length,
                 else:
                     print("vsearch is not in your path, but needs to be!")
                     sys.exit()
-        logging.logPrint("predicting genes with Prodigal")
-        predict_genes(fastadir, processors, intergenics)
-        logging.logPrint("Prodigal done")
+        if len(samples) == 0:
+            pass
+        else:
+            logging.logPrint("predicting genes with Prodigal")
+            """Only predict genes if there are FASTA files"""
+            predict_genes(fastadir, processors, intergenics)
+            logging.logPrint("Prodigal done")
         """This function produces locus tags"""
-        genbank_hits = process_genbank_files(dir_path)
+        if len(genbank_files)>0:
+            logging.logPrint("Converting genbank files")
+            os.chdir("%s" % fastadir)
+            genbank_hits = process_genbank_files(dir_path)
         if genbank_hits == None or len(genbank_hits) == 0:
             if intergenics == "F":
                 os.system("cat *genes.seqs > all_gene_seqs.out")
@@ -219,19 +229,24 @@ def main(directory,id,filter,processors,genes,cluster_method,blast,length,
             else:
                 pass
         else:
-            logging.logPrint("Converting genbank files")
-            """First combine all of the prodigal files into one file"""
-            if intergenics == "F":
-                os.system("cat *genes.seqs > all_gene_seqs.out.tmp")
-            elif intergenics == "T":
-                os.system("cat *genes.seqs *intergenics.seqs > all_gene_seqs.out.tmp")
-            if filter_scaffolds == "T":
-                filter_scaffolds_fun("all_gene_seqs.out.tmp")
-                os.system("mv tmp.out all_gene_seqs.out.tmp")
+            """First combine all of the prodigal files into one file
+            :First check that there will be prodigal annotations"""
+            if len(samples)>0:
+                if intergenics == "F":
+                    os.system("cat *genes.seqs > all_gene_seqs.out.tmp")
+                elif intergenics == "T":
+                    os.system("cat *genes.seqs *intergenics.seqs > all_gene_seqs.out.tmp")
+                if filter_scaffolds == "T":
+                    filter_scaffolds_fun("all_gene_seqs.out.tmp")
+                    os.system("mv tmp.out all_gene_seqs.out.tmp")
+                else:
+                    pass
+            """This combines the locus tags with the Prodigal prediction.
+            If there are no prodigal predictions, then no error is printed"""
+            if len(samples)>0:
+                os.system("cat *locus_tags.fasta all_gene_seqs.out.tmp > all_gene_seqs.out")
             else:
-                pass
-            """This combines the locus tags with the Prodigal prediction"""
-            os.system("cat *locus_tags.fasta all_gene_seqs.out.tmp > all_gene_seqs.out")
+                os.system("cat *locus_tags.fasta > all_gene_seqs.out")
             if blast=="blastp" or blast=="diamond":
                 """Need to convert the locus tags into peptides here"""
                 translate_genes("all_gene_seqs.out","all_genes.pep",30)
@@ -242,6 +257,7 @@ def main(directory,id,filter,processors,genes,cluster_method,blast,length,
             else:
                 for hit in genbank_hits:
                     reduced_hit = hit.replace(".gbk","")
+                    """This is to ensure that genes are aligned back against the genome"""
                     SeqIO.convert("%s/%s" % (dir_path, hit), "genbank", "%s.fasta.new" % reduced_hit, "fasta")
         if "NULL" in cluster_method:
             print("Clustering chosen, but no method selected...exiting")
@@ -350,9 +366,19 @@ def main(directory,id,filter,processors,genes,cluster_method,blast,length,
         else:
             pass
     else:
+        #########This section focuses on providing your own genes with -g############
         logging.logPrint("Using pre-compiled set of predicted genes")
         files = glob.glob(os.path.join(dir_path, "*.fasta"))
-        if len(files)==0:
+        genbank_files = glob.glob(os.path.join(dir_path, "*.gbk"))
+        if len(genbank_files)>0:
+            for hit in genbank_files:
+                base = os.path.basename(hit)
+                reduced_hit = base.replace(".gbk","")
+                """This is to ensure that genes are aligned back against the genome"""
+                os.chdir(fastadir)
+                SeqIO.convert("%s/%s" % (dir_path, base), "genbank", "%s.fasta.new" % reduced_hit, "fasta")
+                os.chdir(start_dir)
+        if len(files)==0 and len(genbank_files)==0:
             print("no usable reference genomes found!")
             sys.exit()
         else:
@@ -393,6 +419,7 @@ def main(directory,id,filter,processors,genes,cluster_method,blast,length,
             elif blast=="blat" or blast=="blastn":
                 print("Nucleotide aligner not compatible with protein sequences...exiting")
                 sys.exit()
+            #Aligning back against each genome
             if blast == "tblastn":
                 logging.logPrint("starting TBLASTN")
                 blast_against_each_genome_tblastn_dev(processors,gene_path,filter)
