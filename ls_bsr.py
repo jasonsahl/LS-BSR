@@ -216,7 +216,7 @@ def main(directory,id,filter,processors,genes,cluster_method,blast,length,
             logging.logPrint("Converting genbank files")
             os.chdir("%s" % fastadir)
             genbank_hits = process_genbank_files(dir_path)
-        if genbank_hits == None or len(genbank_hits) == 0:
+        if genbank_files == None or len(genbank_files) == 0:
             if intergenics == "F":
                 os.system("cat *genes.seqs > all_gene_seqs.out")
             elif intergenics == "T":
