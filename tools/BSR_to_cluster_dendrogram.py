@@ -33,7 +33,7 @@ def main(infile):
 
 def read_file(file):
     array = []
-    with open(file, "rU") as infile:
+    with open(file) as infile:
         fields = infile.readline().split()
         for line in infile:
             array.append([float(x) for x in line.split()[1:]])
@@ -67,12 +67,15 @@ def write_matrix(matrix, fields):
             outfile.write(fields[idx] + "\t")
             outfile.write("\t".join(map(str,row)))
             outfile.write("\n")
+    outfile.close()
 
 def write_tree():
+    import scipy.spatial.distance as ssd
     dmx = pd.read_csv("distance_matrix", index_col=0, sep="\t")
     ids = dmx.index.tolist()
     triu = np.square(dmx.as_matrix())
-    hclust = weighted(triu)
+    distArray = ssd.squareform(triu)
+    hclust = weighted(distArray)
     t = TreeNode.from_linkage_matrix(hclust, ids)
     nw = t.__str__().replace("'", "")
     outfile = open("bsr_matrix.tree", "w")
@@ -85,4 +88,3 @@ if __name__ == "__main__":
     except:
         print("usage: script bsr_matrix")
         sys.exit()
-
