@@ -75,7 +75,7 @@ def write_tree():
     ids = dmx.index.tolist()
     triu = np.square(dmx.as_matrix())
     distArray = ssd.squareform(triu)
-    hclust = weighted(distArray)
+    hclust = average(distArray)
     t = TreeNode.from_linkage_matrix(hclust, ids)
     nw = t.__str__().replace("'", "")
     outfile = open("bsr_matrix.tree", "w")
