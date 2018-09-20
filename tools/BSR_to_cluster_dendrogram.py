@@ -14,7 +14,7 @@ except:
     print("pandas must be installed")
     sys.exit()
 try:
-    from scipy.cluster.hierarchy import weighted
+    from scipy.cluster.hierarchy import average
 except:
     print("scipy must be installed")
     sys.exit()
