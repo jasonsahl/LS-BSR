@@ -857,12 +857,11 @@ def _usearch_workflow(infile):
            "-id", str(infile[1]),
            "-sort", "length",
            "-uc", "results.uc",
-           "-centroids", "%s.usearch.out" % str(autoIncrement())]
+           "-centroids", "%s.usearch.out" % infile[0]]
     subprocess.call(cmd,stdout=devnull,stderr=devnull)
     devnull.close()
 
 def run_usearch_dev(id,processors):
-    rec=1
     curr_dir=os.getcwd()
     # Put all files that start with 'x' in list
     files_and_temp_names = []

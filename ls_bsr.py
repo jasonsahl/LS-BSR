@@ -300,8 +300,11 @@ def main(directory,id,filter,processors,genes,cluster_method,blast,length,
         """need to check for dups here"""
         if os.path.exists("consensus.fasta"):
             dup_ids = test_duplicate_header_ids("consensus.fasta")
-        else:
+        elif os.path.exists("consensus.pep"):
             dup_ids = test_duplicate_header_ids("consensus.pep")
+        else:
+            print("clustering didn't work. Check input and try again")
+            sys.exit()
         if dup_ids == "True":
             pass
         elif dup_ids == "False":
