@@ -688,5 +688,4 @@ if __name__ == "__main__":
 
     main(options.directory,options.id,options.filter,options.processors,options.genes,options.cluster_method,options.blast,
          options.length,options.max_plog,options.min_hlog,options.f_plog,options.keep,options.filter_peps,
-         options.filter_scaffolds,options.prefix,options.min_pep_length,options.intergenics,options.min_len,options.dup_toggle,
-         options.version)
+         options.filter_scaffolds,options.prefix,options.min_pep_length,options.intergenics,options.min_len,options.dup_toggle)
