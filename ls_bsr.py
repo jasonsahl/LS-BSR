@@ -6,10 +6,12 @@ in a set of genomes in fasta format.
 written by Jason Sahl
 contacted at jasonsahl@gmail.com
 """
+
 from __future__ import print_function
 import sys
 import os
 import optparse
+from optparse import OptionParser
 import subprocess
 from subprocess import call
 import errno
@@ -617,8 +619,7 @@ def main(directory,id,filter,processors,genes,cluster_method,blast,length,
     os.chdir("%s" % ap)
 
 if __name__ == "__main__":
-    usage="usage: %prog [options]"
-    parser = optparse.OptionParser(usage=usage)
+    parser = OptionParser(usage="usage: %prog [options]",version="%prog 1.0.3")
     parser.add_option("-d", "--directory", dest="directory",
                       help="/path/to/fasta_directory [REQUIRED]",
                       type="string", action="callback", callback=test_dir)
@@ -687,4 +688,5 @@ if __name__ == "__main__":
 
     main(options.directory,options.id,options.filter,options.processors,options.genes,options.cluster_method,options.blast,
          options.length,options.max_plog,options.min_hlog,options.f_plog,options.keep,options.filter_peps,
-         options.filter_scaffolds,options.prefix,options.min_pep_length,options.intergenics,options.min_len,options.dup_toggle)
+         options.filter_scaffolds,options.prefix,options.min_pep_length,options.intergenics,options.min_len,options.dup_toggle,
+         options.version)

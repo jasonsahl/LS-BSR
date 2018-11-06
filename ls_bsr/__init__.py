@@ -7,5 +7,6 @@ __version__ = "1.0"
 __maintainer__ = "Jason Sahl"
 __email__ = "jsahl@tgen.org"
 __status__ = "Development"
+__version__ = "1.0.3"
 
 __all__ = ['util']
