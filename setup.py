@@ -4,11 +4,12 @@ from distutils.core import setup
 __author__ = "Jason Sahl"
 __credits__ = ["Jason Sahl"]
 __license__ = "GPL v3"
-__version__ = "1.0"
+__version__ = "1.0.4"
 __maintainer__ = "Jason Sahl"
-__email__ = "jsahl@tgen.org"
+__email__ = "jason.sahl@nau.edu"
 __status__ = "Development"
- 
+
+
 long_description = """Large scale blast score ratio (LS-BSR)
 LS-BSR is a method to compare open reading frames betweeen
 a set of bacterial isolates.  The result of the script is a

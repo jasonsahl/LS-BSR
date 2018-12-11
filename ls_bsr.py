@@ -675,8 +675,8 @@ if __name__ == "__main__":
                       help="value for 's' flag in cd-hit, defaults to '-i' flag in LS-BSR (float)",
                       default="0.9", type="float")
     parser.add_option("-z", "--dup_toggle", dest="dup_toggle", action="callback",
-                      help="Perform duplicate searching? T or F; Defaults to T",
-                      default="T", type="string", callback=test_filter)
+                      help="Perform duplicate searching? T or F; Defaults to F",
+                      default="F", type="string", callback=test_filter)
     options, args = parser.parse_args()
 
     mandatories = ["directory"]

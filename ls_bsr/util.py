@@ -85,7 +85,7 @@ def rename_fasta_header(fasta_in, fasta_out):
     names for separate peptides"""
     rec=1
     handle = open(fasta_out, "w")
-    outdata = [ ]
+    outdata = []
     with open(fasta_in) as infile:
         for record in SeqIO.parse(infile, "fasta"):
             try:
@@ -119,9 +119,9 @@ def filter_seqs(input_pep,output_pep):
     """filter out short sequences from a multifasta.
     Will hopefully speed up the process without losing
     important information"""
-    long_sequences = [ ]
+    long_sequences = []
     outfile = open(output_pep, "w")
-    outdata = [ ]
+    outdata = []
     with open(input_pep) as infile:
         for record in SeqIO.parse(infile, "fasta"):
             if len(record.seq) >= int(50):
@@ -138,7 +138,6 @@ def parse_blast_report_dev(test,processors):
     for infile in glob.glob(os.path.join(curr_dir, "*_blast.out")):
         files_and_temp_names.append([infile, test])
     outdata = mp_shell(_perform_workflow_pbr, files_and_temp_names, processors)
-
     if "true" in test:
         # mp_shell will return a list of lists. This will flatten it into a single list
         return outdata
@@ -365,8 +364,8 @@ def compare_values(pruned_1,pruned_2,upper,lower):
         next(group2)
         for line in group2:
             fields = line.split()
-            presents = [ ]
-            homolog = [ ]
+            presents = []
+            homolog = []
             if len(fields) == 0:
                 pass
             else:
@@ -384,9 +383,9 @@ def compare_values(pruned_1,pruned_2,upper,lower):
     return group1_presents, group2_presents, group1_mean
 
 def find_uniques(combined,fasta):
-    group1_unique_ids = [ ]
-    seqrecords=[ ]
-    testids = [ ]
+    group1_unique_ids = []
+    seqrecords=[]
+    testids = []
     with open(combined) as infile:
         for line in infile:
             fields=line.split()
@@ -399,8 +398,8 @@ def find_uniques(combined,fasta):
     output_handle = open("group1_unique_seqs.fasta", "w")
     SeqIO.write(seqrecords, output_handle, "fasta")
     output_handle.close()
-    group2_unique_ids = [ ]
-    seqrecords2 = [ ]
+    group2_unique_ids = []
+    seqrecords2 = []
     with open(combined) as infile:
         for line in infile:
             fields=line.split()
@@ -434,7 +433,7 @@ def filter_genomes(genomes, in_matrix):
 def filter_matrix(to_keep, in_matrix, prefix):
     with open(in_matrix) as matrix:
         outfile = open("%s_genomes.matrix" % prefix, "w")
-        outdata = [ ]
+        outdata = []
         to_remove = [x+1 for x in to_keep]
         firstLine = matrix.readline()
         first_fields = firstLine.split()
@@ -453,15 +452,15 @@ def filter_matrix(to_keep, in_matrix, prefix):
 def get_core_gene_stats(matrix, threshold, lower, missing):
     outfile = open("core_gene_ids.txt", "w")
     singletons = open("unique_gene_ids.txt", "w")
-    positives = [ ]
-    singles = [ ]
+    positives = []
+    singles = []
     with open(matrix) as in_matrix:
         firstLine = in_matrix.readline()
         for line in in_matrix:
             fields = line.split()
             totals = len(fields[1:])
-            presents = [ ]
-            uniques = [ ]
+            presents = []
+            uniques = []
             try:
                 for x in fields[1:]:
                     if float(x)>=float(threshold):
@@ -539,12 +538,12 @@ def filter_variome(matrix, threshold, step):
     with open(matrix) as in_matrix:
         outfile = open("variome_BSR_matrix", "w")
         firstLine = in_matrix.readline()
-        outdata = [ ]
+        outdata = []
         outfile.write(firstLine)
         for line in in_matrix:
             fields = line.split()
             totals = len(fields[1:])
-            presents = [ ]
+            presents = []
             for x in fields[1:]:
                 try:
                     if float(x)>=float(threshold):
@@ -561,7 +560,7 @@ def filter_scaffolds_fun(in_fasta):
     """If an N is present in any scaffold, the entire contig will
     be entire filtered, probably too harsh"""
     with open(in_fasta) as infile:
-        outrecords = [ ]
+        outrecords = []
         for record in SeqIO.parse(infile, "fasta"):
             if "N" not in record.seq:
                 outrecords.append(record)
@@ -676,7 +675,7 @@ def process_pangenome(matrix, upper, lower, iterations, type, prefix):
         print("core means")
         for k,v in sorted_core_dict.items():
             test_cores.append(v)
-            print(k, sum(v)/len(v))
+            print(k,sum(v)/len(v))
             for z in v:
                 core_outfile.write(str(k)+"\t"+str(z)+"\n")
     if "acc" in type:
@@ -697,7 +696,7 @@ def bsr_to_pangp(matrix, lower):
         firstLine = my_matrix.readline()
         outfile.write(firstLine)
         for line in my_matrix:
-            new_fields = [ ]
+            new_fields = []
             fields = line.split()
             new_fields.append(fields[0])
             for x in fields[1:]:
@@ -711,7 +710,7 @@ def bsr_to_pangp(matrix, lower):
 
 def transpose_matrix(matrix):
     out_matrix = open("tmp.matrix", "w")
-    reduced = [ ]
+    reduced = []
     with open(matrix) as infile:
         for line in infile:
             newline=line.strip("\n")
@@ -750,9 +749,9 @@ def blat_against_self(query,reference,output,processors):
 
 def create_bsr_matrix_dev(master_list):
     new_matrix = open("bsr_matrix", "w")
-    test = map(list, zip(*master_list))
+    test = map(list,zip(*master_list))
     for x in test:
-        y = map(str, x)
+        y = map(str,x)
         new_matrix.write("\t".join(y)+"\n")
     new_matrix.close()
 
@@ -773,14 +772,9 @@ def process_genbank_files(directory):
         name = get_seq_name(infile)
         reduced = name.replace(".gbk","")
         genbank_hits.append(name)
-        #record = SeqIO.read(infile, "genbank")
-        #records = SeqIO.read(infile, "genbank")
         output_handle = open("%s.locus_tags.fasta" % reduced, "w")
         count = 0
-        #for feature in record.features:
-        #for record in SeqIO.read(infile, "genbank"):
         for record in SeqIO.parse(infile, "genbank"):
-        #for record in records:
             for feature in record.features:
                 if feature.type == "gene":
                     count = count + 1
@@ -867,7 +861,7 @@ def run_usearch_dev(id,processors):
     # Put all files that start with 'x' in list
     files_and_temp_names = []
     for file in glob.glob(os.path.join(curr_dir, "x*")):
-	       files_and_temp_names.append([file,id])
+        files_and_temp_names.append([file,id])
     mp_shell(_usearch_workflow, files_and_temp_names, processors)
 
 def _prodigal_workflow_def(data):
@@ -875,7 +869,7 @@ def _prodigal_workflow_def(data):
     subprocess.check_call("prodigal -i %s -d %s_genes.seqs -m -c -a %s_genes.pep > /dev/null 2>&1" % (f, f, f), shell=True)
 
 def _prodigal_workflow_inter(data):
-    tn, f = data
+    tn,f = data
     name = f.replace(".fasta.new","")
     subprocess.check_call("prodigal -i %s -d %s_genes.seqs -a %s_genes.pep -f gff -m -c -o %s.prodigal > /dev/null 2>&1" % (f, f, f, name), shell=True)
     inverse_coding_regions("%s.prodigal" % name, name)
@@ -1181,7 +1175,7 @@ def find_dups_dev(ref_scores, length, max_plog, min_hlog, clusters, processors):
     return duplicate_IDs
 
 def _perform_workflow_nl(data):
-     tn, f = data[0]
+     tn,f = data[0]
      clusters = data[1]
      names = data[2]
      table_list = data[3]
@@ -1209,11 +1203,11 @@ def new_loop_dev(to_iterate, processors, clusters):
 
 def make_table_test(infile, test, clusters):
     """make the BSR matrix table"""
-    values = [ ]
-    names = [ ]
-    outdata = [ ]
+    values = []
+    names = []
+    outdata = []
     name = get_seq_name(infile)
-    reduced=[ ]
+    reduced=[]
     """remove the junk at the end of the file"""
     reduced.append(name.replace('.fasta.new_blast.out.filtered.unique',''))
     names.append(reduced)
