@@ -22,5 +22,8 @@ Minimum requirements, see manual.md for version information
 8. Blat - Optional  
 9. Diamond - Optional  
 
+-To create an environment and run through conda:
+    `conda create -n ls_bsr python=3.5`
+
 *See changelog.md for a list of changes  
 *See manual.md for run directions  
