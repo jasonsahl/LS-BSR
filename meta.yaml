@@ -1,0 +1,39 @@
+{% set version = "1.03" %}
+{% set sha256 = "106ef02468b75b475e92b6e8c36137e1c7de641556978b38b8cf09426617d8c4" %}
+
+package:
+  name: ls-bsr
+  version: '{{ version }}'
+
+source:
+  url: https://github.com/jasonsahl/LS-BSR/archive/{{ version }}.tar.gz
+  sha256: '{{ sha256 }}'
+
+build:
+  noarch: python
+  number: 0
+  script:
+    - mv ls_bsr.py ls-bsr
+    - cp ${RECIPE_DIR}/setup.py setup.py
+    - python -m pip install --no-deps .
+
+requirements:
+  build:
+    - python
+    - pip
+  run:
+    - python
+    - blast
+    - prodigal
+    - vsearch
+    - BioPython
+
+test:
+  commands:
+    - ls-bsr --help
+
+about:
+  home: https://github.com/jasonsahl/LS-BSR
+  license: GPL-3.0-only
+  license_file: license.txt
+  summary: 'Large scale Blast Score Ratio (BSR) analysis'
