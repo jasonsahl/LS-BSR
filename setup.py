@@ -16,7 +16,7 @@ with open(os.path.join(here, 'README.md'), encoding='utf-8') as f:
 # Fields marked as "Optional" may be commented out.
 
 setup(
-    name=os.getenv('PKG_NAME', 'ls-bsr'),
+    name=os.getenv('PKG_NAME', 'ls_bsr'),
     version=os.getenv('PKG_VERSION', 'dev'),
     description='Large scale blast score ratio',
 
@@ -131,7 +131,7 @@ setup(
     #        'sample=sample:main',
     #    ],
     #},
-    scripts=['ls-bsr'],
+    #scripts=['ls-bsr'],
 
     # List additional URLs that are relevant to your project as a dict.
     #
