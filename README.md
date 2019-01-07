@@ -24,6 +24,7 @@ Minimum requirements, see manual.md for version information
 
 -To create an environment and run through conda:  
     `conda create -n ls_bsr python=3.5`  
+    `conda activate ls_bsr`   
     `conda install blast vsearch cd-hit prodigal ucsc-blat diamond biopython`  
     `git clone https://github.com/jasonsahl/LS-BSR.git`  
     `python setup.py install`  
