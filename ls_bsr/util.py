@@ -77,7 +77,7 @@ def divide_values(file, ref_scores):
         outfile.close()
     if len(errors)>0:
         nr=[x for i, x in enumerate(errors) if x not in errors[i+1:]]
-        logging.logPrint("The following genes had no hits in datasets or are too short, values changed to 0, check names and output:%s" % "\n".join(nr))
+        logPrint("The following genes had no hits in datasets or are too short, values changed to 0, check names and output:%s" % "\n".join(nr))
     return outdata
 
 def rename_fasta_header(fasta_in, fasta_out):
@@ -256,7 +256,7 @@ def translate_genes(genes,outfile,min_len):
     for record in output:
         return str(record)
     if len(too_short)>0:
-        logging.logPrint("The following sequences were too short and will not be processed: %s" % "\n".join(too_short))
+        logPrint("The following sequences were too short and will not be processed: %s" % "\n".join(too_short))
 
 rec=1
 
@@ -1369,7 +1369,6 @@ def debugPrint(fmsg, stream=None):
 
         stream.write('DEBUG: %s - %s\n' % (timestamp(), removeRecursiveMsg(fmsg())))
         stream.flush()
-
 
 def timestamp():
     return time.strftime('%Y/%m/%d %H:%M:%S')
