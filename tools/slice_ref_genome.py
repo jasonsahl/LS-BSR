@@ -38,8 +38,9 @@ def get_seq_name(in_fasta):
 
 def split_sequence_by_window(input_file, step_size, frag_length):
     """cuts up fasta sequences into given chunks"""
-    infile = open(input_file, "rU")
-    first_record = list(itertools.islice(SeqIO.parse(infile,"fasta"), 1))[0]
+    #infile = open(input_file, "rU")
+    with open(input_file) as infile:
+        first_record = list(itertools.islice(SeqIO.parse(infile,"fasta"), 1))[0]
     return sliding_window(first_record.seq, frag_length, step_size)
 
 def write_sequences(reads,name):

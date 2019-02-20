@@ -17,7 +17,7 @@ from subprocess import call
 import errno
 import types
 from ls_bsr.util import *
-import igs_logging as logging
+#import igs_logging as logging
 import glob
 import tempfile
 from shutil import copyfile
@@ -97,19 +97,19 @@ def main(directory,id,filter,processors,genes,cluster_method,blast,length,
     dir_path=os.path.abspath("%s" % directory)
     """Here's a check to make sure that there are no conflicting methods"""
     if "null" not in genes and "null" not in cluster_method:
-        logging.logPrint("Choose either genes or de novo clustering method, not both")
+        logPrint("Choose either genes or de novo clustering method, not both")
         sys.exit()
     """Test for use of intergenics with a protein alignment method"""
     if intergenics=="T" and blast=="tblastn":
-        logging.logPrint("Incompatible choices: if incorporating intergenics, choose a nucleotide alignment method")
+        logPrint("Incompatible choices: if incorporating intergenics, choose a nucleotide alignment method")
         sys.exit()
     elif intergenics == "T" and blast=="blastp":
-        logging.logPrint("Incompatible choices: if incorporating intergenics, choose a nucleotide alignment method")
+        logPrint("Incompatible choices: if incorporating intergenics, choose a nucleotide alignment method")
         sys.exit()
     elif intergenics == "T" and blast=="diamond":
-        logging.logPrint("Incompatible choices: if incorporating intergenics, choose a nucleotide alignment method")
+        logPrint("Incompatible choices: if incorporating intergenics, choose a nucleotide alignment method")
         sys.exit()
-    logging.logPrint("Testing paths of dependencies")
+    logPrint("Testing paths of dependencies")
     if blast=="blastn" or blast=="tblastn" or blast=="blastp":
         ab = subprocess.call(['which', 'blastn'])
         if ab == 0:
@@ -209,13 +209,13 @@ def main(directory,id,filter,processors,genes,cluster_method,blast,length,
         if len(samples) == 0:
             pass
         else:
-            logging.logPrint("predicting genes with Prodigal")
+            logPrint("predicting genes with Prodigal")
             """Only predict genes if there are FASTA files"""
             predict_genes(fastadir, processors, intergenics)
-            logging.logPrint("Prodigal done")
+            logPrint("Prodigal done")
         """This function produces locus tags"""
         if len(genbank_files)>0:
-            logging.logPrint("Converting genbank files")
+            logPrint("Converting genbank files")
             os.chdir("%s" % fastadir)
             genbank_hits = process_genbank_files(dir_path)
         else:
@@ -276,9 +276,9 @@ def main(directory,id,filter,processors,genes,cluster_method,blast,length,
             else:
                 os.system("cp all_gene_seqs.out split_files/all_sorted.txt")
             os.chdir("split_files/")
-            logging.logPrint("Splitting FASTA file for use with USEARCH")
+            logPrint("Splitting FASTA file for use with USEARCH")
             split_files("all_sorted.txt")
-            logging.logPrint("clustering with USEARCH at an ID of %s" % id)
+            logPrint("clustering with USEARCH at an ID of %s" % id)
             run_usearch_dev(id,processors)
             os.system("cat *.usearch.out > all_sorted.txt")
             os.system("mv all_sorted.txt %s" % fastadir)
@@ -286,14 +286,14 @@ def main(directory,id,filter,processors,genes,cluster_method,blast,length,
             """Need to make output either FASTA or PEP"""
             data_type = find_data_type("all_sorted.txt")
             uclust_cluster(id,data_type)
-            logging.logPrint("USEARCH clustering finished")
+            logPrint("USEARCH clustering finished")
         elif "vsearch" in cluster_method:
-            logging.logPrint("clustering with VSEARCH at an ID of %s, using %s processors" % (id,processors))
+            logPrint("clustering with VSEARCH at an ID of %s, using %s processors" % (id,processors))
             run_vsearch(id, processors, "all_gene_seqs.out")
             os.system("mv vsearch.out consensus.fasta")
-            logging.logPrint("VSEARCH clustering finished")
+            logPrint("VSEARCH clustering finished")
         elif "cd-hit" in cluster_method:
-            logging.logPrint("clustering with cd-hit at an ID of %s, length percentage of %s, using %s processors" % (id,min_len,processors))
+            logPrint("clustering with cd-hit at an ID of %s, length percentage of %s, using %s processors" % (id,min_len,processors))
             if blast == "blastp" or blast == "diamond":
                 os.system("cat *new_genes.pep > all_gene_seqs.pep")
                 subprocess.check_call("cd-hit -i all_gene_seqs.pep -o consensus.pep -M 0 -T %s -c %s -s %s > cdhit.cluster 2>&1" % (processors,id,min_len), shell=True)
@@ -355,11 +355,11 @@ def main(directory,id,filter,processors,genes,cluster_method,blast,length,
         os.system("cp tmp_blast.out ref.scores")
         subprocess.check_call("rm tmp_blast.out self_blast.out", shell=True)
         if blast == "tblastn" or blast == "blastn" or blast == "blastp":
-            logging.logPrint("starting BLAST")
+            logPrint("starting BLAST")
         elif blast == "diamond":
-            logging.logPrint("starting Diamond")
+            logPrint("starting Diamond")
         else:
-            logging.logPrint("starting BLAT")
+            logPrint("starting BLAT")
         if "tblastn" == blast:
             blast_against_each_genome_tblastn_dev(processors, "consensus.pep", filter)
         elif "blastn" == blast:
@@ -374,7 +374,7 @@ def main(directory,id,filter,processors,genes,cluster_method,blast,length,
             pass
     else:
         #########This section focuses on providing your own genes with -g############
-        logging.logPrint("Using pre-compiled set of predicted genes")
+        logPrint("Using pre-compiled set of predicted genes")
         files = glob.glob(os.path.join(dir_path, "*.fasta"))
         genbank_files = glob.glob(os.path.join(dir_path, "*.gbk"))
         if len(genbank_files)>0:
@@ -409,26 +409,26 @@ def main(directory,id,filter,processors,genes,cluster_method,blast,length,
                 sys.exit()
             os.system("cp %s %s/genes.pep" % (gene_path,fastadir))
             if blast=="tblastn" or blast=="blastp":
-                logging.logPrint("using %s on peptides" % blast)
+                logPrint("using %s on peptides" % blast)
                 try:
                     subprocess.check_call("makeblastdb -in genes.pep -dbtype prot > /dev/null 2>&1", shell=True)
                 except:
-                    logging.logPrint("problem encountered formatting BLAST database")
+                    logPrint("problem encountered formatting BLAST database")
                     sys.exit()
                 blast_against_self_tblastn("blastp", "genes.pep", "genes.pep", "tmp_blast.out", processors, filter)
             elif blast=="diamond":
-                logging.logPrint("using %s on peptides" % blast)
+                logPrint("using %s on peptides" % blast)
                 try:
                     subprocess.check_call("diamond makedb --in %s -d self > /dev/null 2>&1" % gene_path, shell=True)
                 except:
-                    logging.logPrint("problem encountered formatting DIAMOND database")
+                    logPrint("problem encountered formatting DIAMOND database")
                 subprocess.check_call("diamond blastp -p 4 -d self -f 6 -q %s -o tmp_blast.out > /dev/null 2>&1" % gene_path, shell=True)
             elif blast=="blat" or blast=="blastn":
                 print("Nucleotide aligner not compatible with protein sequences...exiting")
                 sys.exit()
             #Aligning back against each genome
             if blast == "tblastn":
-                logging.logPrint("starting TBLASTN")
+                logPrint("starting TBLASTN")
                 blast_against_each_genome_tblastn_dev(processors,gene_path,filter)
             elif blast == "blastp":
                 """I will need to first do gene prediction for each genome"""
@@ -438,9 +438,9 @@ def main(directory,id,filter,processors,genes,cluster_method,blast,length,
                         os.symlink("%s" % infile, os.path.join(dir_path, os.path.dirname(dir_path)))
                     except:
                         copyfile("%s" % infile, "%s/%s.new" % (fastadir,name))
-                logging.logPrint("Predicting genes with Prodigal")
+                logPrint("Predicting genes with Prodigal")
                 predict_genes(fastadir, processors, intergenics)
-                logging.logPrint("BlastP starting")
+                logPrint("BlastP starting")
                 blastp_against_each_annotation("genes.pep",processors,filter)
             elif blast == "diamond":
                 for infile in glob.glob(os.path.join(dir_path, '*.fasta')):
@@ -449,9 +449,9 @@ def main(directory,id,filter,processors,genes,cluster_method,blast,length,
                         os.symlink("%s" % infile, os.path.join(dir_path, os.path.dirname(dir_path)))
                     except:
                         copyfile("%s" % infile, "%s/%s.new" % (fastadir,name))
-                logging.logPrint("Predicting genes with Prodigal")
+                logPrint("Predicting genes with Prodigal")
                 predict_genes(fastadir, processors, intergenics)
-                logging.logPrint("Diamond starting")
+                logPrint("Diamond starting")
                 diamond_against_each_annotation(gene_path,processors)
         elif gene_path.endswith(".fasta"):
             if data_type == "nt":
@@ -464,39 +464,39 @@ def main(directory,id,filter,processors,genes,cluster_method,blast,length,
                 print("protein alignment not compatible with nucleotide input..exiting")
                 sys.exit()
             if "tblastn" == blast:
-                logging.logPrint("using tblastn")
+                logPrint("using tblastn")
                 translate_genes(gene_path,"genes.pep",min_pep_length)
                 try:
                     subprocess.check_call("makeblastdb -in %s -dbtype nucl > /dev/null 2>&1" % gene_path, shell=True)
                 except:
-                    logging.logPrint("problem encountered with BLAST database")
+                    logPrint("problem encountered with BLAST database")
                     sys.exit()
                 blast_against_self_tblastn("tblastn", gene_path, "genes.pep", "tmp_blast.out", processors, filter)
-                logging.logPrint("starting BLAST")
+                logPrint("starting BLAST")
                 blast_against_each_genome_tblastn_dev(processors, "genes.pep", filter)
                 os.system("cp genes.pep %s" % start_dir)
             elif "blastn" == blast:
-                logging.logPrint("using blastn")
+                logPrint("using blastn")
                 try:
                     subprocess.check_call("makeblastdb -in %s -dbtype nucl > /dev/null 2>&1" % gene_path, shell=True)
                 except:
-                    logging.logPrint("Database not formatted correctly...exiting")
+                    logPrint("Database not formatted correctly...exiting")
                     sys.exit()
                 try:
                     blast_against_self_blastn("blastn", gene_path, gene_path, "tmp_blast.out", filter, processors)
                 except:
                     print("problem with blastn, exiting")
                     sys.exit()
-                logging.logPrint("starting BLAST")
+                logPrint("starting BLAST")
                 try:
                     blast_against_each_genome_blastn_dev(processors, filter, gene_path)
                 except:
                     print("problem with blastn, exiting")
                     sys.exit()
             elif "blat" == blast:
-                logging.logPrint("using blat")
+                logPrint("using blat")
                 blat_against_self(gene_path, gene_path, "tmp_blast.out", processors)
-                logging.logPrint("starting BLAT")
+                logPrint("starting BLAT")
                 blat_against_each_genome_dev(gene_path,processors)
             else:
                 pass
@@ -509,17 +509,17 @@ def main(directory,id,filter,processors,genes,cluster_method,blast,length,
         subprocess.check_call("rm tmp_blast.out self_blast.out", shell=True)
         """testing block complete"""
     if blast=="blat":
-        logging.logPrint("BLAT complete")
+        logPrint("BLAT complete")
     elif blast=="diamond":
-        logging.logPrint("Diamond complete")
+        logPrint("Diamond complete")
     else:
-        logging.logPrint("BLAST done")
+        logPrint("BLAST done")
     if dup_toggle == "T":
-        logging.logPrint("Finding duplicates")
+        logPrint("Finding duplicates")
         find_dups_dev(ref_scores, length, max_plog, min_hlog, clusters, processors)
-        logging.logPrint("Finding duplicates complete")
+        logPrint("Finding duplicates complete")
     else:
-        logging.logPrint("Duplicate searching turned off")
+        logPrint("Duplicate searching turned off")
     parse_blast_report_dev("false",4)
     curr_dir=os.getcwd()
     table_files = glob.glob(os.path.join(curr_dir, "*.filtered.unique"))
@@ -533,7 +533,7 @@ def main(directory,id,filter,processors,genes,cluster_method,blast,length,
     for x in nr_sorted:
         centroid_list.append(x)
     table_list.append(centroid_list)
-    logging.logPrint("starting matrix building")
+    logPrint("starting matrix building")
     new_names,new_table = new_loop_dev(files_and_temp_names, processors, clusters)
     new_table_list = table_list+new_table
     open("ref.list", "a").write("\n")
@@ -554,15 +554,15 @@ def main(directory,id,filter,processors,genes,cluster_method,blast,length,
     except:
         pass
     if "T" in f_plog:
-        logging.logPrint("filtering duplicates")
+        logPrint("filtering duplicates")
         num_filtered = filter_paralogs("%s/bsr_matrix_values.txt" % start_dir, "duplicate_ids.txt")
-        logging.logPrint("%s duplicates filtered" % str(num_filtered))
+        logPrint("%s duplicates filtered" % str(num_filtered))
         if "NULL" in prefix:
             os.system("cp bsr_matrix_values_filtered.txt %s/%s_paralogs_filtered_bsr_matrix_values.txt" % (start_dir,"".join(rename)))
         else:
             os.system("cp bsr_matrix_values_filtered.txt %s/%s_paralogs_filtered_bsr_matrix_values.txt" % (start_dir,prefix))
     os.chdir("%s" % ap)
-    logging.logPrint("matrix built")
+    logPrint("matrix built")
     if "NULL" in prefix:
         if dup_toggle == "T":
             os.system("mv dup_matrix.txt %s_dup_matrix.txt" % "".join(rename))
@@ -611,7 +611,7 @@ def main(directory,id,filter,processors,genes,cluster_method,blast,length,
     outfile.write("-z %s\n" % dup_toggle)
     outfile.write("temp data stored here if kept: %s" % fastadir)
     outfile.close()
-    logging.logPrint("all Done")
+    logPrint("all Done")
     if "T" == keep:
         pass
     else:
@@ -619,7 +619,7 @@ def main(directory,id,filter,processors,genes,cluster_method,blast,length,
     os.chdir("%s" % ap)
 
 if __name__ == "__main__":
-    parser = OptionParser(usage="usage: %prog [options]",version="%prog 1.0.4")
+    parser = OptionParser(usage="usage: %prog [options]",version="%prog 1.0.5")
     parser.add_option("-d", "--directory", dest="directory",
                       help="/path/to/fasta_directory [REQUIRED]",
                       type="string", action="callback", callback=test_dir)

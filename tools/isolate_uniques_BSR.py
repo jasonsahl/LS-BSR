@@ -15,25 +15,24 @@ def test_file(option, opt_str, value, parser):
         sys.exit()
 
 def filter_uniques(matrix, threshold):
-    in_matrix = open(matrix, "U")
     outfile = open("uniques_BSR_matrix", "w")
-    firstLine = in_matrix.readline()
-    outdata = [ ]
-    outfile.write(firstLine)
-    for line in in_matrix:
-        fields = line.split()
-        totals = len(fields[1:])
-        presents = [ ]
-        for x in fields[1:]:
-            try:
-                if float(x)>=float(threshold):
-                    presents.append(fields[0])
-            except:
-                raise TypeError("problem in input file observed")
-        if int(len(presents))<int(2):
-            outdata.append(fields[0])
-            outfile.write(line)
-    in_matrix.close()
+    with open(matrix) as in_matrix:
+        firstLine = in_matrix.readline()
+    outdata = []
+    with open(matrix) as in_matrix:
+        for line in in_matrix:
+            fields = line.split()
+            totals = len(fields[1:])
+            presents = []
+            for x in fields[1:]:
+                try:
+                    if float(x)>=float(threshold):
+                        presents.append(fields[0])
+                except:
+                    pass
+            if int(len(presents))<int(2):
+                outdata.append(fields[0])
+                outfile.write(line)
     outfile.close()
     return outdata
 

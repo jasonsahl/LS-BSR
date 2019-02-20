@@ -15,13 +15,15 @@ def test_file(option, opt_str, value, parser):
         sys.exit()
 
 def main(in_fasta, ids, out_fasta):
-    infile = open(in_fasta, "U")
-    data = open(ids, "U").read().splitlines()
+    #infile = open(in_fasta, "U")
+    with open(ids) as my_ids:
+        data = my_ids.read().splitlines()
     output_handle = open(out_fasta, "w")
     seqrecords=[ ]
-    for record in SeqIO.parse(infile, "fasta"):
-        if record.id in data:
-            seqrecords.append(record)
+    with open(in_fasta) as infile:
+        for record in SeqIO.parse(infile, "fasta"):
+            if record.id in data:
+                seqrecords.append(record)
     SeqIO.write(seqrecords, output_handle, "fasta")
     infile.close()
     output_handle.close()

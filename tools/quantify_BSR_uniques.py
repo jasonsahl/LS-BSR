@@ -17,26 +17,28 @@ def test_file(option, opt_str, value, parser):
         sys.exit()
 
 def get_uniques(matrix, threshold):
-    in_matrix = open(matrix, "U")
+    #in_matrix = open(matrix, "U")
     outfile = open("summary_stats.tmp.txt", "w")
-    firstLine = in_matrix.readline()
+    with open(matrix) as in_matrix:
+        firstLine = in_matrix.readline()
     firstFields = firstLine.split()
     my_dict={}
-    for line in in_matrix:
-        hits=[]
-        fields=line.split()
-        for x in fields[1:]:
-            if float(x)>=float(threshold):
-                hits.append(fields.index(x))
-            if float(x)>=0.40:
-                hits.append("1")
-        if len(hits)==2:
+    with open(matrix) as in_matrix:
+        for line in in_matrix:
+            hits=[]
+            fields=line.split()
             for x in fields[1:]:
                 if float(x)>=float(threshold):
-                    try:
-                        my_dict[firstFields[fields.index(x)-1]].append(fields[0])
-                    except:
-                        my_dict[firstFields[fields.index(x)-1]] = [fields[0]]
+                    hits.append(fields.index(x))
+                if float(x)>=0.40:
+                    hits.append("1")
+            if len(hits)==2:
+                for x in fields[1:]:
+                    if float(x)>=float(threshold):
+                        try:
+                            my_dict[firstFields[fields.index(x)-1]].append(fields[0])
+                        except:
+                            my_dict[firstFields[fields.index(x)-1]] = [fields[0]]
     for k,v in my_dict.items():
         outfile.write(k+"\t"+str(len(v))+"\n")
     for firstField in firstFields:
@@ -51,12 +53,13 @@ def sort_uniques_by_tree(summary, tree):
         if clade.name:
             tree_names.append(clade.name)
     for tree_name in tree_names:
-        for line in open(summary, "U"):
-            fields = line.split()
-            if fields[0] == tree_name:
-                outfile.write(line)
-            else:
-                pass
+        with open(summary) as my_file:
+            for line in my_file:
+                fields = line.split()
+                if fields[0] == tree_name:
+                    outfile.write(line)
+                else:
+                    pass
 
 def main(matrix, tree, threshold):
     get_uniques(matrix, threshold)
