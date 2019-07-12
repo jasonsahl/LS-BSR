@@ -1,6 +1,6 @@
 ## The Large Scale Blast Score Ratio (LS-BSR) pipeline
 
-### Updated 4/10/2018
+### Updated 7/12/2019
 
 #### Citation:
 Jason W. Sahl, J. Gregory Caporaso, David A. Rasko, Paul S. Keim (2014). The large-scale
@@ -34,7 +34,8 @@ aligner is chosen.
 5. All functionality should now be compatible with Python 2.7 through 3.5. Seems to work with
 3.6, although some additional testing is required.
 6. Added “-z” toggle that can turn off duplicate searching, which can speed up very large
-analyses.
+analyses (v1.0.4)
+7. Added blastn-short as an alignment option (v1.0.5)
 
 #### Installation:
 
@@ -93,7 +94,7 @@ diamond protein comparisons. Can be obtained from: [https://github.com/bbuchfink
 **-g GENES**: if you have a list of genes to screen, supply a nucleotide fasta file (.fasta) or a peptide file (.pep). Each gene sequence must be in frame, or questionable results will be obtained (only true for TBLASTN). If this flag is not invoked, then the de novo gene prediction method is invoked  
 **-c CLUSTER_METHOD**: determines which clustering method to choose. You can choose from
 “usearch”, “vsearch”, or “cd-hit”. These must be in your path as “usearch”, “vsearch”, “cd-hit-est”, or “cd-hit” to use.  
-**-b BLAST**: which alignment method to use. Default is 'tblastn', can be changed to 'blastn', ‘blastp’, ‘diamond’, or ‘blat’. Can be used with either a list of supplied genes or with the de novo method. Tblastn, blastp, and diamond are not compatible with “-y T” flag set below.  
+**-b BLAST**: which alignment method to use. Default is 'tblastn', can be changed to 'blastn', 'blastn-short', ‘blastp’, ‘diamond’, or ‘blat’. Can be used with either a list of supplied genes or with the de novo method. Tblastn, blastp, and diamond are not compatible with “-y T” flag set below.  
 **-l LENGTH**: minimum BSR value to be called a duplicate, defaults to 0.7. The BSR of the "duplicate" divided by the reference bit score must be greater than this value to be called a
 duplicate  
 **-m MAX_PLOG**: maximum value to be called a remote paralog, defaults to 0.85. If the BSR value

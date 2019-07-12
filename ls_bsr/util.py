@@ -174,14 +174,14 @@ def _perform_workflow_pbr(data):
     if "true" in test:
         return outdata
 
-def blast_against_self_blastn(blast_type, genes_pep, genes_nt, output, filter, processors):
+def blast_against_self_blastn(blast_type, algorithm, genes_pep, genes_nt, output, filter, processors):
     devnull = open('/dev/null', 'w')
     if "F" in filter:
         my_seg = "yes"
     else:
         my_seg = "no"
     cmd = ["%s" % blast_type,
-           "-task", blast_type,
+           "-task", algorithm,
            "-query", genes_pep,
            "-db", genes_nt,
            "-num_threads", str(processors),
@@ -1031,6 +1031,7 @@ def _perform_workflow_blastn(data):
     f = data[1]
     my_seg = data[2]
     peptides = data[3]
+    algorithm = data[4]
     if ".fasta.new" in f:
         try:
             subprocess.check_call("makeblastdb -in %s -dbtype nucl > /dev/null 2>&1" % f, shell=True)
@@ -1040,7 +1041,7 @@ def _perform_workflow_blastn(data):
         devnull = open('/dev/null', 'w')
         try:
             cmd = ["blastn",
-                   "-task", "blastn",
+                   "-task", algorithm,
                    "-query", peptides,
                    "-db", f,
                    "-dust", str(my_seg),
@@ -1053,7 +1054,7 @@ def _perform_workflow_blastn(data):
         except:
             print("The genome file %s was not processed" % f)
 
-def blast_against_each_genome_blastn_dev(processors, filter, peptides):
+def blast_against_each_genome_blastn_dev(processors,algorithm,filter,peptides):
     """BLAST all peptides against each genome"""
     if "F" in filter:
         my_seg = "yes"
@@ -1066,7 +1067,7 @@ def blast_against_each_genome_blastn_dev(processors, filter, peptides):
             files.append(file)
     files_and_temp_names = []
     for idx, f in enumerate(files):
-        files_and_temp_names.append([str(idx), os.path.join(curr_dir,f), my_seg, peptides])
+        files_and_temp_names.append([str(idx), os.path.join(curr_dir,f), my_seg, peptides, algorithm])
     mp_shell(_perform_workflow_blastn, files_and_temp_names, processors)
 
 def _perform_workflow_fdd(q, my_dict_o, data):

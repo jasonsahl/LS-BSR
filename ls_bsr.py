@@ -54,6 +54,8 @@ def test_blast(option, opt_str, value, parser):
         setattr(parser.values, option.dest, value)
     elif "blastn" in value:
         setattr(parser.values, option.dest, value)
+    elif "blastn-short" in value:
+        setattr(parser.values, option.dest, value)
     elif "blat" in value:
         setattr(parser.values, option.dest, value)
     elif "blastp" in value:
@@ -110,7 +112,7 @@ def main(directory,id,filter,processors,genes,cluster_method,blast,length,
         logPrint("Incompatible choices: if incorporating intergenics, choose a nucleotide alignment method")
         sys.exit()
     logPrint("Testing paths of dependencies")
-    if blast=="blastn" or blast=="tblastn" or blast=="blastp":
+    if blast=="blastn" or blast=="tblastn" or blast=="blastp" or blast=="blastn-short":
         ab = subprocess.call(['which', 'blastn'])
         if ab == 0:
             print("citation: Altschul SF, Madden TL, Schaffer AA, Zhang J, Zhang Z, Miller W, and Lipman DJ. 1997. Gapped BLAST and PSI-BLAST: a new generation of protein database search programs. Nucleic Acids Res 25:3389-3402")
@@ -331,7 +333,7 @@ def main(directory,id,filter,processors,genes,cluster_method,blast,length,
             blast_against_self_tblastn("tblastn", "consensus.fasta", "consensus.pep", "tmp_blast.out", processors, filter)
         elif "blastn" == blast:
             subprocess.check_call("makeblastdb -in consensus.fasta -dbtype nucl > /dev/null 2>&1", shell=True)
-            blast_against_self_blastn("blastn", "consensus.fasta", "consensus.fasta", "tmp_blast.out", filter, processors)
+            blast_against_self_blastn("blastn", "blastn", "consensus.fasta", "consensus.fasta", "tmp_blast.out", filter, processors)
             clusters = get_cluster_ids("consensus.fasta")
         elif "blat" == blast:
             blat_against_self("consensus.fasta", "consensus.fasta", "tmp_blast.out", processors)
@@ -340,6 +342,10 @@ def main(directory,id,filter,processors,genes,cluster_method,blast,length,
             subprocess.check_call("makeblastdb -in consensus.pep -dbtype prot > /dev/null 2>&1", shell=True)
             blast_against_self_tblastn("blastp", "consensus.pep", "consensus.pep", "tmp_blast.out", processors, filter)
             clusters = get_cluster_ids("consensus.pep")
+        elif "blastn-short" == blast:
+            subprocess.check_call("makeblastdb -in consensus.fasta -dbtype nucl > /dev/null 2>&1", shell=True)
+            blast_against_self_blastn("blastn", "blastn-short", "consensus.fasta", "consensus.fasta", "tmp_blast.out", filter, processors)
+            clusters = get_cluster_ids("consensus.fasta")
         elif "diamond" == blast:
             """Check this"""
             if filter_peps == "T":
@@ -354,21 +360,23 @@ def main(directory,id,filter,processors,genes,cluster_method,blast,length,
         ref_scores=parse_self_blast("self_blast.out")
         os.system("cp tmp_blast.out ref.scores")
         subprocess.check_call("rm tmp_blast.out self_blast.out", shell=True)
-        if blast == "tblastn" or blast == "blastn" or blast == "blastp":
-            logPrint("starting BLAST")
-        elif blast == "diamond":
-            logPrint("starting Diamond")
-        else:
-            logPrint("starting BLAT")
         if "tblastn" == blast:
+            logPrint("starting tblastn")
             blast_against_each_genome_tblastn_dev(processors, "consensus.pep", filter)
         elif "blastn" == blast:
-            blast_against_each_genome_blastn_dev(processors, filter, "consensus.fasta")
+            logPrint("starting blastn")
+            blast_against_each_genome_blastn_dev(processors, "blastn", filter, "consensus.fasta")
+        elif "blastn-short" == blast:
+            logPrint("starting blastn-short")
+            blast_against_each_genome_blastn_dev(processors, "blastn-short", filter, "consensus.fasta")
         elif "blat" == blast:
+            logPrint("starting blat")
             blat_against_each_genome_dev("consensus.fasta",processors)
         elif "blastp" == blast:
+            logPrint("starting blastp")
             blastp_against_each_annotation("consensus.pep",processors,filter)
         elif "diamond" == blast:
+            logPrint("starting diamond")
             diamond_against_each_annotation("consensus.pep",processors)
         else:
             pass
@@ -423,7 +431,7 @@ def main(directory,id,filter,processors,genes,cluster_method,blast,length,
                 except:
                     logPrint("problem encountered formatting DIAMOND database")
                 subprocess.check_call("diamond blastp -p 4 -d self -f 6 -q %s -o tmp_blast.out > /dev/null 2>&1" % gene_path, shell=True)
-            elif blast=="blat" or blast=="blastn":
+            elif blast=="blat" or blast=="blastn" or blast=="blastn-short":
                 print("Nucleotide aligner not compatible with protein sequences...exiting")
                 sys.exit()
             #Aligning back against each genome
@@ -483,15 +491,33 @@ def main(directory,id,filter,processors,genes,cluster_method,blast,length,
                     logPrint("Database not formatted correctly...exiting")
                     sys.exit()
                 try:
-                    blast_against_self_blastn("blastn", gene_path, gene_path, "tmp_blast.out", filter, processors)
+                    blast_against_self_blastn("blastn", "blastn", gene_path, gene_path, "tmp_blast.out", filter, processors)
                 except:
                     print("problem with blastn, exiting")
                     sys.exit()
                 logPrint("starting BLAST")
                 try:
-                    blast_against_each_genome_blastn_dev(processors, filter, gene_path)
+                    blast_against_each_genome_blastn_dev(processors,"blastn",filter,gene_path)
                 except:
                     print("problem with blastn, exiting")
+                    sys.exit()
+            elif "blastn-short" == blast:
+                logPrint("using blastn-short")
+                try:
+                    subprocess.check_call("makeblastdb -in %s -dbtype nucl > /dev/null 2>&1" % gene_path, shell=True)
+                except:
+                    logPrint("Database not formatted correctly...exiting")
+                    sys.exit()
+                try:
+                    blast_against_self_blastn("blastn", "blastn-short", gene_path, gene_path, "tmp_blast.out", filter, processors)
+                except:
+                    print("problem with blastn, exiting")
+                    sys.exit()
+                logPrint("starting BLAST")
+                try:
+                    blast_against_each_genome_blastn_dev(processors,"blastn-short",filter,gene_path)
+                except:
+                    print("problem with blastn-short, exiting")
                     sys.exit()
             elif "blat" == blast:
                 logPrint("using blat")
@@ -619,7 +645,7 @@ def main(directory,id,filter,processors,genes,cluster_method,blast,length,
     os.chdir("%s" % ap)
 
 if __name__ == "__main__":
-    parser = OptionParser(usage="usage: %prog [options]",version="%prog 1.0.5")
+    parser = OptionParser(usage="usage: %prog [options]",version="%prog 1.0.6")
     parser.add_option("-d", "--directory", dest="directory",
                       help="/path/to/fasta_directory [REQUIRED]",
                       type="string", action="callback", callback=test_dir)
@@ -639,7 +665,7 @@ if __name__ == "__main__":
                       help="Clustering method to use: choose from usearch, vsearch, cd-hit",
                       type="string", default="null")
     parser.add_option("-b", "--blast", dest="blast", action="callback", callback=test_blast,
-                      help="use tblastn, blastn, blastp, diamond, or blat (nucleotide search only), default is tblastn",
+                      help="use tblastn, blastn, blastp, blastn-short, diamond, or blat (nucleotide search only), default is tblastn",
                       default="tblastn", type="string")
     parser.add_option("-l", "--length", dest="length", action="store",
                       help="minimum BSR value to be called a duplicate, defaults to 0.7",
