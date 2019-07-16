@@ -12,7 +12,7 @@ blast score ratio (LS-BSR) pipeline: a method to rapidly compare genetic content
 bacterial genomes. PeerJ 2 (e332).
 
 #### Contact:
-Please address queries, concerns, improvements to jasonsahl at gmail dot compare
+Please address queries, concerns, improvements to jasonsahl at gmail dot com
 
 #### What does it do?
 The LS-BSR pipeline was designed as a way to quickly compare the genetic content between
