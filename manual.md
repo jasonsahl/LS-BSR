@@ -391,7 +391,7 @@ pan-genome profiles
 -What does the output look like?  
 • Cluster in Newick format that can be visualized by any tree visualization program
 (e.g. FigTree)  
-```python BSR_to_cluster_dendrogram.py test_bsr_matrix.txt```  
+```python BSR_to_cluster_dendrogram.py -b test_bsr_matrix.txt```  
 
 #### Disclaimer
 TGen and ITS Affiliates, representatives and employees make no representations, warranties,
