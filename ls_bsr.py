@@ -17,10 +17,8 @@ from subprocess import call
 import errno
 import types
 from ls_bsr.util import *
-#import igs_logging as logging
 import glob
 import tempfile
-from shutil import copyfile
 
 def test_file(option, opt_str, value, parser):
     try:
@@ -155,10 +153,7 @@ def main(directory,id,filter,processors,genes,cluster_method,blast,length,
     for infile in glob.glob(os.path.join(dir_path, '*.fasta')):
         name=get_seq_name(infile)
         samples.append(name)
-        try:
-            os.symlink("%s" % infile, os.path.join(dir_path, os.path.dirname(dir_path)))
-        except:
-            copyfile("%s" % infile, "%s/%s.new" % (fastadir,name))
+        os.link(infile,"%s/%s.new" % (fastadir,name))
     genbank_files = []
     for infile in glob.glob(os.path.join(dir_path, '*.gbk')):
         name=get_seq_name(infile)
@@ -442,10 +437,7 @@ def main(directory,id,filter,processors,genes,cluster_method,blast,length,
                 """I will need to first do gene prediction for each genome"""
                 for infile in glob.glob(os.path.join(dir_path, '*.fasta')):
                     name=get_seq_name(infile)
-                    try:
-                        os.symlink("%s" % infile, os.path.join(dir_path, os.path.dirname(dir_path)))
-                    except:
-                        copyfile("%s" % infile, "%s/%s.new" % (fastadir,name))
+                    os.link(infile,"%s/%s.new" % (fastadir,name))
                 logPrint("Predicting genes with Prodigal")
                 predict_genes(fastadir, processors, intergenics)
                 logPrint("BlastP starting")
@@ -453,10 +445,7 @@ def main(directory,id,filter,processors,genes,cluster_method,blast,length,
             elif blast == "diamond":
                 for infile in glob.glob(os.path.join(dir_path, '*.fasta')):
                     name=get_seq_name(infile)
-                    try:
-                        os.symlink("%s" % infile, os.path.join(dir_path, os.path.dirname(dir_path)))
-                    except:
-                        copyfile("%s" % infile, "%s/%s.new" % (fastadir,name))
+                    os.link(infile,"%s/%s.new" % (fastadir,name))
                 logPrint("Predicting genes with Prodigal")
                 predict_genes(fastadir, processors, intergenics)
                 logPrint("Diamond starting")
@@ -645,7 +634,7 @@ def main(directory,id,filter,processors,genes,cluster_method,blast,length,
     os.chdir("%s" % ap)
 
 if __name__ == "__main__":
-    parser = OptionParser(usage="usage: %prog [options]",version="%prog 1.0.6")
+    parser = OptionParser(usage="usage: %prog [options]",version="%prog 1.0.7")
     parser.add_option("-d", "--directory", dest="directory",
                       help="/path/to/fasta_directory [REQUIRED]",
                       type="string", action="callback", callback=test_dir)
