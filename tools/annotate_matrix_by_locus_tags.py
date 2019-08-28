@@ -37,32 +37,32 @@ def parse_self_blast(lines):
 def parse_blast_report(infile):
     """parse out only the name and bit score from the blast report"""
     outfile = open("query_blast.filtered", "w")
-    for line in open(infile, "rU"):
-        try:
-            fields = line.split("\t")
-            outfile.write(fields[0]+"\t"+fields[1]+"\t"+fields[11]+"\n")
-        except:
-            raise TypeError("malformed blast line found")
+    with open(infile) as my_file:
+        for line in my_file:
+            try:
+                fields = line.split("\t")
+                outfile.write(fields[0]+"\t"+fields[1]+"\t"+fields[11]+"\n")
+            except:
+                raise TypeError("malformed blast line found")
     outfile.close()
 
 def get_unique_lines(infile):
     """only return the top hit for each query"""
     outfile = open("query.filtered.unique", "w")
     d = {}
-    input = open(infile)
-    for line in input:
-        unique = line.split("\t",1)[0]
-        if unique not in d:
-            d[unique] = 1
-            outfile.write(line)
+    with open(infile) as my_file:
+        for line in my_file:
+            unique = line.split("\t",1)[0]
+            if unique not in d:
+                d[unique] = 1
+                outfile.write(line)
     outfile.close()
-    input.close()
 
 def get_cluster_ids(in_fasta):
     clusters = []
-    infile = open(in_fasta, "U")
-    for record in SeqIO.parse(infile, "fasta"):
-        clusters.append(record.id)
+    with open(in_fasta) as my_file:
+        for record in SeqIO.parse(my_file, "fasta"):
+            clusters.append(record.id)
     nr = list(OrderedDict.fromkeys(clusters))
     if len(clusters) == len(nr):
         return clusters
@@ -72,18 +72,19 @@ def get_cluster_ids(in_fasta):
 
 def update_dict(ref_scores, query_file, all_clusters, threshold):
     new_dict = {}
-    for line in open(query_file, "U"):
-        newline = line.strip()
-        fields = newline.split()
-        hits = []
-        if fields:
-            for cluster in all_clusters:
-                if cluster == fields[1]:
-                    if (float(fields[2])/float(ref_scores.get(fields[0]))*100)>int(threshold):
-                        new_dict.update({fields[1]:fields[0]})
-                        hits.append("1")
-            if len(hits) == 0:
-                new_dict.update({fields[0]:fields[0]})
+    with open(query_file) as my_file:
+        for line in my_file:
+            newline = line.strip()
+            fields = newline.split()
+            hits = []
+            if fields:
+                for cluster in all_clusters:
+                    if cluster == fields[1]:
+                        if (float(fields[2])/float(ref_scores.get(fields[0]))*100)>int(threshold):
+                            new_dict.update({fields[1]:fields[0]})
+                            hits.append("1")
+                if len(hits) == 0:
+                    new_dict.update({fields[0]:fields[0]})
     for cluster in all_clusters:
         if cluster in new_dict:
             pass
@@ -94,17 +95,17 @@ def update_dict(ref_scores, query_file, all_clusters, threshold):
 def process_bsr_matrix(matrix,new_dict):
     my_lists = []
     outfile = open("bsr_matrix_annotated.txt", "w")
-    infile = open(matrix,"rU")
-    lines = infile.readlines()
-    refline = lines[0].split()
-    refline.insert(0,"")
-    infile.close()
-    my_lists.append(refline)
-    for line in lines[1:]:
-        newline = line.strip()
-        fields = newline.split()
-        fields[0] = new_dict.get(fields[0])
-        my_lists.append(fields)
+    #infile = open(matrix,"rU")
+    with open(matrix) as infile:
+        lines = infile.readlines()
+        refline = lines[0].split()
+        refline.insert(0,"")
+        my_lists.append(refline)
+        for line in lines[1:]:
+            newline = line.strip()
+            fields = newline.split()
+            fields[0] = new_dict.get(fields[0])
+            my_lists.append(fields)
     sorted_lists = sorted(my_lists, key=itemgetter(0))
     for alist in sorted_lists:
         outfile.write("\t".join(alist)+"\n")
@@ -112,16 +113,17 @@ def process_bsr_matrix(matrix,new_dict):
 
 def process_consensus(consensus,new_dict,output_prefix):
     outfile = open("%s.consensus_annotated.fasta" % output_prefix, "w")
-    for record in SeqIO.parse(open(consensus, "U"), "fasta"):
-        changed_id = []
-        for k,v in new_dict.items():
-            if k == record.id:
-                new_id = record.id.replace("%s" % k, "%s" % v)
-                changed_id.append(new_id)
-        if len(changed_id)>0:
-            outfile.write(">"+"".join(changed_id)+"\n"+str(record.seq)+"\n")
-        else:
-            outfile.write(">"+str(record.id)+"\n"+str(record.seq)+"\n")
+    with open(consensus) as my_fasta:
+        for record in SeqIO.parse(my_fasta,"fasta"):
+            changed_id = []
+            for k,v in new_dict.items():
+                if k == record.id:
+                    new_id = record.id.replace("%s" % k, "%s" % v)
+                    changed_id.append(new_id)
+            if len(changed_id)>0:
+                outfile.write(">"+"".join(changed_id)+"\n"+str(record.seq)+"\n")
+            else:
+                outfile.write(">"+str(record.id)+"\n"+str(record.seq)+"\n")
     outfile.close()
 
 def get_seq_name(in_fasta):

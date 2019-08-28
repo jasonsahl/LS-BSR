@@ -58,9 +58,10 @@ def get_seq_name(fasta_in):
 
 def split_multifasta(infile):
     dir_out = os.getcwd()
-    for record in SeqIO.parse(open(infile, "U"), "fasta"):
-        f_out = os.path.join(dir_out,record.id+'.fasta')
-        SeqIO.write([record],open(f_out,'w'),"fasta")
+    with open(infile) as my_fasta:
+        for record in SeqIO.parse(my_fasta,"fasta"):
+            f_out = os.path.join(dir_out,record.id+'.fasta')
+            SeqIO.write([record],open(f_out,'w'),"fasta")
 
 def combined_seqs(dir_path):
     num_genomes = []
@@ -160,13 +161,14 @@ def fasta_to_tab(infile):
 def tab_to_matrix(tab):
     reduced = [ ]
     out_matrix = open("tab_matrix", "w")
-    for line in open(tab):
-        tmp_list = []
-        fields = line.split()
-        tmp_list.append(fields[0])
-        for nucs in fields[1]:
-            tmp_list.append(nucs.upper())
-        reduced.append(tmp_list)
+    with open(tab) as my_tab:
+        for line in my_tab:
+            tmp_list = []
+            fields = line.split()
+            tmp_list.append(fields[0])
+            for nucs in fields[1]:
+                tmp_list.append(nucs.upper())
+            reduced.append(tmp_list)
     test=map(list, zip(*reduced))
     for x in test:
         out_matrix.write("\t".join(x))
@@ -176,26 +178,27 @@ def tab_to_matrix(tab):
 def filter_alignment(tab):
     """currently untested, but needs to be"""
     outfile = open("tab.filtered", "w")
-    infile = open(tab, "U")
-    firstLine = infile.readline()
-    outfile.write(firstLine)
-    for line in infile:
-        valid_fields = []
-        fields = line.split()
-        if "-" in fields:
-            pass
-        else:
-            outfile.write(line)
+    with open(tab) as infile:
+        firstLine = infile.readline()
+        outfile.write(firstLine)
+        for line in infile:
+            valid_fields = []
+            fields = line.split()
+            if "-" in fields:
+                pass
+            else:
+                outfile.write(line)
     outfile.close()
-    infile.close()
 
 def file_to_fasta(matrix):
     """currently untested, but needs to be"""
     reduced = [ ]
     out_matrix = open("final_alignment.fasta", "w")
-    for line in open(matrix, "U"):
-        fields = line.strip().split()
-        reduced.append(fields)
+    #for line in open(matrix, "U"):
+    with open(matrix) as my_matrix:
+        for line in my_matrix:
+            fields = line.strip().split()
+            reduced.append(fields)
     test=map(list, zip(*reduced))
     for x in test:
         out_matrix.write(">"+str(x[0])+"\n")

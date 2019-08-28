@@ -22,8 +22,9 @@ def test_file(option, opt_str, value, parser):
 def add_headers(infile, outfile, lower, upper):
     file_out = open(outfile, "w")
     file_out.write("marker"+"\t"+"group1_mean"+"\t"+">="+str(upper)+"\t"+"total_in_group_1"+"\t"+">="+str(lower)+"\t"+"group2_mean"+"\t"+">="+str(upper)+"\t"+"total_in_group2"+"\t"+">="+str(lower)+"\n")
-    for line in open(infile, "U"):
-        file_out.write(line)
+    with open(infile) as my_file:
+        for line in my_file:
+            file_out.write(line)
     file_out.close()
 
 def main(matrix,group1,group2,fasta,upper,lower):

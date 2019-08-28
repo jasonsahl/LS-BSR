@@ -20,7 +20,6 @@ def main(tree):
         if clade.name:
             print(clade.name)
 
-
 if __name__ == "__main__":
     usage="usage: %prog [options]"
     parser = OptionParser(usage=usage)

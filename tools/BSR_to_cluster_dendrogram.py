@@ -4,7 +4,7 @@ import optparse
 try:
     import numpy as np
 except:
-    print("numpy must be installed")
+    print("numpy must be installed, try: conda install -c anaconda numpy")
     sys.exit()
 import itertools
 
@@ -12,18 +12,18 @@ import itertools
 try:
     import pandas as pd
 except:
-    print("pandas must be installed")
+    print("pandas must be installed, try: conda install -c anaconda pandas")
     sys.exit()
 try:
     from scipy.cluster.hierarchy import average
     from scipy.cluster.hierarchy import weighted
 except:
-    print("scipy must be installed")
+    print("scipy must be installed, try: conda install -c anaconda scipy")
     sys.exit()
 try:
     from skbio.tree import TreeNode
 except:
-    print("skbio must be installed")
+    print("skbio must be installed, try: conda install -c anaconda scikit-bio")
     sys.exit()
 
 def test_file(option, opt_str, value, parser):
@@ -75,7 +75,6 @@ def write_tree(cluster_method):
     import scipy.spatial.distance as ssd
     dmx = pd.read_csv("distance_matrix", index_col=0, sep="\t")
     ids = dmx.index.tolist()
-    #triu = np.square(dmx.as_matrix())
     triu = np.square(dmx.values)
     distArray = ssd.squareform(triu)
     if cluster_method == "average":

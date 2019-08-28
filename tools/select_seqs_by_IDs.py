@@ -15,7 +15,6 @@ def test_file(option, opt_str, value, parser):
         sys.exit()
 
 def main(in_fasta, ids, out_fasta):
-    #infile = open(in_fasta, "U")
     with open(ids) as my_ids:
         data = my_ids.read().splitlines()
     output_handle = open(out_fasta, "w")

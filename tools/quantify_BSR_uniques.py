@@ -17,13 +17,11 @@ def test_file(option, opt_str, value, parser):
         sys.exit()
 
 def get_uniques(matrix, threshold):
-    #in_matrix = open(matrix, "U")
     outfile = open("summary_stats.tmp.txt", "w")
     with open(matrix) as in_matrix:
         firstLine = in_matrix.readline()
-    firstFields = firstLine.split()
-    my_dict={}
-    with open(matrix) as in_matrix:
+        firstFields = firstLine.split()
+        my_dict={}
         for line in in_matrix:
             hits=[]
             fields=line.split()
