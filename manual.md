@@ -181,7 +181,7 @@ Differences can be set by user-defined thresholds for presence and absence. The
 stored in the “groupX_unique_seqs.fasta” file. If there are no unique sequences, the
 “groups_combined_header.txt” can be analyzed to look at the variable distribution of regions
 between groups.  
-```python compare_BSR.py -1 group1.txt -2 group2.txt –f $prefix_consensus.fasta –b $prefix_bsr_matrix.txt```  
+```python compare_BSR.py -1 group1.txt -2 group2.txt -f $prefix_consensus.fasta -b $prefix_bsr_matrix.txt```  
 2. filter_BSR_variome.py  
 -what does it do? Filters out the conserved regions of the pan-genome, if you are only
 interested in looking at the “variome” or accessory genome  
@@ -335,7 +335,7 @@ then concatenates them into a single multiple sequence alignment
 • MUSCLE aligner. Can be obtained from: [http://www.drive5.com/muscle/]  
 • BLAST+  
 • BioPython  
-```python extract_core_genome.py –d genomes_directory –g $prefix_consensus.fasta```  
+```python extract_core_genome.py -d genomes_directory -g $prefix_consensus.fasta```  
 16. annotate_matrix_by_locus_tags.py  
 -what does it do? Given a BSR matrix, a consensus file, and locus tags, such as those
 produced with script described above, a new BSR matrix will be generated and annotated
@@ -391,7 +391,7 @@ pan-genome profiles
 -What does the output look like?  
 • Cluster in Newick format that can be visualized by any tree visualization program
 (e.g. FigTree)  
-```python BSR_to_cluster_dendrogram.py test_bsr_matrix.txt```  
+```python BSR_to_cluster_dendrogram.py -b test_bsr_matrix.txt```  
 
 #### Disclaimer
 TGen and ITS Affiliates, representatives and employees make no representations, warranties,
