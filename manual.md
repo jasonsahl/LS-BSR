@@ -335,7 +335,7 @@ then concatenates them into a single multiple sequence alignment
 • MUSCLE aligner. Can be obtained from: [http://www.drive5.com/muscle/]  
 • BLAST+  
 • BioPython  
-```python extract_core_genome.py –d genomes_directory –g $prefix_consensus.fasta```  
+```python extract_core_genome.py -d genomes_directory -g $prefix_consensus.fasta```  
 16. annotate_matrix_by_locus_tags.py  
 -what does it do? Given a BSR matrix, a consensus file, and locus tags, such as those
 produced with script described above, a new BSR matrix will be generated and annotated
