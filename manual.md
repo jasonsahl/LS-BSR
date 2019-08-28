@@ -181,7 +181,7 @@ Differences can be set by user-defined thresholds for presence and absence. The
 stored in the “groupX_unique_seqs.fasta” file. If there are no unique sequences, the
 “groups_combined_header.txt” can be analyzed to look at the variable distribution of regions
 between groups.  
-```python compare_BSR.py -1 group1.txt -2 group2.txt –f $prefix_consensus.fasta –b $prefix_bsr_matrix.txt```  
+```python compare_BSR.py -1 group1.txt -2 group2.txt -f $prefix_consensus.fasta -b $prefix_bsr_matrix.txt```  
 2. filter_BSR_variome.py  
 -what does it do? Filters out the conserved regions of the pan-genome, if you are only
 interested in looking at the “variome” or accessory genome  
