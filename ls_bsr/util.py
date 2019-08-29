@@ -278,12 +278,12 @@ def prune_matrix(matrix, group1, group2):
     group2_out = open("group2_pruned.txt", "w")
     with open(group1) as file_1:
         for line in file_1:
-            line.strip("\n")
-            group1_ids.append(line)
+            newline = line.strip("\n")
+            group1_ids.append(newline)
     with open(group2) as file_2:
         for line in file_2:
-            line.strip("\n")
-            group2_ids.append(line)
+            newline = line.strip("\n")
+            group2_ids.append(newline)
     with open(matrix) as in_matrix:
         """This is just to get the headers correct"""
         firstLine = in_matrix.readline()
@@ -296,7 +296,8 @@ def prune_matrix(matrix, group1, group2):
         group2_ids_list = list(group2_ids)
         for x in fields:
             """These are the genomes that I want to prune out"""
-            if x not in group1_ids_list: group1_idx.append(fields.index(x))
+            if x not in group1_ids_list:
+                group1_idx.append(fields.index(x))
         deque((list.pop(fields, i) for i in sorted(group1_idx, reverse=True)), maxlen=0)
         #Changing this to only print out 1 tab
         group1_out.write("\t"+"\t".join(fields)+"\n")
