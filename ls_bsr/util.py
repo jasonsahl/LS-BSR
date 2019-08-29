@@ -278,11 +278,11 @@ def prune_matrix(matrix, group1, group2):
     group2_out = open("group2_pruned.txt", "w")
     with open(group1) as file_1:
         for line in file_1:
-            line.strip()
+            line.strip("\n")
             group1_ids.append(line)
     with open(group2) as file_2:
         for line in file_2:
-            line.strip()
+            line.strip("\n")
             group2_ids.append(line)
     with open(matrix) as in_matrix:
         """This is just to get the headers correct"""
