@@ -21,7 +21,6 @@ try:
 except:
     print("BioPython is not in your PATH, but needs to be")
     sys.exit()
-#import igs_logging as logging
 import errno
 import threading
 import types
@@ -299,7 +298,8 @@ def prune_matrix(matrix, group1, group2):
             """These are the genomes that I want to prune out"""
             if x not in group1_ids_list: group1_idx.append(fields.index(x))
         deque((list.pop(fields, i) for i in sorted(group1_idx, reverse=True)), maxlen=0)
-        group1_out.write("\t"+"\t"+"\t".join(fields)+"\n")
+        #Changing this to only print out 1 tab
+        group1_out.write("\t"+"\t".join(fields)+"\n")
         for line in in_matrix:
             fields = line.split()
             name = fields[0]
