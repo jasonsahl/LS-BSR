@@ -461,7 +461,6 @@ def main(directory,id,filter,processors,genes,cluster_method,blast,length,
             elif blast == "diamond":
                 for infile in glob.glob(os.path.join(dir_path, '*.fasta')):
                     name=get_seq_name(infile)
-                    os.link(infile,"%s/%s.new" % (fastadir,name))
                 logPrint("Predicting genes with Prodigal")
                 predict_genes(fastadir, processors, intergenics)
                 logPrint("Diamond starting")
@@ -650,7 +649,7 @@ def main(directory,id,filter,processors,genes,cluster_method,blast,length,
     os.chdir("%s" % ap)
 
 if __name__ == "__main__":
-    parser = OptionParser(usage="usage: %prog [options]",version="%prog 1.0.7")
+    parser = OptionParser(usage="usage: %prog [options]",version="%prog 1.0.8")
     parser.add_option("-d", "--directory", dest="directory",
                       help="/path/to/fasta_directory [REQUIRED]",
                       type="string", action="callback", callback=test_dir)
