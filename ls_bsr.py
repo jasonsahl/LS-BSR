@@ -158,8 +158,13 @@ def main(directory,id,filter,processors,genes,cluster_method,blast,length,
     for infile in glob.glob(os.path.join(dir_path, '*.gbk')):
         name=get_seq_name(infile)
         genbank_files.append("1")
-        """Do I need to add this to samples as well?"""
-    if len(samples) == 0 and len(genbank_files) == 0:
+    #New code to test if there are peptide files as the reference
+    pep_refs = []
+    for infile in glob.glob(os.path.join(dir_path, '*.pep')):
+        name = get_seq_name(infile)
+        pep_refs.append(name)
+        pep_refs.append("1")
+    if len(samples) == 0 and len(genbank_files) == 0 and len(pep_refs) == 0:
         print("no usable genome files found, exiting...")
         sys.exit()
     """This is the section on de novo clustering"""
@@ -378,8 +383,9 @@ def main(directory,id,filter,processors,genes,cluster_method,blast,length,
     else:
         #########This section focuses on providing your own genes with -g############
         logPrint("Using pre-compiled set of predicted genes")
-        files = glob.glob(os.path.join(dir_path, "*.fasta"))
-        genbank_files = glob.glob(os.path.join(dir_path, "*.gbk"))
+        files = glob.glob(os.path.join(dir_path,"*.fasta"))
+        genbank_files = glob.glob(os.path.join(dir_path,"*.gbk"))
+        pep_files = glob.glob(os.path.join(dir_path,".pep"))
         if len(genbank_files)>0:
             for hit in genbank_files:
                 base = os.path.basename(hit)
@@ -388,11 +394,14 @@ def main(directory,id,filter,processors,genes,cluster_method,blast,length,
                 os.chdir(fastadir)
                 SeqIO.convert("%s/%s" % (dir_path, base), "genbank", "%s.fasta.new" % reduced_hit, "fasta")
                 os.chdir(start_dir)
-        if len(files)==0 and len(genbank_files)==0:
+        if len(pep_refs)>0:
+            for hit in pep_files:
+                base = os.path.basename(hit)
+                reduced_hit = base.replace(".pep","")
+                os.link(infile,"%s/%s.new" % (fastadir,reduced_hit))
+        if len(files)==0 and len(genbank_files)==0 and len(pep_refs) == 0:
             print("no usable reference genomes found!")
             sys.exit()
-        else:
-            pass
         gene_path=os.path.abspath("%s" % genes)
         """new method: aa,nt,unknown"""
         data_type = find_data_type(gene_path)
@@ -435,13 +444,20 @@ def main(directory,id,filter,processors,genes,cluster_method,blast,length,
                 blast_against_each_genome_tblastn_dev(processors,gene_path,filter)
             elif blast == "blastp":
                 """I will need to first do gene prediction for each genome"""
-                for infile in glob.glob(os.path.join(dir_path, '*.fasta')):
-                    name=get_seq_name(infile)
-                    os.link(infile,"%s/%s.new" % (fastadir,name))
-                logPrint("Predicting genes with Prodigal")
-                predict_genes(fastadir, processors, intergenics)
+                #First, check to see if the genomes are nt or pep
+                if len(pep_refs)>0 and len(files)==0:
+                    for infile in glob.glob(os.path.join(dir_path,'*.pep')):
+                        name=get_seq_name(infile)
+                        os.link(infile,"%s/%s.new" % (fastadir,name))
+                else:
+                    for infile in glob.glob(os.path.join(dir_path,'*.fasta')):
+                        name=get_seq_name(infile)
+                        os.link(infile,"%s/%s.new" % (fastadir,name))
+                    logPrint("Predicting genes with Prodigal")
+                    predict_genes(fastadir, processors, intergenics)
                 logPrint("BlastP starting")
-                blastp_against_each_annotation("genes.pep",processors,filter)
+                #This script might need to be modified to fit with peptide "genomes"
+                blastp_against_each_annotation(gene_path,processors,filter)
             elif blast == "diamond":
                 for infile in glob.glob(os.path.join(dir_path, '*.fasta')):
                     name=get_seq_name(infile)

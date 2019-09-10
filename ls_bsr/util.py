@@ -999,6 +999,8 @@ def blastp_against_each_annotation(peptides,processors,filter):
     for files in os.listdir(curr_dir):
         if "new_genes.pep" in files:
             annotation_files.append(files)
+        elif ".pep.new" in files:
+            annotation_files.append(files)
     for idx, f in enumerate(annotation_files):
         files_and_temp_names.append([str(idx), os.path.join(curr_dir, f), my_seg, peptides])
     mp_shell(_perform_workflow_blastp, files_and_temp_names, processors)
