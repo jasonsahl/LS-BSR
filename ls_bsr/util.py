@@ -70,7 +70,7 @@ def divide_values(file, ref_scores):
                     """if a mismatch error in names encountered, change values to 0"""
                     errors.append(all_fields[0])
                     values.append(float("0"))
-            sort_values=['%.2f' % elem for elem in values]
+            sort_values=['%.4f' % elem for elem in values]
             outfile.write('\t'.join([str(item) for item in sort_values])+"\n")
             outdata.append(values)
         outfile.close()
@@ -1389,12 +1389,3 @@ def removeRecursiveMsg(msg):
         return msg.split(' - ', 1)[1]
     else:
         return msg
-
-
-##
-# These version strip off the right white spaces so they can be used in printing output from a program
-#errorPrintS = lambda l, *args, **kwargs : errorPrint(l.rstrip(), *args, **kwargs)
-
-#logPrintS = lambda l, *args, **kwargs : logPrint(l.rstrip(), *args, **kwargs)
-
-#debugPrintS = lambda f, *args, **kwargs : debugPrint(lambda : f().rstrip(), *args, **kwargs)
