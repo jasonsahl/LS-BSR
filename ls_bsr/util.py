@@ -606,7 +606,6 @@ def process_pangenome(matrix, upper, lower, iterations, type, prefix):
     uni_dict = {}
     #I could step through these by 2?
     for i in range(1,genomes+1):
-        #for j in range(1,iterations+1):
         positives_acc = []
         positives_core = []
         positives_unis = []
