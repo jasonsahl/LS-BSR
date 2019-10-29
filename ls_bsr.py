@@ -402,7 +402,7 @@ def main(directory,id,filter,processors,genes,cluster_method,blast,length,
         if len(files)==0 and len(genbank_files)==0 and len(pep_refs) == 0:
             print("no usable reference genomes found!")
             sys.exit()
-        gene_path=os.path.abspath("%s" % genes)
+        gene_path = os.path.abspath("%s" % genes)
         """new method: aa,nt,unknown"""
         data_type = find_data_type(gene_path)
         dup_ids = test_duplicate_header_ids(gene_path)
@@ -574,7 +574,7 @@ def main(directory,id,filter,processors,genes,cluster_method,blast,length,
     for x in names_redux: names_out.write("".join(x)+"\n")
     names_out.close()
     create_bsr_matrix_dev(new_table_list)
-    divide_values("bsr_matrix", ref_scores)
+    divide_values("bsr_matrix",ref_scores)
     subprocess.check_call("paste ref.list BSR_matrix_values.txt > %s/bsr_matrix_values.txt" % start_dir, shell=True)
     try:
         if dup_toggle == "T":
@@ -649,7 +649,7 @@ def main(directory,id,filter,processors,genes,cluster_method,blast,length,
     os.chdir("%s" % ap)
 
 if __name__ == "__main__":
-    parser = OptionParser(usage="usage: %prog [options]",version="%prog 1.0.8")
+    parser = OptionParser(usage="usage: %prog [options]",version="%prog 1.0.9")
     parser.add_option("-d", "--directory", dest="directory",
                       help="/path/to/fasta_directory [REQUIRED]",
                       type="string", action="callback", callback=test_dir)
