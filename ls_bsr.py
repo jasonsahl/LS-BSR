@@ -28,40 +28,40 @@ def test_file(option, opt_str, value, parser):
         sys.exit()
 
 def test_filter(option, opt_str, value, parser):
-    if "F" in value:
+    if "F" == value:
         setattr(parser.values, option.dest, value)
-    elif "T" in value:
+    elif "T" == value:
         setattr(parser.values, option.dest, value)
     else:
         print("option not supported.  Only select from T and F")
         sys.exit()
 
 def test_cluster(option, opt_str, value, parser):
-    if "usearch" in value:
+    if "usearch" == value:
         setattr(parser.values, option.dest, value)
-    elif "vsearch" in value:
+    elif "vsearch" == value:
         setattr(parser.values, option.dest, value)
-    elif "cd-hit" in value:
+    elif "cd-hit" == value:
         setattr(parser.values, option.dest, value)
     else:
         print("option not supported. Choose from vsearch, usearch, cd-hit")
         sys.exit()
 
 def test_blast(option, opt_str, value, parser):
-    if "tblastn" in value:
+    if "tblastn" == value:
         setattr(parser.values, option.dest, value)
-    elif "blastn" in value:
+    elif "blastn" == value:
         setattr(parser.values, option.dest, value)
-    elif "blastn-short" in value:
+    elif "blastn-short" == value:
         setattr(parser.values, option.dest, value)
-    elif "blat" in value:
+    elif "blat" == value:
         setattr(parser.values, option.dest, value)
-    elif "blastp" in value:
+    elif "blastp" == value:
         setattr(parser.values, option.dest, value)
-    elif "diamond" in value:
+    elif "diamond" == value:
         setattr(parser.values, option.dest, value)
     else:
-        print("Blast option not supported.  Only select from tblastn, blat, or blastn")
+        print("Blast option not supported. Select from tblastn, blastn, blastn-short, blat, blastp, diamond")
         sys.exit()
 
 def test_dir(option, opt_str, value, parser):
@@ -649,7 +649,7 @@ def main(directory,id,filter,processors,genes,cluster_method,blast,length,
     os.chdir("%s" % ap)
 
 if __name__ == "__main__":
-    parser = OptionParser(usage="usage: %prog [options]",version="%prog 1.0.9")
+    parser = OptionParser(usage="usage: %prog [options]",version="%prog 1.0.9.1")
     parser.add_option("-d", "--directory", dest="directory",
                       help="/path/to/fasta_directory [REQUIRED]",
                       type="string", action="callback", callback=test_dir)
