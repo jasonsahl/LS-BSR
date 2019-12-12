@@ -777,7 +777,7 @@ def process_genbank_files(directory):
         count = 0
         for record in SeqIO.parse(infile, "genbank"):
             for feature in record.features:
-                if feature.type == "CDS" or if feature.type == "gene":
+                if feature.type == "CDS" or feature.type == "gene":
                     count = count + 1
                     try:
                         feature_name = feature.qualifiers["locus_tag"]
