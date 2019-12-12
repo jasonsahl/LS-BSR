@@ -777,12 +777,16 @@ def process_genbank_files(directory):
         count = 0
         for record in SeqIO.parse(infile, "genbank"):
             for feature in record.features:
-                if feature.type == "gene":
+                if feature.type == "CDS":
                     count = count + 1
                     try:
                         feature_name = feature.qualifiers["locus_tag"]
+                        feature_product = feature.qualifiers["product"]
+                        product = []
+                        for afeature in feature_product:
+                            product.append(afeature.replace(" ","_"))
                         feature_seq = feature.extract(record.seq)
-                        output_handle.write(">" + "".join(feature_name) + "\n" + str(feature_seq) + "\n")
+                        output_handle.write(">" + "".join(feature_name) + "|" + "".join(product) + "\n" + str(feature_seq) + "\n")
                     except:
                         print("problem extracting locus tag: %s" % "".join(feature_name))
         output_handle.close()
