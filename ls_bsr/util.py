@@ -97,19 +97,19 @@ def rename_fasta_header(fasta_in, fasta_out):
     handle.close()
     return outdata
 
-def uclust_cluster(id, data_type):
-    devnull = open("/dev/null", "w")
-    if "nt" in data_type:
-        output_name = "consensus.fasta"
-    else:
-        output_name = "consensus.pep"
-    """cluster with Uclust.  Updated to V6"""
-    cmd = ["usearch",
-           "-cluster_fast", "all_sorted.txt",
-           "-id", str(id),
-           "-uc", "results.uc",
-           "-centroids", str(output_name)]
-    subprocess.call(cmd, stderr=devnull, stdout=devnull)
+#def uclust_cluster(id, data_type):
+#    devnull = open("/dev/null", "w")
+#    if "nt" in data_type:
+#        output_name = "consensus.fasta"
+#    else:
+#        output_name = "consensus.pep"
+#    """cluster with Uclust.  Updated to V6"""
+#    cmd = ["usearch",
+#           "-cluster_fast", "all_sorted.txt",
+#           "-id", str(id),
+#           "-uc", "results.uc",
+#           "-centroids", str(output_name)]
+#    subprocess.call(cmd, stderr=devnull, stdout=devnull)
 
 def get_seq_name(in_fasta):
     """used for renaming the sequences"""
@@ -767,6 +767,28 @@ def run_vsearch(id, processors, infile):
     subprocess.call(cmd,stdout=devnull,stderr=devnull)
     devnull.close()
 
+def run_mmseqs(id, processors, infile):
+    devnull = open("/dev/null", "w")
+    cmd = ["mmseqs",
+           "easy-cluster", infile,
+           "mmseqs",
+           "mm_tmp",
+           "--min-seq-id", str(id),
+           "--threads", "%s" % processors]
+    subprocess.call(cmd,stdout=devnull,stderr=devnull)
+    devnull.close()
+
+def run_mmseqs_lin(id, processors, infile):
+    devnull = open("/dev/null", "w")
+    cmd = ["mmseqs",
+           "easy-linclust", infile,
+           "mmseqs",
+           "mm_tmp",
+           "--min-seq-id", str(id),
+           "--threads", "%s" % processors]
+    subprocess.call(cmd,stdout=devnull,stderr=devnull)
+    devnull.close()
+
 def process_genbank_files(directory):
     genbank_hits = []
     for infile in glob.glob(os.path.join(directory, "*.gbk")):
@@ -820,17 +842,17 @@ def test_duplicate_header_ids(fasta_file):
     else:
         return "False"
 
-def split_files(fasta_file):
-    """This next section removes line wraps, so I can
-    split the file without interrupting a gene"""
-    output_handle = open("nowrap.fasta", "w")
-    with open(fasta_file) as infile:
-        for record in SeqIO.parse(infile, "fasta"):
-            output_handle.write(">"+str(record.id)+"\n")
-            output_handle.write(str(record.seq)+"\n")
-    output_handle.close()
-    """I can always make the number of lines an alterable field"""
-    subprocess.check_call("split -l 200000 nowrap.fasta", shell=True)
+#def split_files(fasta_file):
+#    """This next section removes line wraps, so I can
+#    split the file without interrupting a gene"""
+#    output_handle = open("nowrap.fasta", "w")
+#    with open(fasta_file) as infile:
+#        for record in SeqIO.parse(infile, "fasta"):
+#            output_handle.write(">"+str(record.id)+"\n")
+#            output_handle.write(str(record.seq)+"\n")
+#    output_handle.close()
+#    """I can always make the number of lines an alterable field"""
+#    subprocess.check_call("split -l 200000 nowrap.fasta", shell=True)
 
 def generate_dup_matrix():
     curr_dir=os.getcwd()
@@ -850,24 +872,24 @@ def generate_dup_matrix():
         outfile.write("\t".join(alist)+"\n")
     outfile.close()
 
-def _usearch_workflow(infile):
-    devnull = open("/dev/null", "w")
-    cmd = ["usearch",
-           "-cluster_fast", "%s" % infile[0],
-           "-id", str(infile[1]),
-           "-sort", "length",
-           "-uc", "results.uc",
-           "-centroids", "%s.usearch.out" % infile[0]]
-    subprocess.call(cmd,stdout=devnull,stderr=devnull)
-    devnull.close()
+#def _usearch_workflow(infile):
+#    devnull = open("/dev/null", "w")
+#    cmd = ["usearch",
+#           "-cluster_fast", "%s" % infile[0],
+#           "-id", str(infile[1]),
+#           "-sort", "length",
+#           "-uc", "results.uc",
+#           "-centroids", "%s.usearch.out" % infile[0]]
+#    subprocess.call(cmd,stdout=devnull,stderr=devnull)
+#    devnull.close()
 
-def run_usearch_dev(id,processors):
-    curr_dir=os.getcwd()
-    # Put all files that start with 'x' in list
-    files_and_temp_names = []
-    for file in glob.glob(os.path.join(curr_dir, "x*")):
-        files_and_temp_names.append([file,id])
-    mp_shell(_usearch_workflow, files_and_temp_names, processors)
+#def run_usearch_dev(id,processors):
+#    curr_dir=os.getcwd()
+# Put all files that start with 'x' in list
+#    files_and_temp_names = []
+#    for file in glob.glob(os.path.join(curr_dir, "x*")):
+#        files_and_temp_names.append([file,id])
+#    mp_shell(_usearch_workflow, files_and_temp_names, processors)
 
 def _prodigal_workflow_def(data):
     tn, f = data

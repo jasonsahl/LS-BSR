@@ -37,14 +37,16 @@ def test_filter(option, opt_str, value, parser):
         sys.exit()
 
 def test_cluster(option, opt_str, value, parser):
-    if "usearch" == value:
+    if "mmseqs-lin" == value:
+        setattr(parser.values, option.dest, value)
+    elif "mmseqs" == value:
         setattr(parser.values, option.dest, value)
     elif "vsearch" == value:
         setattr(parser.values, option.dest, value)
     elif "cd-hit" == value:
         setattr(parser.values, option.dest, value)
     else:
-        print("option not supported. Choose from vsearch, usearch, cd-hit")
+        print("option not supported. Choose from vsearch, mmseqs, mmseqs-lin, cd-hit")
         sys.exit()
 
 def test_blast(option, opt_str, value, parser):
@@ -180,12 +182,12 @@ def main(directory,id,filter,processors,genes,cluster_method,blast,length,
         else:
             print("prodigal is not in your path, but needs to be!")
             sys.exit()
-        if "usearch" in cluster_method:
-            rc = subprocess.call(['which', 'usearch'])
+        if "mmseqs" in cluster_method or "mmseqs-lin" in cluster_method:
+            rc = subprocess.call(['which','mmseqs'])
             if rc == 0:
-                print("citation: Edgar RC. 2010. Search and clustering orders of magnitude faster than BLAST. Bioinformatics 26:2460-2461")
+                print("citation: Steinegger and Soding. 2018. Clustering huge protein sequence sets in linear time. Nature Communications 9:2542")
             else:
-                print("usearch is not in your path, but needs to be!")
+                print("mmseqs is not in your path, but needs to be")
                 sys.exit()
         elif "cd-hit" in cluster_method:
             if blast == "blastp" or blast == "diamond":
@@ -268,27 +270,16 @@ def main(directory,id,filter,processors,genes,cluster_method,blast,length,
         if "NULL" in cluster_method:
             print("Clustering chosen, but no method selected...exiting")
             sys.exit()
-        elif "usearch" in cluster_method:
-            os.system("mkdir split_files")
-            if blast == "blastp" or blast == "diamond":
-                if genbank_hits == None or len(genbank_hits) == 0:
-                    os.system("cat *new_genes.pep > split_files/all_sorted.txt")
-                else:
-                    os.system("cp all_genes.pep split_files/all_sorted.txt")
-            else:
-                os.system("cp all_gene_seqs.out split_files/all_sorted.txt")
-            os.chdir("split_files/")
-            logPrint("Splitting FASTA file for use with USEARCH")
-            split_files("all_sorted.txt")
-            logPrint("clustering with USEARCH at an ID of %s" % id)
-            run_usearch_dev(id,processors)
-            os.system("cat *.usearch.out > all_sorted.txt")
-            os.system("mv all_sorted.txt %s" % fastadir)
-            os.chdir("%s" % fastadir)
-            """Need to make output either FASTA or PEP"""
-            data_type = find_data_type("all_sorted.txt")
-            uclust_cluster(id,data_type)
-            logPrint("USEARCH clustering finished")
+        elif "mmseqs" == cluster_method:
+            logPrint("clustering with mmseqs at an ID of %s, using %s processors" % (id,processors))
+            run_mmseqs(id, processors, "all_gene_seqs.out")
+            os.system("mv mmseqs_rep_seq.fasta consensus.fasta")
+            logPrint("mmseqs clustering finished")
+        elif "mmseqs-lin" == cluster_method:
+            logPrint("clustering with mmseqs-linear at an ID of %s, using %s processors" % (id,processors))
+            run_mmseqs_lin(id, processors, "all_gene_seqs.out")
+            os.system("mv mmseqs_rep_seq.fasta consensus.fasta")
+            logPrint("mmseqs-lin clustering finished")
         elif "vsearch" in cluster_method:
             logPrint("clustering with VSEARCH at an ID of %s, using %s processors" % (id,processors))
             run_vsearch(id, processors, "all_gene_seqs.out")
@@ -649,7 +640,7 @@ def main(directory,id,filter,processors,genes,cluster_method,blast,length,
     os.chdir("%s" % ap)
 
 if __name__ == "__main__":
-    parser = OptionParser(usage="usage: %prog [options]",version="%prog 1.1.0")
+    parser = OptionParser(usage="usage: %prog [options]",version="%prog 1.2.0")
     parser.add_option("-d", "--directory", dest="directory",
                       help="/path/to/fasta_directory [REQUIRED]",
                       type="string", action="callback", callback=test_dir)
@@ -666,7 +657,7 @@ if __name__ == "__main__":
                       help="predicted genes (nucleotide) to screen against genomes, will not use prodigal, must end in fasta (nt) or pep (aa)",
                       type="string",default="null")
     parser.add_option("-c", "--cluster_method", dest="cluster_method", action="callback", callback=test_cluster,
-                      help="Clustering method to use: choose from usearch, vsearch, cd-hit",
+                      help="Clustering method to use: choose from mmseqs, mmseqs-lin, vsearch, cd-hit",
                       type="string", default="null")
     parser.add_option("-b", "--blast", dest="blast", action="callback", callback=test_blast,
                       help="use tblastn, blastn, blastp, blastn-short, diamond, or blat (nucleotide search only), default is tblastn",

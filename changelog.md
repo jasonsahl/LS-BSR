@@ -1,3 +1,6 @@
+###Changes made on 1/15/2020 ###
+1. The option to use USEARCH has been removed
+2. The clustering method mmseqs2 has been added as an option. Read the manual for more details
 
 ### Changes made on 7/6/2018 ###
 1. An error was reported where genbank files were not being found. This was relevant to the situation where only GenBank files were supplied. This has now been fixed.

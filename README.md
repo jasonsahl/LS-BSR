@@ -12,11 +12,11 @@ have not been observed.
 contact: jasonsahl at gmail dot com  
 
 Minimum requirements, see manual.md for version information  
-1. Python >2.7 and <=3.5  
+1. Python >2.7 and <=3.5 (higher versions still work but tests may fail)
 2. BioPython  
 3. Prodigal - Required for de novo gene prediction only  
 4. VSEARCH - Optional  
-5. USEARCH - Optional  
+5. mmseqs2- Optional  
 6. CD-HIT - Optional  
 7. Blast+ - Optional  
 8. Blat - Optional  
@@ -25,13 +25,13 @@ Minimum requirements, see manual.md for version information
 -To create an environment and run through conda:  
     `conda create -n ls_bsr python=3.5`  
     `conda activate ls_bsr`   
-    `conda install -c bioconda blast vsearch cd-hit prodigal ucsc-blat diamond biopython`  
+    `conda install -c bioconda blast vsearch cd-hit prodigal ucsc-blat diamond biopython mmseqs2`  
     `git clone https://github.com/jasonsahl/LS-BSR.git`  
     `python setup.py install`  
-    
+
 -To test the install:  
     `python ls_bsr.py --version`  
     `python tests/test_all_functions.py`   
-    
+
 *See changelog.md for a list of changes  
 *See manual.md for run directions  
