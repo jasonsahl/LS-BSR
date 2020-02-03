@@ -92,7 +92,7 @@ def test_fplog(option, opt_str, value, parser):
         sys.exit()
 
 def main(directory,id,filter,processors,genes,cluster_method,blast,length,
-         max_plog,min_hlog,f_plog,keep,filter_peps,filter_scaffolds,prefix,min_pep_length,
+         max_plog,min_hlog,f_plog,keep,filter_peps,filter_scaffolds,prefix,
          intergenics,min_len,dup_toggle):
     start_dir = os.getcwd()
     ap=os.path.abspath("%s" % start_dir)
@@ -113,7 +113,7 @@ def main(directory,id,filter,processors,genes,cluster_method,blast,length,
         sys.exit()
     logPrint("Testing paths of dependencies")
     if blast=="blastn" or blast=="tblastn" or blast=="blastp" or blast=="blastn-short":
-        ab = subprocess.call(['which', 'blastn'])
+        ab = subprocess.call(['which', '%s' % blast])
         if ab == 0:
             print("citation: Altschul SF, Madden TL, Schaffer AA, Zhang J, Zhang Z, Miller W, and Lipman DJ. 1997. Gapped BLAST and PSI-BLAST: a new generation of protein database search programs. Nucleic Acids Res 25:3389-3402")
         else:
@@ -190,7 +190,7 @@ def main(directory,id,filter,processors,genes,cluster_method,blast,length,
                 print("mmseqs is not in your path, but needs to be")
                 sys.exit()
         elif "cd-hit" in cluster_method:
-            if blast == "blastp" or blast == "diamond":
+            if blast == "blastp" or blast == "diamond" or blast == "tblastn":
                 rc = subprocess.call(['which', 'cd-hit'])
             else:
                 rc = subprocess.call(['which', 'cd-hit-est'])
@@ -257,11 +257,11 @@ def main(directory,id,filter,processors,genes,cluster_method,blast,length,
                 os.system("cat *locus_tags.fasta > all_gene_seqs.out")
             if blast=="blastp" or blast=="diamond":
                 """Need to convert the locus tags into peptides here"""
-                translate_genes("all_gene_seqs.out","all_genes.pep",30)
+                translate_genes("all_gene_seqs.out","all_genes.pep",0)
                 for infile in glob.glob(os.path.join(fastadir, "*locus_tags.fasta")):
                     base = os.path.basename(infile)
                     name = base.replace(".locus_tags.fasta","")
-                    translate_genes(base,"%s.fasta.new_genes.pep" % name,30)
+                    translate_genes(base,"%s.fasta.new_genes.pep" % name,0)
             else:
                 for hit in genbank_hits:
                     reduced_hit = hit.replace(".gbk","")
@@ -272,13 +272,23 @@ def main(directory,id,filter,processors,genes,cluster_method,blast,length,
             sys.exit()
         elif "mmseqs" == cluster_method:
             logPrint("clustering with mmseqs at an ID of %s, using %s processors" % (id,processors))
-            run_mmseqs(id, processors, "all_gene_seqs.out")
-            os.system("mv mmseqs_rep_seq.fasta consensus.fasta")
+            if blast == "blastp" or blast == "diamond":
+                os.system("cat *new_genes.pep > all_gene_seqs.pep")
+                run_mmseqs(id, processors, "all_gene_seqs.pep")
+                os.system("mv mmseqs_rep_seq.fasta consensus.pep")
+            else:
+                run_mmseqs(id, processors, "all_gene_seqs.out")
+                os.system("mv mmseqs_rep_seq.fasta consensus.fasta")
             logPrint("mmseqs clustering finished")
         elif "mmseqs-lin" == cluster_method:
             logPrint("clustering with mmseqs-linear at an ID of %s, using %s processors" % (id,processors))
-            run_mmseqs_lin(id, processors, "all_gene_seqs.out")
-            os.system("mv mmseqs_rep_seq.fasta consensus.fasta")
+            if blast == "blastp" or blast == "diamond":
+                os.system("cat *new_genes.pep > all_gene_seqs.pep")
+                run_mmseqs_lin(id, processors, "all_gene_seqs.pep")
+                os.system("mv mmseqs_rep_seq.fasta consensus.pep")
+            else:
+                run_mmseqs_lin(id, processors, "all_gene_seqs.out")
+                os.system("mv mmseqs_rep_seq.fasta consensus.fasta")
             logPrint("mmseqs-lin clustering finished")
         elif "vsearch" in cluster_method:
             logPrint("clustering with VSEARCH at an ID of %s, using %s processors" % (id,processors))
@@ -314,12 +324,7 @@ def main(directory,id,filter,processors,genes,cluster_method,blast,length,
             pass
         if "tblastn" == blast:
             subprocess.check_call("makeblastdb -in consensus.fasta -dbtype nucl > /dev/null 2>&1", shell=True)
-            translate_genes("consensus.fasta","tmp.pep",min_pep_length)
-            if filter_peps == "T":
-                filter_seqs("tmp.pep","consensus.pep")
-                os.system("rm tmp.pep")
-            else:
-                os.system("mv tmp.pep consensus.pep")
+            translate_genes("consensus.fasta","consensus.pep",0)
             clusters = get_cluster_ids("consensus.pep")
             blast_against_self_tblastn("tblastn", "consensus.fasta", "consensus.pep", "tmp_blast.out", processors, filter)
         elif "blastn" == blast:
@@ -338,12 +343,6 @@ def main(directory,id,filter,processors,genes,cluster_method,blast,length,
             blast_against_self_blastn("blastn", "blastn-short", "consensus.fasta", "consensus.fasta", "tmp_blast.out", filter, processors)
             clusters = get_cluster_ids("consensus.fasta")
         elif "diamond" == blast:
-            """Check this"""
-            if filter_peps == "T":
-                filter_seqs("consensus.pep","tmp.pep")
-                os.system("mv tmp.pep consensus.pep")
-            else:
-                pass
             subprocess.check_call("diamond makedb --in consensus.pep -d consensus > /dev/null 2>&1", shell=True)
             subprocess.check_call("diamond blastp -p 4 -d consensus -f 6 -q consensus.pep -o tmp_blast.out > /dev/null 2>&1", shell=True)
             clusters = get_cluster_ids("consensus.pep")
@@ -468,7 +467,7 @@ def main(directory,id,filter,processors,genes,cluster_method,blast,length,
                 sys.exit()
             if "tblastn" == blast:
                 logPrint("using tblastn")
-                translate_genes(gene_path,"genes.pep",min_pep_length)
+                translate_genes(gene_path,"genes.pep",0)
                 try:
                     subprocess.check_call("makeblastdb -in %s -dbtype nucl > /dev/null 2>&1" % gene_path, shell=True)
                 except:
@@ -640,7 +639,7 @@ def main(directory,id,filter,processors,genes,cluster_method,blast,length,
     os.chdir("%s" % ap)
 
 if __name__ == "__main__":
-    parser = OptionParser(usage="usage: %prog [options]",version="%prog 1.2.0")
+    parser = OptionParser(usage="usage: %prog [options]",version="%prog 1.2.1")
     parser.add_option("-d", "--directory", dest="directory",
                       help="/path/to/fasta_directory [REQUIRED]",
                       type="string", action="callback", callback=test_dir)
@@ -678,7 +677,7 @@ if __name__ == "__main__":
                       help="keep or remove temp files, choose from T or F, defaults to F",
                       default="F", type="string")
     parser.add_option("-s", "--filter_short_peps", dest="filter_peps", action="callback",
-                      help="remove short peptides, smaller than 50AA?  Defaults to T",
+                      help="remove short peptides, smaller than 50AA?  Defaults to F",
                       default="T", callback=test_filter, type="string")
     parser.add_option("-e", "--filter_scaffolds", dest="filter_scaffolds", action="callback",
                       help="Filter any contig that contains an N? Defaults to F",
@@ -686,9 +685,6 @@ if __name__ == "__main__":
     parser.add_option("-x", "--prefix", dest="prefix", action="store",
                       help="prefix for naming output files, defaults to time/date",
                       default="NULL", type="string")
-    parser.add_option("-a", "--min_pep_length", dest="min_pep_length", action="store",
-                      help="minimum peptide length to keep, defaults to 33",
-                      default="33", type="int")
     parser.add_option("-y", "--intergenics", dest="intergenics", action="callback",
                       help="Incoporate intergenic regions? T or F; Defaults to F",
                       default="F", type="string", callback=test_filter)
@@ -709,4 +705,4 @@ if __name__ == "__main__":
 
     main(options.directory,options.id,options.filter,options.processors,options.genes,options.cluster_method,options.blast,
          options.length,options.max_plog,options.min_hlog,options.f_plog,options.keep,options.filter_peps,
-         options.filter_scaffolds,options.prefix,options.min_pep_length,options.intergenics,options.min_len,options.dup_toggle)
+         options.filter_scaffolds,options.prefix,options.intergenics,options.min_len,options.dup_toggle)
