@@ -176,17 +176,17 @@ def main(aligner,peptides,consensus,processors,threshold,out_fasta_prefix):
     """"This causes problems"""
     os.system("cp %s query.peptides.xyx" % pep_path)
     if blast_type == "diamond":
-        subprocess.check_call("diamond makedb --in query.peptides.xyx -d DB > /dev/null 2>&1", shell=True)
+        subprocess.check_call("diamond makedb --in query.peptides.xyx -d DB > /dev/null 2>&1", stdout=open(os.devnull, 'wb'),stderr=open(os.devnull, 'wb'),shell=True)
     else:
-        subprocess.check_call("makeblastdb -in query.peptides.xyx -dbtype prot > /dev/null 2>&1", shell=True)
+        subprocess.check_call("makeblastdb -in query.peptides.xyx -dbtype prot > /dev/null 2>&1", stdout=open(os.devnull, 'wb'),stderr=open(os.devnull, 'wb'),shell=True)
     if blast_type == "blastp":
         blast_against_self("blastp", "query.peptides.xyx", "query.peptides.xyx", "xyx.blast.out", processors)
     elif blast_type == "diamond":
-        subprocess.check_call("diamond blastp -p %s -d DB -f 6 -q query.peptides.xyx -o xyx.blast.out > /dev/null 2>&1" % processors, shell=True)
+        subprocess.check_call("diamond blastp -p %s -d DB -f 6 -q query.peptides.xyx -o xyx.blast.out > /dev/null 2>&1" % processors, stdout=open(os.devnull, 'wb'),stderr=open(os.devnull, 'wb'),shell=True)
     else:
         blast_against_self("blastx", "query.peptides.xyx", "query.peptides.xyx", "xyx.blast.out", processors)
     os.system("sort -u -k 1,1 xyx.blast.out > xyx.blast.unique.xyx")
-    ref_scores=parse_self_blast(open("xyx.blast.unique.xyx", "U"))
+    ref_scores=parse_self_blast(open("xyx.blast.unique.xyx"))
     ref_score_file = open("ref.scores", "w")
     for k,v in ref_scores.items():
         ref_score_file.write(str(k)+"\t"+str(v)+"\n")
@@ -197,7 +197,7 @@ def main(aligner,peptides,consensus,processors,threshold,out_fasta_prefix):
     elif blast_type == "blastx":
         blast_against_self("blastx", consensus_path, "query.peptides.xyx", "xyx.blast.out", processors)
     elif blast_type == "diamond":
-        subprocess.check_call("diamond blastp -p %s -d DB -f 6 -q %s -o xyx.blast.out > /dev/null 2>&1" % (processors,consensus_path), shell=True)
+        subprocess.check_call("diamond blastp -p %s -d DB -f 6 -q %s -o xyx.blast.out > /dev/null 2>&1" % (processors,consensus_path), stdout=open(os.devnull, 'wb'),stderr=open(os.devnull, 'wb'),shell=True)
     parse_blast_report("xyx.blast.out")
     get_unique_lines("query_blast.filtered")
     """These are reference clusters"""
