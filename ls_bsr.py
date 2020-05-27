@@ -112,7 +112,7 @@ def main(directory,id,filter,processors,genes,cluster_method,blast,length,
         logPrint("Incompatible choices: if incorporating intergenics, choose a nucleotide alignment method")
         sys.exit()
     logPrint("Testing paths of dependencies")
-    if blast=="blastn" or blast=="tblastn" or blast=="blastp" or blast=="blastn-short":
+    if blast=="blastn" or blast=="tblastn" or blast=="blastp":
         ab = subprocess.call(['which', '%s' % blast])
         if ab == 0:
             print("citation: Altschul SF, Madden TL, Schaffer AA, Zhang J, Zhang Z, Miller W, and Lipman DJ. 1997. Gapped BLAST and PSI-BLAST: a new generation of protein database search programs. Nucleic Acids Res 25:3389-3402")
@@ -133,6 +133,8 @@ def main(directory,id,filter,processors,genes,cluster_method,blast,length,
         else:
             print("You have requested DIAMOND, but it is not in your PATH (as diamond)")
             sys.exit()
+    elif blast=="blastn-short":
+        print("citation: W.James Kent. 2002. BLAT - The BLAST-Like Alignment Tool.  Genome Research 12:656-664")
     if "NULL" in prefix:
         import datetime
         timestamp = datetime.datetime.now()
@@ -639,7 +641,7 @@ def main(directory,id,filter,processors,genes,cluster_method,blast,length,
     os.chdir("%s" % ap)
 
 if __name__ == "__main__":
-    parser = OptionParser(usage="usage: %prog [options]",version="%prog 1.2.1")
+    parser = OptionParser(usage="usage: %prog [options]",version="%prog 1.2.2")
     parser.add_option("-d", "--directory", dest="directory",
                       help="/path/to/fasta_directory [REQUIRED]",
                       type="string", action="callback", callback=test_dir)
