@@ -582,7 +582,7 @@ def uclust_sort(usearch):
     subprocess.call(cmd,stdout=devnull,stderr=devnull)
     devnull.close()
 
-def process_pangenome(matrix, upper, lower, iterations, type, prefix):
+def process_pangenome(matrix,upper,lower,iterations,type,prefix):
     if "acc" in type:
         acc_outfile = open("%s_accumulation_replicates.txt" % prefix, "w")
     elif "uni" in type:
@@ -604,50 +604,52 @@ def process_pangenome(matrix, upper, lower, iterations, type, prefix):
     acc_dict = {}
     core_dict = {}
     uni_dict = {}
-    #I could step through these by 2?
+    #For each subsampling level
     for i in list(range(1,genomes+1)):
-        positives_acc = []
-        positives_core = []
-        positives_unis = []
-        """This selects the random set of genomes"""
-        outseqs=random.sample(set(indexes), int(i))
-        """Changing the tabs for all of these genomes"""
-        with open(matrix) as f:
-            next(f)
-            for line in f:
-                fields = line.split()
-                positive_lines_acc=[]
-                positive_lines_core=[]
-                positive_lines_unis=[]
-                for outseq in outseqs:
-                    if type == "acc" or type == "all":
-                        if float(fields[outseq])>=float(upper):
-                            positive_lines_acc.append("1")
-                    if type == "core" or type == "all":
-                        if float(fields[outseq])>=float(upper):
-                            positive_lines_core.append("1")
-                    if type == "uni" or type == "all":
-                        """this was changed from lower to upper"""
-                        if float(fields[outseq])>=float(lower) and float(fields[outseq])>=float(upper):
-                            positive_lines_unis.append("1")
-                if len(positive_lines_acc)>=1:
-                    positives_acc.append("1")
-                if len(positive_lines_core)==len(outseqs):
-                    positives_core.append("1")
-                if int(len(positive_lines_unis))==1:
-                    positives_unis.append("1")
-        try:
-            acc_dict[i].append(len(positives_acc))
-        except KeyError:
-            acc_dict[i] = [len(positives_acc)]
-        try:
-            core_dict[i].append(len(positives_core))
-        except KeyError:
-            core_dict[i] = [len(positives_core)]
-        try:
-            uni_dict[i].append(len(positives_unis))
-        except KeyError:
-            uni_dict[i] = [len(positives_unis)]
+        #For each iteration
+        for iteration in list(range(1,iterations)):
+            positives_acc = []
+            positives_core = []
+            positives_unis = []
+            """This selects the random set of genomes"""
+            outseqs=random.sample(set(indexes), int(i))
+            """Changing the tabs for all of these genomes"""
+            with open(matrix) as f:
+                next(f)
+                for line in f:
+                    fields = line.split()
+                    positive_lines_acc=[]
+                    positive_lines_core=[]
+                    positive_lines_unis=[]
+                    for outseq in outseqs:
+                        if type == "acc" or type == "all":
+                            if float(fields[outseq])>=float(upper):
+                                positive_lines_acc.append("1")
+                        if type == "core" or type == "all":
+                            if float(fields[outseq])>=float(upper):
+                                positive_lines_core.append("1")
+                        if type == "uni" or type == "all":
+                            """this was changed from lower to upper"""
+                            if float(fields[outseq])>=float(lower) and float(fields[outseq])>=float(upper):
+                                positive_lines_unis.append("1")
+                    if len(positive_lines_acc)>=1:
+                        positives_acc.append("1")
+                    if len(positive_lines_core)==len(outseqs):
+                        positives_core.append("1")
+                    if int(len(positive_lines_unis))==1:
+                        positives_unis.append("1")
+            try:
+                acc_dict[i].append(len(positives_acc))
+            except KeyError:
+                acc_dict[i] = [len(positives_acc)]
+            try:
+                core_dict[i].append(len(positives_core))
+            except KeyError:
+                core_dict[i] = [len(positives_core)]
+            try:
+                uni_dict[i].append(len(positives_unis))
+            except KeyError:
+                uni_dict[i] = [len(positives_unis)]
     try:
         sorted_acc_dict = collections.OrderedDict(sorted(acc_dict.items()))
         sorted_uni_dict = collections.OrderedDict(sorted(uni_dict.items()))
