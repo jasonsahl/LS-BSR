@@ -29,7 +29,7 @@ def test_types(option, opt_str, value, parser):
         sys.exit()
 
 def main(matrix,upper,lower,iterations,type,prefix):
-    process_pangenome(matrix, upper, lower, iterations, type, prefix)
+    process_pangenome(matrix,upper,lower,iterations,type,prefix)
 
 if __name__ == "__main__":
     usage="usage: %prog [options]"

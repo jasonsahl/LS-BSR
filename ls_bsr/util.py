@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 
 from __future__ import division
-from __future__ import print_function
 import sys
 import time
 import os
@@ -97,20 +96,6 @@ def rename_fasta_header(fasta_in, fasta_out):
     handle.close()
     return outdata
 
-#def uclust_cluster(id, data_type):
-#    devnull = open("/dev/null", "w")
-#    if "nt" in data_type:
-#        output_name = "consensus.fasta"
-#    else:
-#        output_name = "consensus.pep"
-#    """cluster with Uclust.  Updated to V6"""
-#    cmd = ["usearch",
-#           "-cluster_fast", "all_sorted.txt",
-#           "-id", str(id),
-#           "-uc", "results.uc",
-#           "-centroids", str(output_name)]
-#    subprocess.call(cmd, stderr=devnull, stdout=devnull)
-
 def get_seq_name(in_fasta):
     """used for renaming the sequences"""
     return os.path.basename(in_fasta)
@@ -141,7 +126,6 @@ def parse_blast_report_dev(test,processors):
     if "true" in test:
         # mp_shell will return a list of lists. This will flatten it into a single list
         return outdata
-    return
 
 def _perform_workflow_pbr(data):
     infile = data[0]
@@ -256,7 +240,6 @@ def translate_genes(genes,outfile,min_len):
         return str(record)
     if len(too_short)>0:
         logPrint("The following sequences were too short and will not be processed: %s" % "\n".join(too_short))
-
 rec=1
 
 def autoIncrement():
@@ -269,7 +252,7 @@ def autoIncrement():
         rec += pInterval
         return rec
 
-def prune_matrix(matrix, group1, group2):
+def prune_matrix(matrix,group1,group2):
     """prune out genomes of interest from a BSR matrix.
     Not done efficiently, but appears to work"""
     group1_ids = []
@@ -334,8 +317,7 @@ def prune_matrix(matrix, group1, group2):
                 except:
                     pass
     group2_out.close()
-    return group1_ids_list, group2_ids_list, group1_idx, group2_idx
-
+    return group1_ids_list,group2_ids_list,group1_idx,group2_idx
 
 def compare_values(pruned_1,pruned_2,upper,lower):
     group1_out = open("group1_out.txt", "w")
@@ -382,12 +364,12 @@ def compare_values(pruned_1,pruned_2,upper,lower):
                 group2_out.write(str(mean)+"\t"+str(len(presents))+"\t"+str(len(fields[1:]))+"\t"+str(len(homolog))+"\n")
     group1_out.close()
     group2_out.close()
-    return group1_presents, group2_presents, group1_mean
+    return group1_presents,group2_presents,group1_mean
 
 def find_uniques(combined,fasta):
-    group1_unique_ids = []
+    group1_unique_ids=[]
     seqrecords=[]
-    testids = []
+    testids=[]
     with open(combined) as infile:
         for line in infile:
             fields=line.split()
@@ -398,7 +380,7 @@ def find_uniques(combined,fasta):
             seqrecords.append(record)
             testids.append(record.id)
     output_handle = open("group1_unique_seqs.fasta", "w")
-    SeqIO.write(seqrecords, output_handle, "fasta")
+    SeqIO.write(seqrecords,output_handle,"fasta")
     output_handle.close()
     group2_unique_ids = []
     seqrecords2 = []
@@ -413,9 +395,9 @@ def find_uniques(combined,fasta):
     output_handle2 = open("group2_unique_seqs.fasta", "w")
     SeqIO.write(seqrecords2, output_handle2, "fasta")
     output_handle2.close()
-    return group1_unique_ids, group2_unique_ids, testids
+    return group1_unique_ids,group2_unique_ids,testids
 
-def filter_genomes(genomes, in_matrix):
+def filter_genomes(genomes,in_matrix):
     to_keep = []
     with open(in_matrix) as matrix:
         firstLine = matrix.readline()
@@ -475,17 +457,19 @@ def get_core_gene_stats(matrix, threshold, lower, missing):
                     singles.append(fields[0])
             except:
                 raise TypeError("problem in input file found")
+                outfile.close()
+                singletons.close()
     print("# of conserved genes (>=0.8 BSR in all genomes) = %s" % len(positives))
     print("# of unique genes (>=0.8 BSR in only 1 genome, <0.4 in others) = %s" % len(singles))
     ratio = int(len(singles))/int(totals)
     outfile.write("\n".join(positives)+"\n")
     singletons.write("\n".join(singles)+"\n")
-    print("# of unique genes per genome = %s" % ratio)
     outfile.close()
     singletons.close()
+    print("# of unique genes per genome = %s" % ratio)
     return len(positives),len(singles)
 
-def get_frequencies(matrix, threshold):
+def get_frequencies(matrix,threshold):
     import collections
     out_data = []
     all = []
@@ -573,14 +557,14 @@ def filter_scaffolds_fun(in_fasta):
         SeqIO.write(outrecords, output_handle, "fasta")
         output_handle.close()
 
-def uclust_sort(usearch):
-    """sort with Usearch. Updated to V6"""
-    devnull = open("/dev/null", "w")
-    cmd = ["%s" % usearch,
-           "-sortbylength", "all_gene_seqs.out",
-           "-output", "tmp_sorted.txt"]
-    subprocess.call(cmd,stdout=devnull,stderr=devnull)
-    devnull.close()
+#def uclust_sort(usearch):
+#    """sort with Usearch. Updated to V6"""
+#    devnull = open("/dev/null", "w")
+#    cmd = ["%s" % usearch,
+#           "-sortbylength", "all_gene_seqs.out",
+#           "-output", "tmp_sorted.txt"]
+#    subprocess.call(cmd,stdout=devnull,stderr=devnull)
+#    devnull.close()
 
 def process_pangenome(matrix,upper,lower,iterations,type,prefix):
     if "acc" in type:
@@ -598,7 +582,6 @@ def process_pangenome(matrix,upper,lower,iterations,type,prefix):
         firstLine = my_matrix.readline()
         first_fields = firstLine.split()
         genomes = len(first_fields)
-        #indexes = []
         for x in first_fields:
             indexes.append(first_fields.index(x)+1)
     acc_dict = {}
@@ -606,8 +589,9 @@ def process_pangenome(matrix,upper,lower,iterations,type,prefix):
     uni_dict = {}
     #For each subsampling level
     for i in list(range(1,genomes+1)):
+        print(i)
         #For each iteration
-        for iteration in list(range(1,iterations)):
+        for iteration in list(range(1,iterations+1)):
             positives_acc = []
             positives_core = []
             positives_unis = []
@@ -617,7 +601,8 @@ def process_pangenome(matrix,upper,lower,iterations,type,prefix):
             with open(matrix) as f:
                 next(f)
                 for line in f:
-                    fields = line.split()
+                    newline = line.strip("\n")
+                    fields = newline.split()
                     positive_lines_acc=[]
                     positive_lines_core=[]
                     positive_lines_unis=[]
@@ -663,21 +648,21 @@ def process_pangenome(matrix,upper,lower,iterations,type,prefix):
     if type == "acc" or type == "all":
         print("accumulation means")
         for k,v in sorted_acc_dict.items():
-            test_accums.append(v)
-            print(k, sum(v)/len(v))
+            test_accums.append(sum(v)/len(v))
+            print(k,sum(v)/len(v))
             for z in v:
                 acc_outfile.write(str(k)+"\t"+str(z)+"\n")
     if type == "uni" or type == "all":
         print("unique means")
         for k,v in sorted_uni_dict.items():
-            test_uniques.append(v)
+            test_uniques.append(sum(v)/len(v))
             print(k, (sum(v)/len(v))/int(k))
             for z in v:
                 uni_outfile.write(str(k)+"\t"+str(int(z)/int(k))+"\n")
     if type == "core" or type == "all":
         print("core means")
         for k,v in sorted_core_dict.items():
-            test_cores.append(v)
+            test_cores.append(sum(v)/len(v))
             print(k,sum(v)/len(v))
             for z in v:
                 core_outfile.write(str(k)+"\t"+str(z)+"\n")
