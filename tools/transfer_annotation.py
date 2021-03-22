@@ -123,7 +123,7 @@ def update_dict(ref_scores,query_file,all_clusters,threshold):
             for cluster in all_clusters:
                 if cluster == fields[1]:
                     try:
-                        if (float(fields[2])/float(ref_scores.get(fields[1]))*100)>int(threshold):
+                        if (float(fields[2])/float(ref_scores.get(fields[1]))*100)>=int(threshold):
                             new_dict.update({fields[0]:fields[1]})
                     except:
                         print("couldn't process", fields[2], ref_scores.get(fields[0]), fields[1], fields[0])
