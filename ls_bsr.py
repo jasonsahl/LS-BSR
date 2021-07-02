@@ -536,7 +536,7 @@ def main(directory,id,filter,processors,genes,cluster_method,blast,length,
         logPrint("Diamond complete")
     else:
         logPrint("BLAST done")
-    if dup_toggle == "T":
+    if dup_toggle == "T" or if "T" in f_plog:
         logPrint("Finding duplicates")
         find_dups_dev(ref_scores, length, max_plog, min_hlog, clusters, processors)
         logPrint("Finding duplicates complete")
@@ -577,7 +577,6 @@ def main(directory,id,filter,processors,genes,cluster_method,blast,length,
         pass
     if "T" in f_plog:
         logPrint("filtering duplicates")
-        find_dups_dev(ref_scores, length, max_plog, min_hlog, clusters, processors)
         num_filtered = filter_paralogs("%s/bsr_matrix_values.txt" % start_dir, "duplicate_ids.txt")
         logPrint("%s duplicates filtered" % str(num_filtered))
         if "NULL" in prefix:
