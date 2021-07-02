@@ -577,6 +577,7 @@ def main(directory,id,filter,processors,genes,cluster_method,blast,length,
         pass
     if "T" in f_plog:
         logPrint("filtering duplicates")
+        find_dups_dev(ref_scores, length, max_plog, min_hlog, clusters, processors)
         num_filtered = filter_paralogs("%s/bsr_matrix_values.txt" % start_dir, "duplicate_ids.txt")
         logPrint("%s duplicates filtered" % str(num_filtered))
         if "NULL" in prefix:
@@ -641,7 +642,7 @@ def main(directory,id,filter,processors,genes,cluster_method,blast,length,
     os.chdir("%s" % ap)
 
 if __name__ == "__main__":
-    parser = OptionParser(usage="usage: %prog [options]",version="%prog 1.2.2")
+    parser = OptionParser(usage="usage: %prog [options]",version="%prog 1.2.3")
     parser.add_option("-d", "--directory", dest="directory",
                       help="/path/to/fasta_directory [REQUIRED]",
                       type="string", action="callback", callback=test_dir)
