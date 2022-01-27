@@ -70,8 +70,9 @@ def combined_seqs(dir_path):
         names = get_seq_name(infile)
         reduced = names.replace('.fasta','')
         handle.write(">"+str(reduced)+"\n")
-        for record in SeqIO.parse(open(infile), "fasta"):
-            handle.write(str(record.seq)+"\n")
+        with open(infile) as my_file:
+            for record in SeqIO.parse(my_file), "fasta"):
+                handle.write(str(record.seq)+"\n")
     handle.close()
     for record in SeqIO.parse("combined.seqs", "fasta"):
         num_genomes.append(record.id)
@@ -96,13 +97,14 @@ def parsed_blast_to_seqs(infile):
     names = get_seq_name(infile)
     reduced = names.replace('.blast.unique','')
     outfile = open("%s.extracted.seqs" % reduced, "w")
-    for line in open(infile, "U"):
-        if line.startswith("#"):
-            pass
-        else:
-            fields = line.split()
-            outfile.write(">"+str(fields[1])+"\n")
-            outfile.write(str(fields[12])+"\n")
+    with open(infile) as my_file:
+        for line in my_file:
+            if line.startswith("#"):
+                pass
+            else:
+                fields = line.split()
+                outfile.write(">"+str(fields[1])+"\n")
+                outfile.write(str(fields[12])+"\n")
     outfile.close()
 
 def check_and_align_seqs(infile, num_genomes):
@@ -110,14 +112,15 @@ def check_and_align_seqs(infile, num_genomes):
     names = get_seq_name(infile)
     reduced = names.replace('.extracted.seqs','')
     list_names = []
-    for record in SeqIO.parse(open(infile), "fasta"):
-        lengths.append(len(record.seq))
-        list_names.append(record.id)
+    with open(infile) as my_file:
+        for record in SeqIO.parse(my_file, "fasta"):
+            lengths.append(len(record.seq))
+            list_names.append(record.id)
     lengths.sort(key=int)
     try:
         if (lengths[0]/float(lengths[-1])) > 0.75 and len(lengths) == num_genomes and len(set(list_names)) == num_genomes:
             try:
-                os.system("muscle -in '%s' -out '%s_aln.seqs' > /dev/null 2>&1" % (infile,reduced))
+                os.system("muscle -super5 '%s' -output '%s_aln.seqs' > /dev/null 2>&1" % (infile,reduced))
             except:
                 print("problem with %s" % infile)
         else:
@@ -130,10 +133,11 @@ def pull_seqs(names):
     for infile in glob.glob(os.path.join(curr_dir, '*_aln.seqs')):
         for name in names:
             handle = open("%s_aln_final.seqs" % name, "a")
-            for record in SeqIO.parse(open(infile), "fasta"):
-                if name == record.id:
-                    handle.write(">"+str(record.id)+"\n")
-                    handle.write(str(record.seq)+"\n")
+            with open(infile) as my_file:
+                for record in SeqIO.parse(my_file, "fasta"):
+                    if name == record.id:
+                        handle.write(">"+str(record.id)+"\n")
+                        handle.write(str(record.seq)+"\n")
             handle.close()
 
 def concatenate():
@@ -143,19 +147,21 @@ def concatenate():
         reduced = names.replace("_aln_final.seqs", "")
         handle = open("%s.concat" % reduced, "w")
         handle.write("\n"+">"+str(reduced)+"\n")
-        for record in SeqIO.parse(open(infile), "fasta"):
-            seqs = []
-            seqs.append(record.seq)
-            handle.write("".join([str(x) for x in seqs]))
-            #handle.write("\n")
+        with open(infile) as my_file:
+            for record in SeqIO.parse(my_file, "fasta"):
+                seqs = []
+                seqs.append(record.seq)
+                handle.write("".join([str(x) for x in seqs]))
+                #handle.write("\n")
         handle.close()
 
 def fasta_to_tab(infile):
-    my_file = open(infile, "rU")
+    #my_file = open(infile)
     outfile = open("out.tab", "w")
-    for record in SeqIO.parse(my_file, "fasta"):
-        outfile.write(str(record.id)+"\t"+str(record.seq)+"\n")
-    my_file.close()
+    with open(infile) as my_file:
+        for record in SeqIO.parse(my_file, "fasta"):
+            outfile.write(str(record.id)+"\t"+str(record.seq)+"\n")
+    #my_file.close()
     outfile.close()
 
 def tab_to_matrix(tab):
