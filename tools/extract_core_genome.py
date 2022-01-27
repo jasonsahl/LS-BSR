@@ -71,7 +71,7 @@ def combined_seqs(dir_path):
         reduced = names.replace('.fasta','')
         handle.write(">"+str(reduced)+"\n")
         with open(infile) as my_file:
-            for record in SeqIO.parse(my_file), "fasta"):
+            for record in SeqIO.parse(my_file, "fasta"):
                 handle.write(str(record.seq)+"\n")
     handle.close()
     for record in SeqIO.parse("combined.seqs", "fasta"):
