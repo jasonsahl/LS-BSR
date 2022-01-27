@@ -331,7 +331,7 @@ then concatenates them into a single multiple sequence alignment
 -what do you need for script to run?  
 • Directory of genomes in FASTA format  
 • Input multi-FASTA  
-• MUSCLE aligner. Can be obtained from: [http://www.drive5.com/muscle/]  
+• MUSCLE aligner (must be v5 or newer). Can be obtained from: [http://www.drive5.com/muscle/]  
 • BLAST+  
 • BioPython  
 ```python extract_core_genome.py -d genomes_directory -g $prefix_consensus.fasta```  
