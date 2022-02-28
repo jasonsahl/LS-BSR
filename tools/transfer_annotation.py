@@ -12,6 +12,10 @@ from collections import OrderedDict
 from Bio import SeqIO
 from ls_bsr.util import find_data_type
 
+def is_tool(name):
+    from distutils.spawn import find_executable
+    return find_executable(name) is not None
+
 def test_file(option, opt_str, value, parser):
     try:
         with open(value): setattr(parser.values, option.dest, value)
@@ -112,7 +116,6 @@ def process_consensus(in_fasta,new_dict,out_fasta_prefix):
                 outfile.write(str(record.seq)+"\n")
     outfile.close()
 
-
 def update_dict(ref_scores,query_file,all_clusters,threshold):
     new_dict = {}
     with open(query_file) as my_file:
@@ -131,7 +134,7 @@ def update_dict(ref_scores,query_file,all_clusters,threshold):
     return new_dict,len(new_dict)
 
 def main(aligner,peptides,consensus,processors,threshold,out_fasta_prefix):
-    devnull = open("/dev/null", "w")
+    #devnull = open("/dev/null", "w")
     """These are your reference peptides"""
     pep_path=os.path.abspath("%s" % peptides)
     consensus_path=os.path.abspath("%s" % consensus)
@@ -145,20 +148,20 @@ def main(aligner,peptides,consensus,processors,threshold,out_fasta_prefix):
             sys.exit()
         if aligner == "blastp":
             blast_type = "blastp"
-            ab = subprocess.call(['which', 'blastp'])
-            if ab == 0:
-                pass
-            else:
-                print("blastp must be in your path to use peptides")
+            result = is_tool("blastp")
+            if result is False:
+                print("blastp isn't in your path, but needs to be!. Try: conda install -c bioconda blast")
                 sys.exit()
+            else:
+                pass
         else:
             blast_type = "diamond"
-            ab = subprocess.call(['which', 'diamond'])
-            if ab == 0:
-                pass
-            else:
-                print("diamond is not in your path but needs to be")
+            result = is_tool("diamond")
+            if result is False:
+                print("diamond isn't in your path, but needs to be!. Try: conda install -c bioconda diamond")
                 sys.exit()
+            else:
+                pass
     elif consensus_path.endswith(".fasta"):
         """Need to check to make sure that this is a nucleotide file"""
         if data_type == "nt":
@@ -167,12 +170,14 @@ def main(aligner,peptides,consensus,processors,threshold,out_fasta_prefix):
             print("Make sure that peptide data ends with 'pep'")
             sys.exit()
         blast_type = "blastx"
-        ab = subprocess.call(['which', 'blastx'])
-        if ab == 0:
-            pass
+        result = is_tool("blastx")
+        if result is False:
+            print("blastx must be in your path to use nucleotides. Try: conda install -c blast")
         else:
-            print("blastx must be in your path to use nucleotides")
-            sys.exit()
+            pass
+    else:
+        print("cannot determine the file type. Rename peptide files as .pep and fasta files as .fasta")
+        sys.exit()
     """"This causes problems"""
     os.system("cp %s query.peptides.xyx" % pep_path)
     if blast_type == "diamond":
