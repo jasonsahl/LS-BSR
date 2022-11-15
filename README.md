@@ -23,9 +23,10 @@ Minimum requirements, see manual.md for version information
 9. Diamond - Optional  
 
 -To create an environment and run through conda:  
-    `conda create -n ls_bsr python=3.5`  
+    `conda create -n ls_bsr python=3.9`  
     `conda activate ls_bsr`   
     `conda install -c bioconda blast vsearch cd-hit prodigal ucsc-blat diamond biopython mmseqs2`  
+    #If you have problems with biopython, try: pip install Biopython  
     `git clone https://github.com/jasonsahl/LS-BSR.git`  
     `python setup.py install`  
 
