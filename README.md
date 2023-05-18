@@ -12,7 +12,7 @@ have not been observed.
 contact: jasonsahl at gmail dot com  
 
 Minimum requirements, see manual.md for version information  
-1. Python >2.7 and <=3.5 (higher versions still work but tests may fail)
+1. Python >2.7 and <=3.9 (higher versions still work but tests may fail)
 2. BioPython  
 3. Prodigal - Required for de novo gene prediction only  
 4. VSEARCH - Optional  
