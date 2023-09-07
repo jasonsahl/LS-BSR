@@ -14,7 +14,7 @@ def test_file(option, opt_str, value, parser):
         sys.exit()
 
 def main(matrix,lower):
-    my_matrix = open(matrix, "U")
+    my_matrix = open(matrix)
     outfile = open("Scoary_matrix.txt","w")
     firstLine = my_matrix.readline()
     first_fields = firstLine.split()
