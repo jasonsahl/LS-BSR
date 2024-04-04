@@ -5,9 +5,7 @@ import sys
 import time
 import os
 import glob
-import optparse
 import subprocess
-from subprocess import Popen
 import shlex
 from subprocess import call
 import random
@@ -194,20 +192,22 @@ def blast_against_self_tblastn(blast_type, genes_nt, genes_pep, output,processor
     except:
         print("error!")
 
+
 def parse_self_blast(infile):
-    my_dict={}
+    my_dict = {}
     with open(infile) as my_blast:
         for line in my_blast:
             try:
-                fields=line.split()
-                str1=fields[0]
-                str2=fields[11]
+                fields = line.split()
+                str1 = fields[0]
+                str2 = fields[11]
                 my_dict.update({str1:str2})
             except:
                 raise TypeError("blast file is malformed")
     return my_dict
 
-def translate_genes(genes,outfile,min_len):
+
+def translate_genes(genes, outfile, min_len):
     """translate nucleotide into peptide with BioPython"""
     output = []
     output_handle = open(outfile, "w")
@@ -557,14 +557,7 @@ def filter_scaffolds_fun(in_fasta):
         SeqIO.write(outrecords, output_handle, "fasta")
         output_handle.close()
 
-#def uclust_sort(usearch):
-#    """sort with Usearch. Updated to V6"""
-#    devnull = open("/dev/null", "w")
-#    cmd = ["%s" % usearch,
-#           "-sortbylength", "all_gene_seqs.out",
-#           "-output", "tmp_sorted.txt"]
-#    subprocess.call(cmd,stdout=devnull,stderr=devnull)
-#    devnull.close()
+
 
 def process_pangenome(matrix,upper,lower,iterations,type,prefix):
     if "acc" in type:
@@ -820,8 +813,8 @@ def test_duplicate_header_ids(fasta_file):
             my_dict[id] = ["1"]
     dups = []
     for k,v in my_dict.items():
-        if len(v)>1: dups.append(k)
-    if len(dups)>0:
+        if len(v) > 1: dups.append(k)
+    if len(dups) > 0:
         print("Duplicate header IDs:")
         print("\n".join(dups))
     if len(IDs) == len(nr):
@@ -829,17 +822,7 @@ def test_duplicate_header_ids(fasta_file):
     else:
         return "False"
 
-#def split_files(fasta_file):
-#    """This next section removes line wraps, so I can
-#    split the file without interrupting a gene"""
-#    output_handle = open("nowrap.fasta", "w")
-#    with open(fasta_file) as infile:
-#        for record in SeqIO.parse(infile, "fasta"):
-#            output_handle.write(">"+str(record.id)+"\n")
-#            output_handle.write(str(record.seq)+"\n")
-#    output_handle.close()
-#    """I can always make the number of lines an alterable field"""
-#    subprocess.check_call("split -l 200000 nowrap.fasta", shell=True)
+
 
 def generate_dup_matrix():
     curr_dir=os.getcwd()
@@ -859,28 +842,11 @@ def generate_dup_matrix():
         outfile.write("\t".join(alist)+"\n")
     outfile.close()
 
-#def _usearch_workflow(infile):
-#    devnull = open("/dev/null", "w")
-#    cmd = ["usearch",
-#           "-cluster_fast", "%s" % infile[0],
-#           "-id", str(infile[1]),
-#           "-sort", "length",
-#           "-uc", "results.uc",
-#           "-centroids", "%s.usearch.out" % infile[0]]
-#    subprocess.call(cmd,stdout=devnull,stderr=devnull)
-#    devnull.close()
-
-#def run_usearch_dev(id,processors):
-#    curr_dir=os.getcwd()
-# Put all files that start with 'x' in list
-#    files_and_temp_names = []
-#    for file in glob.glob(os.path.join(curr_dir, "x*")):
-#        files_and_temp_names.append([file,id])
-#    mp_shell(_usearch_workflow, files_and_temp_names, processors)
 
 def _prodigal_workflow_def(data):
     tn, f = data
     subprocess.check_call("prodigal -i %s -d %s_genes.seqs -m -c -a %s_genes.pep > /dev/null 2>&1" % (f, f, f), shell=True)
+
 
 def _prodigal_workflow_inter(data):
     tn,f = data
@@ -1343,9 +1309,9 @@ def find_data_type(in_fasta):
         except:
             print("file cannot be parsed, is it in FASTA format?")
             sys.exit()
-    if len(aa)==0:
+    if len(aa) == 0:
         data_type = "nt"
-    elif len(aa)>0:
+    elif len(aa) > 0:
         data_type = "aa"
     else:
         print("problem determining data type..exiting")
@@ -1391,6 +1357,7 @@ def timestamp():
 
 
 def removeRecursiveMsg(msg):
+
     """
     This takes a message and if it starts with something that looks like
     a message generated with these tools it chops it off.  Useful if using
