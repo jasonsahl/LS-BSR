@@ -20,6 +20,10 @@ from ls_bsr.util import *
 import glob
 import tempfile
 
+def is_tool(name):
+    from distutils.spawn import find_executable
+    return find_executable(name) is not None
+
 def test_file(option, opt_str, value, parser):
     try:
         with open(value): setattr(parser.values, option.dest, value)
@@ -113,26 +117,26 @@ def main(directory,id,filter,processors,genes,cluster_method,blast,length,
         sys.exit()
     logPrint("Testing paths of dependencies")
     if blast=="blastn" or blast=="tblastn" or blast=="blastp":
-        ab = subprocess.call(['which', '%s' % blast])
-        if ab == 0:
-            print("citation: Altschul SF, Madden TL, Schaffer AA, Zhang J, Zhang Z, Miller W, and Lipman DJ. 1997. Gapped BLAST and PSI-BLAST: a new generation of protein database search programs. Nucleic Acids Res 25:3389-3402")
-        else:
+        result = is_tool(blast)
+        if result is False:
             print("blast isn't in your path, but needs to be!")
             sys.exit()
-    elif blast=="blat":
-        ac = subprocess.call(['which', 'blat'])
-        if ac == 0:
-            print("citation: W.James Kent. 2002. BLAT - The BLAST-Like Alignment Tool.  Genome Research 12:656-664")
         else:
+            print("citation: Altschul SF, Madden TL, Schaffer AA, Zhang J, Zhang Z, Miller W, and Lipman DJ. 1997. Gapped BLAST and PSI-BLAST: a new generation of protein database search programs. Nucleic Acids Res 25:3389-3402")
+    elif blast=="blat":
+        result = is_tool("blat")
+        if result is False:
             print("You have requested blat, but it is not in your PATH")
             sys.exit()
-    elif blast=="diamond":
-        ac = subprocess.call(['which', 'diamond'])
-        if ac == 0:
-            print("citation: Buchfink B, Xie C, Huson DH. 2015. Fast and sensitive protein alignment using DIAMOND. Nature methods, 12, 59-60.")
         else:
+            print("citation: W.James Kent. 2002. BLAT - The BLAST-Like Alignment Tool.  Genome Research 12:656-664")
+    elif blast=="diamond":
+        result = is_tool("diamond")
+        if result is False:
             print("You have requested DIAMOND, but it is not in your PATH (as diamond)")
             sys.exit()
+        else:
+            print("citation: Buchfink B, Xie C, Huson DH. 2015. Fast and sensitive protein alignment using DIAMOND. Nature methods, 12, 59-60.")
     elif blast=="blastn-short":
         print("citation: W.James Kent. 2002. BLAT - The BLAST-Like Alignment Tool.  Genome Research 12:656-664")
     if "NULL" in prefix:
@@ -178,40 +182,38 @@ def main(directory,id,filter,processors,genes,cluster_method,blast,length,
             sys.exit()
         else:
             pass
-        rc = subprocess.call(['which', 'prodigal'])
-        if rc == 0:
-            print("citation: Hyatt D, Chen GL, Locascio PF, Land ML, Larimer FW, and Hauser LJ. 2010. Prodigal: prokaryotic gene recognition and translation initiation site identification. BMC Bioinformatics 11:119")
-        else:
+        result = is_tool("prodigal")
+        if result is False:
             print("prodigal is not in your path, but needs to be!")
             sys.exit()
+        else:
+            print("citation: Hyatt D, Chen GL, Locascio PF, Land ML, Larimer FW, and Hauser LJ. 2010. Prodigal: prokaryotic gene recognition and translation initiation site identification. BMC Bioinformatics 11:119")
         if "mmseqs" in cluster_method or "mmseqs-lin" in cluster_method:
-            rc = subprocess.call(['which','mmseqs'])
-            if rc == 0:
-                print("citation: Steinegger and Soding. 2018. Clustering huge protein sequence sets in linear time. Nature Communications 9:2542")
-            else:
+            result = is_tool("mmseqs")
+            if result is False:
                 print("mmseqs is not in your path, but needs to be")
                 sys.exit()
+            else:
+                print("citation: Steinegger and Soding. 2018. Clustering huge protein sequence sets in linear time. Nature Communications 9:2542")
         elif "cd-hit" in cluster_method:
             if blast == "blastp" or blast == "diamond" or blast == "tblastn":
-                rc = subprocess.call(['which', 'cd-hit'])
-            else:
-                rc = subprocess.call(['which', 'cd-hit-est'])
-            if rc == 0:
-                print("citation: Li, W., Godzik, A. 2006. Cd-hit: a fast program for clustering and comparing large sets of protein or nuceltodie sequences. Bioinformatics 22(13):1658-1659")
-            else:
-                print("cd-hit is not in your path, but needs to be!")
-                sys.exit()
+                result = is_tool("cd-hit")
+                if result is False:
+                    print("cd-hit is not in your path, but needs to be!")
+                    sys.exit()
+                else:
+                    print("citation: Li, W., Godzik, A. 2006. Cd-hit: a fast program for clustering and comparing large sets of protein or nuceltodie sequences. Bioinformatics 22(13):1658-1659")
         elif "vsearch" in cluster_method:
             if blast == "blastp" or blast == "diamond":
                 print("vsearch not compatible with proteins, exiting...")
                 sys.exit()
             else:
-                rc = subprocess.call(['which', 'vsearch'])
-                if rc == 0:
-                    print("citation: Rognes, T., Flouri, T., Nichols, B., Qunice, C., Mahe, Frederic. 2016. VSEARCH: a versatile open source tool for metagenomics. PeerJ Preprints. DOI: https://doi.org/10.7287/peerj.preprints.2409v1")
-                else:
+                result = is_tool("vsearch")
+                if result is False:
                     print("vsearch is not in your path, but needs to be!")
                     sys.exit()
+                else:
+                    print("citation: Rognes, T., Flouri, T., Nichols, B., Qunice, C., Mahe, Frederic. 2016. VSEARCH: a versatile open source tool for metagenomics. PeerJ Preprints. DOI: https://doi.org/10.7287/peerj.preprints.2409v1")
         if len(samples) == 0:
             pass
         else:
