@@ -951,7 +951,30 @@ def _perform_workflow_diamond(data):
            "-d", name,
            "-f", "6",
            "-q", peptides,
+           "--masking", "0",
            "-o", "%s_blast.out" % name]
+    subprocess.call(cmd, stdout=devnull, stderr=devnull)
+    devnull.close()
+    
+def _perform_workflow_diamond_proteome(data):
+    tn = data[0]
+    f = data[1]
+    #f is the path to the reference file
+    peptides = data[2]
+    name = f.replace(".new","")
+    try:
+        subprocess.check_call("diamond makedb --in %s -d %s > /dev/null 2>&1" % (f,name), shell=True)
+    except:
+        print("problem with creating diamond database for %s" % f)
+    devnull = open('/dev/null', 'w')
+    cmd = ["diamond",
+           "blastp",
+           "-p", "1",
+           "-d", name,
+           "-f", "6",
+           "-q", peptides,
+           "-o", "%s_blast.out" % name]
+    #print(" ".join(cmd))
     subprocess.call(cmd, stdout=devnull, stderr=devnull)
     devnull.close()
 
@@ -965,6 +988,17 @@ def diamond_against_each_annotation(peptides,processors):
     for idx, f in enumerate(annotation_files):
         files_and_temp_names.append([str(idx), os.path.join(curr_dir, f), peptides])
     mp_shell(_perform_workflow_diamond, files_and_temp_names, processors)
+    
+def diamond_against_each_proteome(peptides,processors,pep_files):
+    curr_dir=os.getcwd()
+    files_and_temp_names = []
+    annotation_files = []
+    for files in os.listdir(curr_dir):
+        if ".new" in files:
+            annotation_files.append(files)
+    for idx, f in enumerate(annotation_files):
+        files_and_temp_names.append([str(idx), os.path.join(curr_dir, f), peptides])
+    mp_shell(_perform_workflow_diamond_proteome, files_and_temp_names, processors)
 
 def blastp_against_each_annotation(peptides,processors,filter):
     curr_dir=os.getcwd()
@@ -1192,7 +1226,10 @@ def make_table_test(infile, test, clusters):
     name = get_seq_name(infile)
     reduced=[]
     """remove the junk at the end of the file"""
-    reduced.append(name.replace('.fasta.new_blast.out.filtered.unique',''))
+    if "blast.out.filtered.unique" in name:
+        reduced.append(name.replace('_blast.out.filtered.unique',''))
+    else:
+        reduced.append(name.replace('.fasta.new_blast.out.filtered.unique',''))
     names.append(reduced)
     my_dict={}
     with open(infile) as my_file:

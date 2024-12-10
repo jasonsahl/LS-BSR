@@ -379,7 +379,7 @@ def main(directory,id,filter,processors,genes,cluster_method,blast,length,
         logPrint("Using pre-compiled set of predicted genes")
         files = glob.glob(os.path.join(dir_path,"*.fasta"))
         genbank_files = glob.glob(os.path.join(dir_path,"*.gbk"))
-        pep_files = glob.glob(os.path.join(dir_path,".pep"))
+        pep_files = glob.glob(os.path.join(dir_path,"*.pep"))
         if len(genbank_files)>0:
             for hit in genbank_files:
                 base = os.path.basename(hit)
@@ -392,14 +392,14 @@ def main(directory,id,filter,processors,genes,cluster_method,blast,length,
             for hit in pep_files:
                 base = os.path.basename(hit)
                 reduced_hit = base.replace(".pep","")
-                os.link(infile,"%s/%s.new" % (fastadir,reduced_hit))
+                os.link(hit,"%s/%s.new" % (fastadir,reduced_hit))
         if len(files)==0 and len(genbank_files)==0 and len(pep_refs) == 0:
             print("no usable reference genomes found!")
             sys.exit()
         gene_path = os.path.abspath("%s" % genes)
-        """new method: aa,nt,unknown"""
         data_type = find_data_type(gene_path)
         dup_ids = test_duplicate_header_ids(gene_path)
+        #Test for duplicate headers and exit if found
         if dup_ids == "True":
             pass
         elif dup_ids == "False":
@@ -411,9 +411,11 @@ def main(directory,id,filter,processors,genes,cluster_method,blast,length,
             if data_type == "aa":
                 pass
             else:
-                print("File is supposed to contain proteins, but doesn't look correct..exiting")
+                print("File is supposed to contain proteins, but needs to end with '.pep'..exiting")
                 sys.exit()
+            #Copies over the genes file into the working directory to prevent cross linking events
             os.system("cp %s %s/genes.pep" % (gene_path,fastadir))
+            #Create the self alignment to get the reference scores
             if blast=="tblastn" or blast=="blastp":
                 logPrint("using %s on peptides" % blast)
                 try:
@@ -428,7 +430,8 @@ def main(directory,id,filter,processors,genes,cluster_method,blast,length,
                     subprocess.check_call("diamond makedb --in %s -d self > /dev/null 2>&1" % gene_path, shell=True)
                 except:
                     logPrint("problem encountered formatting DIAMOND database")
-                subprocess.check_call("diamond blastp -p 4 -d self -f 6 -q %s -o tmp_blast.out > /dev/null 2>&1" % gene_path, shell=True)
+                #Recently added masking flag
+                subprocess.check_call("diamond blastp -p 4 -d self -f 6 -q %s -o tmp_blast.out --masking 0 > /dev/null 2>&1" % gene_path, shell=True)
             elif blast=="blat" or blast=="blastn" or blast=="blastn-short":
                 print("Nucleotide aligner not compatible with protein sequences...exiting")
                 sys.exit()
@@ -447,18 +450,27 @@ def main(directory,id,filter,processors,genes,cluster_method,blast,length,
                     for infile in glob.glob(os.path.join(dir_path,'*.fasta')):
                         name=get_seq_name(infile)
                         os.link(infile,"%s/%s.new" % (fastadir,name))
-                    logPrint("Predicting genes with Prodigal")
-                    predict_genes(fastadir, processors, intergenics)
+                    if len(pep_files) == 0:
+                        logPrint("Predicting genes with Prodigal")
+                        predict_genes(fastadir, processors, intergenics)
+                    else:
+                        #TODO: add functionality here for proteomic screens
+                        logPrint("performing peptide alignment against proteomes")
                 logPrint("BlastP starting")
                 #This script might need to be modified to fit with peptide "genomes"
                 blastp_against_each_annotation(gene_path,processors,filter)
             elif blast == "diamond":
                 for infile in glob.glob(os.path.join(dir_path, '*.fasta')):
                     name=get_seq_name(infile)
-                logPrint("Predicting genes with Prodigal")
-                predict_genes(fastadir, processors, intergenics)
-                logPrint("Diamond starting")
-                diamond_against_each_annotation(gene_path,processors)
+                if len(pep_files)==0:
+                    logPrint("Predicting genes with Prodigal")
+                    predict_genes(fastadir, processors, intergenics)
+                    logPrint("Diamond starting")
+                    diamond_against_each_annotation(gene_path,processors)
+                else:
+                    logPrint("performing peptide alignment against proteomes")
+                    #new function
+                    diamond_against_each_proteome(gene_path,processors,"%s/%s.new" % (fastadir,name))
         elif gene_path.endswith(".fasta"):
             if data_type == "nt":
                 pass
@@ -643,7 +655,7 @@ def main(directory,id,filter,processors,genes,cluster_method,blast,length,
     os.chdir("%s" % ap)
 
 if __name__ == "__main__":
-    parser = OptionParser(usage="usage: %prog [options]",version="%prog 1.4")
+    parser = OptionParser(usage="usage: %prog [options]",version="%prog 1.5")
     parser.add_option("-d", "--directory", dest="directory",
                       help="/path/to/fasta_directory [REQUIRED]",
                       type="string", action="callback", callback=test_dir)
