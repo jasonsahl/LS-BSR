@@ -974,7 +974,6 @@ def _perform_workflow_diamond_proteome(data):
            "-f", "6",
            "-q", peptides,
            "-o", "%s_blast.out" % name]
-    #print(" ".join(cmd))
     subprocess.call(cmd, stdout=devnull, stderr=devnull)
     devnull.close()
 
@@ -1227,8 +1226,6 @@ def make_table_test(infile, test, clusters):
     reduced=[]
     """remove the junk at the end of the file"""
     if "blast.out.filtered.unique" in name:
-        reduced.append(name.replace('_blast.out.filtered.unique',''))
-    else:
         reduced.append(name.replace('.fasta.new_blast.out.filtered.unique',''))
     names.append(reduced)
     my_dict={}

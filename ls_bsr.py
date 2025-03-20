@@ -577,7 +577,9 @@ def main(directory,id,filter,processors,genes,cluster_method,blast,length,
         open("ref.list", "a").write("%s\n" % x)
     names_out = open("names.txt", "w")
     names_redux = [val for subl in new_names for val in subl]
-    for x in names_redux: names_out.write("".join(x)+"\n")
+    #Testing this method
+    for x in names_redux:
+        names_out.write("".join(x)+"\n")
     names_out.close()
     create_bsr_matrix_dev(new_table_list)
     divide_values("bsr_matrix",ref_scores)
@@ -655,7 +657,7 @@ def main(directory,id,filter,processors,genes,cluster_method,blast,length,
     os.chdir("%s" % ap)
 
 if __name__ == "__main__":
-    parser = OptionParser(usage="usage: %prog [options]",version="%prog 1.5")
+    parser = OptionParser(usage="usage: %prog [options]",version="%prog 1.6")
     parser.add_option("-d", "--directory", dest="directory",
                       help="/path/to/fasta_directory [REQUIRED]",
                       type="string", action="callback", callback=test_dir)
