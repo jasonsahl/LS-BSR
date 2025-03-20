@@ -17,7 +17,7 @@ with open(os.path.join(here, 'README.md'), encoding='utf-8') as f:
 
 setup(
     name=os.getenv('PKG_NAME', 'ls_bsr'),
-    version=os.getenv('PKG_VERSION', 'dev'),
+    #version=os.getenv('PKG_VERSION', 'dev'),
     description='Large scale blast score ratio',
 
     # This is an optional longer description of your project that represents
