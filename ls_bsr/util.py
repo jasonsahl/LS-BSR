@@ -23,6 +23,7 @@ import threading
 import types
 from collections import deque,OrderedDict
 import collections
+from collections import Counter
 
 def mp_shell(func, params, numProc):
     from multiprocessing import Pool
@@ -1332,14 +1333,27 @@ def parse_ranges_file(genome,ranges_file,name,test):
 def find_data_type(in_fasta):
     nt = []
     aa = []
+    nucleotide_chars = set("ATGCUNatgcun")
+    amino_chars = set("ACDEFGHIKLMNPQRSTVWYBXZacdefghiklmnpqrstvwybxz")
+    n_nuc, n_aa = 0, 0
     with open(in_fasta) as my_fasta:
         try:
             for record in SeqIO.parse(my_fasta, "fasta"):
                 """None of these characters are IUPACs"""
-                if "F" in record.seq or "L" in record.seq or "I" in record.seq or "P" in record.seq or "Q" in record.seq or "E" in record.seq:
+                seq_letters = Counter(record.seq)
+                total_letters = sum(seq_letters.values())
+                if total_letters == 0:
+                    continue
+                nuc_fraction = sum(seq_letters[base] for base in nucleotide_chars) / total_letters
+                aa_fraction = sum(seq_letters[base] for base in amino_chars) / total_letters
+                if nuc_fraction > 0.9 and nuc_fraction > aa_fraction:
+                    n_nuc +=1
+                elif aa_fraction > 0.9 and aa_fraction > nuc_fraction:
+                    n_aa +=1
+                if n_nuc > 0 and n_aa == 0:
+                    nt.append("1")
+                elif n_aa > 0 and n_nuc == 0:
                     aa.append("1")
-                else:
-                    pass
         except:
             print("file cannot be parsed, is it in FASTA format?")
             sys.exit()

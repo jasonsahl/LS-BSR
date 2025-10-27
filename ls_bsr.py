@@ -20,10 +20,12 @@ from ls_bsr.util import *
 import glob
 import tempfile
 
-def is_tool(name):
-    from distutils.spawn import find_executable
-    return find_executable(name) is not None
-
+def is_tool(name: str) -> bool:
+    #from distutils.spawn import find_executable
+    #return find_executable(name) is not None
+    import shutil
+    return shutil.which(name) is not None
+    
 def test_file(option, opt_str, value, parser):
     try:
         with open(value): setattr(parser.values, option.dest, value)
@@ -657,7 +659,7 @@ def main(directory,id,filter,processors,genes,cluster_method,blast,length,
     os.chdir("%s" % ap)
 
 if __name__ == "__main__":
-    parser = OptionParser(usage="usage: %prog [options]",version="%prog 1.6")
+    parser = OptionParser(usage="usage: %prog [options]",version="%prog 1.7")
     parser.add_option("-d", "--directory", dest="directory",
                       help="/path/to/fasta_directory [REQUIRED]",
                       type="string", action="callback", callback=test_dir)
