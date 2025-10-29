@@ -973,6 +973,7 @@ def _perform_workflow_diamond_proteome(data):
            "-p", "1",
            "-d", name,
            "-f", "6",
+           "--masking", "0",
            "-q", peptides,
            "-o", "%s_blast.out" % name]
     subprocess.call(cmd, stdout=devnull, stderr=devnull)
