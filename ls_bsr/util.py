@@ -1229,6 +1229,8 @@ def make_table_test(infile, test, clusters):
     """remove the junk at the end of the file"""
     if "blast.out.filtered.unique" in name:
         reduced.append(name.replace('.fasta.new_blast.out.filtered.unique',''))
+    elif ".pep.new_blast.out.filtered.unique" in name:
+        reduced.append(name.replace('.pep.new_blast.out.filtered.unique',''))
     names.append(reduced)
     my_dict={}
     with open(infile) as my_file:
