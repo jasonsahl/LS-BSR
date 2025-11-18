@@ -995,7 +995,7 @@ def diamond_against_each_proteome(peptides,processors,pep_files):
     files_and_temp_names = []
     annotation_files = []
     for files in os.listdir(curr_dir):
-        if ".new" in files:
+        if ".pep.new" in files:
             annotation_files.append(files)
     for idx, f in enumerate(annotation_files):
         files_and_temp_names.append([str(idx), os.path.join(curr_dir, f), peptides])
