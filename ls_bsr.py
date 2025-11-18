@@ -462,7 +462,8 @@ def main(directory,id,filter,processors,genes,cluster_method,blast,length,
                 #This script might need to be modified to fit with peptide "genomes"
                 blastp_against_each_annotation(gene_path,processors,filter)
             elif blast == "diamond":
-                for infile in glob.glob(os.path.join(dir_path, '*.fasta')):
+                for infile in glob.glob(os.path.join(dir_path, '*.pep')):
+                #for infile in glob.glob(os.path.join(dir_path, '*.fasta')):
                     name=get_seq_name(infile)
                 if len(pep_files)==0:
                     logPrint("Predicting genes with Prodigal")
