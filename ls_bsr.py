@@ -395,7 +395,7 @@ def main(directory,id,filter,processors,genes,cluster_method,blast,length,
                 base = os.path.basename(hit)
                 #This is creating problems. I'm commenting out to test the effect
                 #reduced_hit = base.replace(".pep","")
-                os.link(hit,"%s/%s.new" % (fastadir,reduced_hit))
+                #os.link(hit,"%s/%s.new" % (fastadir,reduced_hit))
         if len(files)==0 and len(genbank_files)==0 and len(pep_refs) == 0:
             print("no usable reference genomes found!")
             sys.exit()
