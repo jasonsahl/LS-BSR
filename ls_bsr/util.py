@@ -962,20 +962,24 @@ def _perform_workflow_diamond_proteome(data):
     f = data[1]
     #f is the path to the reference file
     peptides = data[2]
-    name = f.replace(".new","")
+    #this is changing the name of the file
+    #name = f.replace(".new","")
     try:
-        subprocess.check_call("diamond makedb --in %s -d %s > /dev/null 2>&1" % (f,name), shell=True)
+        subprocess.check_call("diamond makedb --in %s -d %s > /dev/null 2>&1" % (f,f), shell=True)
+        #subprocess.check_call("diamond makedb --in %s -d %s > /dev/null 2>&1" % (f,name), shell=True)
     except:
         print("problem with creating diamond database for %s" % f)
     devnull = open('/dev/null', 'w')
     cmd = ["diamond",
            "blastp",
            "-p", "1",
-           "-d", name,
+           "-d", f,
+           #"-d", name,
            "-f", "6",
            "--masking", "0",
            "-q", peptides,
-           "-o", "%s_blast.out" % name]
+           "-o", "%s_blast.out" % f]
+           #"-o", "%s_blast.out" % name]
     subprocess.call(cmd, stdout=devnull, stderr=devnull)
     devnull.close()
 
