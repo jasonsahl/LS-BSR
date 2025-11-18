@@ -393,7 +393,8 @@ def main(directory,id,filter,processors,genes,cluster_method,blast,length,
         if len(pep_refs)>0:
             for hit in pep_files:
                 base = os.path.basename(hit)
-                reduced_hit = base.replace(".pep","")
+                #This is creating problems. I'm commenting out to test the effect
+                #reduced_hit = base.replace(".pep","")
                 os.link(hit,"%s/%s.new" % (fastadir,reduced_hit))
         if len(files)==0 and len(genbank_files)==0 and len(pep_refs) == 0:
             print("no usable reference genomes found!")
@@ -452,6 +453,7 @@ def main(directory,id,filter,processors,genes,cluster_method,blast,length,
                     for infile in glob.glob(os.path.join(dir_path,'*.fasta')):
                         name=get_seq_name(infile)
                         os.link(infile,"%s/%s.new" % (fastadir,name))
+                    #This indicates that there currently are no peptide files
                     if len(pep_files) == 0:
                         logPrint("Predicting genes with Prodigal")
                         predict_genes(fastadir, processors, intergenics)
@@ -473,7 +475,7 @@ def main(directory,id,filter,processors,genes,cluster_method,blast,length,
                     diamond_against_each_annotation(gene_path,processors)
                 else:
                     logPrint("performing peptide alignment against proteomes")
-                    #new function
+                    #If the file ends in ".pep", then the name should be "genome.pep.new. currently , thare are two files with a "new" suffix
                     diamond_against_each_proteome(gene_path,processors,"%s/%s.new" % (fastadir,name))
         elif gene_path.endswith(".fasta"):
             if data_type == "nt":
