@@ -465,6 +465,7 @@ def main(directory,id,filter,processors,genes,cluster_method,blast,length,
                 for infile in glob.glob(os.path.join(dir_path, '*.pep')):
                 #for infile in glob.glob(os.path.join(dir_path, '*.fasta')):
                     name=get_seq_name(infile)
+                    os.link(infile,"%s/%s.new" % (fastadir,name))
                 if len(pep_files)==0:
                     logPrint("Predicting genes with Prodigal")
                     predict_genes(fastadir, processors, intergenics)
